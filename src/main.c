@@ -8,6 +8,13 @@
 #define SDL_MAIN_HANDLED
 #include <SDL/SDL.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#define MAIN int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+#else
+#define MAIN int main(int argc, char *argv[])
+#endif
+
 // Create our game window
 SDL_Window *create_sdl_window() {
     const char *title = "Hello";
@@ -24,7 +31,7 @@ SDL_Window *create_sdl_window() {
     return sdl_window;
 }
 
-int main(int argc, char *argv[]) {
+MAIN {
     int rc = 0;
     SDL_Window *sdl_window = NULL;
 

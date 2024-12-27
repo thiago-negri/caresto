@@ -5,7 +5,7 @@ C_OBJECTS_PATH=$(BUILD_PATH)/obj
 C_SOURCES=$(wildcard $(C_SOURCES_PATH)/*.c)
 C_OBJECTS=$(patsubst $(C_SOURCES_PATH)/%.c,$(C_OBJECTS_PATH)/%.o,$(C_SOURCES))
 C_COMPILE_FLAGS=-Iinclude -I$(C_SOURCES_PATH)
-C_LINK_FLAGS=-Llib/windows/SDL/x64 -Llib/windows/glew/x64 -lSDL2 -lglew32 -lglu32 -lopengl32
+C_LINK_FLAGS=-Llib/windows/SDL/x64 -Llib/windows/glew/x64 -lSDL2 -lglew32 -lglu32 -lopengl32 -mwindows
 TARGET_PATH=$(BUILD_PATH)/bin
 TARGET=$(TARGET_PATH)/main.exe
 
