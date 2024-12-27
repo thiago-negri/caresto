@@ -5,7 +5,7 @@ C_OBJECTS_PATH=$(BUILD_PATH)/obj
 C_SOURCES=$(wildcard $(C_SOURCES_PATH)/*.c)
 C_OBJECTS=$(patsubst $(C_SOURCES_PATH)/%.c,$(C_OBJECTS_PATH)/%.o,$(C_SOURCES))
 C_COMPILE_FLAGS=-Iinclude -I$(C_SOURCES_PATH)
-C_LINK_FLAGS=-Llib/windows/SDL/x64 -lSDL2
+C_LINK_FLAGS=-Llib/windows/SDL/x64 -Llib/windows/glew/x64 -lSDL2 -lglew32 -lglu32 -lopengl32
 TARGET_PATH=$(BUILD_PATH)/bin
 TARGET=$(TARGET_PATH)/main.exe
 
@@ -28,12 +28,24 @@ clean:
 	@rm -rf $(BUILD_PATH)
 
 .PHONY: dlls
-dlls: build/bin/SDL2.dll build/bin/README-SDL.txt
+dlls: dll_sdl dll_glew
+
+.PHONY: dll_sdl
+dll_sdl: build/bin/SDL2.dll build/bin/README-SDL.txt
+
+.PHONY: dll_glew
+dll_glew: build/bin/glew32.dll build/bin/LICENSE-glew.txt
 
 build/bin/SDL2.dll: lib/windows/SDL/x64/SDL2.dll
 	cp $< $@
 
 build/bin/README-SDL.txt: licenses/README-SDL.txt
+	cp $< $@
+
+build/bin/glew32.dll: lib/windows/glew/x64/glew32.dll
+	cp $< $@
+
+build/bin/LICENSE-glew.txt: licenses/LICENSE-glew.txt
 	cp $< $@
 
 $(TARGET): $(C_OBJECTS)

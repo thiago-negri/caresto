@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+#include <GL/glew.h>
+
 #define SDL_MAIN_HANDLED
 #include <SDL/SDL.h>
 
@@ -23,23 +25,54 @@ SDL_Window *create_sdl_window() {
 }
 
 int main(int argc, char *argv[]) {
+    int rc = 0;
+    SDL_Window *sdl_window = NULL;
+
     // Initialize SDL
-    atexit(SDL_Quit);
     Uint32 sdl_flags = SDL_INIT_VIDEO;
-    int rc = SDL_Init(sdl_flags);
-    if (rc != 0) {
+    int sdl_rc = SDL_Init(sdl_flags);
+    if (sdl_rc != 0) {
         const char *sdl_error = SDL_GetError();
-        fprintf(stderr, "Could not initialize SDL. %s\n", sdl_error);
-        return -1;
+        SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "Could not initialize SDL. %s\n", sdl_error);
+        rc = -1;
+        goto _done;
     }
 
     // Create our game window
-    SDL_Window *sdl_window = create_sdl_window();
+    sdl_window = create_sdl_window();
     if (sdl_window == NULL) {
         const char *sdl_error = SDL_GetError();
-        fprintf(stderr, "Could not create SDL window. %s\n", sdl_error);
-        return -1;
+        SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "Could not create SDL window. %s\n", sdl_error);
+        rc = -1;
+        goto _done;
     }
+
+    // Create a OpenGL Context
+    SDL_GLContext sdl_gl_context = SDL_GL_CreateContext(sdl_window);
+    if (sdl_gl_context == NULL) {
+        const char *sdl_error = SDL_GetError();
+        SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "Could not create OpenGL context. %s\n",
+                sdl_error);
+        rc = -1;
+        goto _done;
+    }
+
+    // Initialize glew
+    GLenum glew_rc = glewInit();
+    if (GLEW_OK != glew_rc) {
+        const GLubyte *glew_error = glewGetErrorString(glew_rc);
+        SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "Could not initialize glew. %s\n", glew_error);
+        rc = -1;
+        goto _done;
+    }
+
+    // TODO:
+    // - create gl program
+    // - create gl vertex shader
+    // - create gl fragment shader
+    // - create gl vbo
+    // - remember to add gl cleanup code
+    // - draw something to screen
 
     // Main event loop
     bool running = true;
@@ -56,11 +89,17 @@ int main(int argc, char *argv[]) {
                     }
                     break;
             }
+
+            SDL_GL_SwapWindow(sdl_window);
         }
     }
 
     // We're done
-    SDL_DestroyWindow(sdl_window);
-    return 0;
+_done:
+    if (sdl_window != NULL) {
+        SDL_DestroyWindow(sdl_window);
+    }
+    SDL_Quit();
+    return rc;
 }
 
