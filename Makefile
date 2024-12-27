@@ -19,6 +19,14 @@ rebuild: makedir clean $(TARGET)
 run: build dlls
 	./$(TARGET)
 
+.PHONY: dev
+dev: compile_flags.txt
+
+.PHONY: compile_flags.txt
+compile_flags.txt:
+	rm -f compile_flags.txt
+	for flag in $(C_COMPILE_FLAGS); do echo $$flag >> compile_flags.txt; done
+
 .PHONY: makedir
 makedir:
 	@mkdir -p $(TARGET_PATH) $(C_OBJECTS_PATH)
