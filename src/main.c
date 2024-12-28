@@ -15,6 +15,8 @@
 #define MAIN int main(int argc, char *argv[])
 #endif
 
+#include <mm_memory_management.h>
+
 // Create our game window
 SDL_Window *create_sdl_window() {
     const char *title = "Hello";
@@ -34,6 +36,12 @@ SDL_Window *create_sdl_window() {
 MAIN {
     int rc = 0;
     SDL_Window *sdl_window = NULL;
+    mm_arena arena = mm_arena_create(1024);
+    if (arena.size <= 0) {
+        SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "Could not allocate memory.");
+        rc = -1;
+        goto _done;
+    }
 
     // Initialize SDL
     Uint32 sdl_flags = SDL_INIT_VIDEO;
@@ -103,6 +111,7 @@ MAIN {
 
     // We're done
 _done:
+    mm_arena_destroy(&arena);
     if (sdl_window != NULL) {
         SDL_DestroyWindow(sdl_window);
     }
