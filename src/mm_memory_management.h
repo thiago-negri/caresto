@@ -9,6 +9,7 @@ typedef struct {
     size_t size;
     unsigned char *buffer;
 } mm_arena;
+#define mm_arena_zero ((mm_arena){ .offset = 0, .size = 0, .buffer = NULL })
 mm_arena mm_arena_create(size_t size);
 void *mm_arena_alloc(mm_arena *a, size_t size);
 void mm_arena_reset(mm_arena *a);

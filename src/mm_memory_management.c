@@ -32,5 +32,10 @@ void mm_arena_reset(mm_arena *a) {
 }
 
 void mm_arena_destroy(mm_arena *a) {
-    free(a->buffer);
+    if (a->buffer != NULL) {
+        free(a->buffer);
+    }
+    a->offset = 0;
+    a->size = 0;
+    a->buffer = NULL;
 }

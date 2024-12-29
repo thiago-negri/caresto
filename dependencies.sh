@@ -4,7 +4,7 @@ rm -rf include lib tmp-dependencies
 
 mkdir tmp-dependencies
 mkdir licenses
-mkdir -p include/SDL lib/windows/SDL
+mkdir -p include/SDL3 lib/windows/SDL3
 mkdir -p include/GL include/KHR
 mkdir -p lib/windows/glew/x64 lib/windows/glew/x86
 
@@ -14,13 +14,13 @@ cd tmp-dependencies
 #
 # SDL
 #
-SDL=SDL2-devel-2.30.10-VC.zip
-SDL_URL=https://github.com/libsdl-org/SDL/releases/download/release-2.30.10/$SDL
-SDL_FOLDER=SDL2-2.30.10
+SDL=SDL3-devel-3.1.6-VC.zip
+SDL_URL=https://github.com/libsdl-org/SDL/releases/download/preview-3.1.6/$SDL
+SDL_FOLDER=SDL3-3.1.6
 wget $SDL_URL
 unzip $SDL
-cp -r $SDL_FOLDER/include/* ../include/SDL/
-cp -r $SDL_FOLDER/lib/* ../lib/windows/SDL/
+cp -r $SDL_FOLDER/include/* ../include/
+cp -r $SDL_FOLDER/lib/* ../lib/windows/SDL3/
 cp $SDL_FOLDER/README-SDL.txt ../licenses/README-SDL.txt
 
 

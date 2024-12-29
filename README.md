@@ -16,7 +16,6 @@ In Visual Studio Installer add "Game Development with C++"
 You need:
 - A way to execute shell scripts (you can use `sh.exe` from Git);
 - `wget` to download dependencies;
-- `make` to build.
 
 Resolve project dependencies.
 
@@ -32,24 +31,9 @@ Make sure `C:\Program Files\Git\bin` is in your `PATH`.
 sh ./dependencies.sh
 ```
 
-Then you can build.
+Then you can build and run.
 
 ```sh
-make build
-```
-
-Or build and run.
-
-```sh
-make run
-```
-
-
-### Dev
-
-Generate the config files for clangd (LSP).
-
-```sh
-make dev
+./build.sh # or with "sh"
 ```
 
