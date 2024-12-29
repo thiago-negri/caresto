@@ -15,6 +15,9 @@ run() {
 }
 
 need_link() {
+    if [ ! -e "$TARGET" ]; then
+        return 0
+    fi
     for obj_file in ./$OBJ_PATH/*.o; do
         if [[ "$TARGET" -ot "$obj_file" ]]; then
             return 0
@@ -27,7 +30,7 @@ static() {
     file=$1
     filename=$(basename $file)
     target_file=$TARGET_PATH/$filename
-    [ -e $target_file ] || run cp $file $target_file
+    [ -e "$target_file" ] || run cp $file $target_file
 }
 
 
@@ -66,20 +69,20 @@ fi
 #
 if [[ "$arg_build" == "0" ]]; then
     # PREPARE
-    mkdir -p $OBJ_PATH $TARGET_PATH
+    run mkdir -p "$OBJ_PATH" "$TARGET_PATH"
 
     # COMPILE
     for source_file in ./$SRC_PATH/*.c; do
         module=$(basename $source_file .c)
         obj_file=$OBJ_PATH/$module.o
         if [[ "$obj_file" -ot "$source_file" ]]; then
-            run clang -c -o $obj_file $source_file $COMPILE_FLAGS
+            run clang -c -o "$obj_file" "$source_file" $COMPILE_FLAGS
         fi
     done
 
     # LINK
     if need_link; then
-        run clang -o $TARGET $OBJ_PATH/*.o $LINK_FLAGS
+        run clang -o "$TARGET" "$OBJ_PATH/*.o" $LINK_FLAGS
     fi
 
     # COPY DLLS AND LICENSES
