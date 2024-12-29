@@ -101,9 +101,8 @@ int main(int argc, char *argv[]) {
                     }
                     break;
             }
-
-            SDL_GL_SwapWindow(sdl_window);
         }
+        SDL_GL_SwapWindow(sdl_window);
     }
 
     // We're done
