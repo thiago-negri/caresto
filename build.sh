@@ -30,50 +30,71 @@ static() {
     [ -e $target_file ] || run cp $file $target_file
 }
 
+
+#
+# ARGS
+#
+arg_clean=1
+arg_build=1
+arg_run=1
+for arg in "$@"; do
+    if [[ "$arg" == "clean" ]]; then
+        arg_clean=0
+    fi
+    if [[ "$arg" == "build" ]]; then
+        arg_build=0
+    fi
+    if [[ "$arg" == "run" ]]; then
+        arg_run=0
+    fi
+done
+# DEFAULTS (build run)
+if [[ "$arg_clean$arg_build$arg_run" == "111" ]]; then
+    arg_clean=1
+    arg_build=0
+    arg_run=0
+fi
+
 #
 # CLEAN
 #
-[[ "$1" == "clean" ]] && run rm -rf build
+[[ "$arg_clean" == "0" ]] && run rm -rf build
 
 
 #
-# PREPARE
+# BUILD
 #
-mkdir -p $OBJ_PATH $TARGET_PATH
+if [[ "$arg_build" == "0" ]]; then
+    # PREPARE
+    mkdir -p $OBJ_PATH $TARGET_PATH
 
+    # COMPILE
+    for source_file in ./$SRC_PATH/*.c; do
+        module=$(basename $source_file .c)
+        obj_file=$OBJ_PATH/$module.o
+        if [[ "$obj_file" -ot "$source_file" ]]; then
+            run clang -c -o $obj_file $source_file $COMPILE_FLAGS
+        fi
+    done
 
-#
-# COMPILE
-#
-for source_file in ./$SRC_PATH/*.c; do
-    module=$(basename $source_file .c)
-    obj_file=$OBJ_PATH/$module.o
-    if [[ "$obj_file" -ot "$source_file" ]]; then
-        run clang -c -o $obj_file $source_file $COMPILE_FLAGS
+    # LINK
+    if need_link; then
+        run clang -o $TARGET $OBJ_PATH/*.o $LINK_FLAGS
     fi
-done
 
-
-#
-# LINK
-#
-if need_link; then
-    run clang -o $TARGET $OBJ_PATH/*.o $LINK_FLAGS
+    # COPY DLLS AND LICENSES
+    static lib/windows/SDL3/x64/SDL3.dll
+    static licenses/README-SDL.txt
+    static lib/windows/glew/x64/glew32.dll
+    static licenses/LICENSE-glew.txt
 fi
-
-
-#
-# COPY DLLS AND LICENSES
-#
-static lib/windows/SDL3/x64/SDL3.dll
-static licenses/README-SDL.txt
-static lib/windows/glew/x64/glew32.dll
-static licenses/LICENSE-glew.txt
 
 
 #
 # RUN
 #
-run ./$TARGET
-echo "$?"
+if [[ "$arg_run" == "0" ]]; then
+    run ./$TARGET
+    echo "$?"
+fi
 
