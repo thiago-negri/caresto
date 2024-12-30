@@ -78,6 +78,11 @@ int main(int argc, char *argv[]) {
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
+    GLuint shader_id_vertex = glCreateShader(GL_VERTEX_SHADER);
+    GLuint shader_id_fragment = glCreateShader(GL_FRAGMENT_SHADER);
+    glDeleteShader(shader_id_vertex);
+    glDeleteShader(shader_id_fragment);
+
     // TODO:
     // - create gl program
     // - create gl vertex shader
