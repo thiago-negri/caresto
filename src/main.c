@@ -30,8 +30,11 @@ int main(int argc, char *argv[]) {
     int rc = 0;
     SDL_Window *sdl_window = NULL;
     mm_arena arena = mm_arena_zero;
+    GLuint program_id = 0;
+    GLuint shader_vertex_id = 0;
+    GLuint shader_fragment_id = 0;
 
-    arena = mm_arena_create(1024);
+    arena = mm_arena_create(10 * 1024 * 1024); // 10 MB
     if (arena.size <= 0) {
         l_critical("Could not allocate memory.");
         rc = -1;
@@ -74,14 +77,78 @@ int main(int argc, char *argv[]) {
         goto _done;
     }
 
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    shader_vertex_id = glCreateShader(GL_VERTEX_SHADER);
+    {
+        const char *shader_vertex_source = "#version 330 core\nvoid main() {}";
+        glShaderSource(shader_vertex_id, 1, &shader_vertex_source, NULL);
+        glCompileShader(shader_vertex_id);
+        GLint compile_status = 0;
+        glGetShaderiv(shader_vertex_id, GL_COMPILE_STATUS, &compile_status);
+        if (compile_status != GL_TRUE) {
+            GLint log_length = 0;
+            glGetShaderiv(shader_vertex_id, GL_INFO_LOG_LENGTH, &log_length);
+            char *log = mm_arena_alloc(&arena, log_length + 1);
+            if (log == NULL) {
+                l_critical("Shader failed to compile. Could not allocate memory to read log (log length = %d).\n", log_length);
+                rc = -1;
+                goto _done;
+            }
+            glGetShaderInfoLog(shader_vertex_id, log_length, NULL, log);
+            log[log_length] = 0;
+            l_critical("Shader failed to compile.\n%s\n", log);
+            rc = -1;
+            goto _done;
+        }
+    }
 
-    GLuint shader_id_vertex = glCreateShader(GL_VERTEX_SHADER);
-    GLuint shader_id_fragment = glCreateShader(GL_FRAGMENT_SHADER);
-    glDeleteShader(shader_id_vertex);
-    glDeleteShader(shader_id_fragment);
+    shader_fragment_id = glCreateShader(GL_FRAGMENT_SHADER);
+    {
+        const char *shader_fragment_source = "#version 330 core\nvoid main() {}";
+        glShaderSource(shader_fragment_id, 1, &shader_fragment_source, NULL);
+        glCompileShader(shader_fragment_id);
+        GLint compile_status = 0;
+        glGetShaderiv(shader_fragment_id, GL_COMPILE_STATUS, &compile_status);
+        if (compile_status != GL_TRUE) {
+            GLint log_length = 0;
+            glGetShaderiv(shader_fragment_id, GL_INFO_LOG_LENGTH, &log_length);
+            char *log = mm_arena_alloc(&arena, log_length + 1);
+            if (log == NULL) {
+                l_critical("Shader failed to compile. Could not allocate memory to read log (log length = %d).\n", log_length);
+                rc = -1;
+                goto _done;
+            }
+            glGetShaderInfoLog(shader_fragment_id, log_length, NULL, log);
+            log[log_length] = 0;
+            l_critical("Shader failed to compile.\n%s\n", log);
+            rc = -1;
+            goto _done;
+        }
+    }
+
+    program_id = glCreateProgram();
+    {
+        glAttachShader(program_id, shader_vertex_id);
+        glAttachShader(program_id, shader_fragment_id);
+        glLinkProgram(program_id);
+        GLint link_status = 0;
+        glGetProgramiv(program_id, GL_LINK_STATUS, &link_status);
+        if (link_status != GL_TRUE) {
+            GLint log_length = 0;
+            glGetShaderiv(program_id, GL_INFO_LOG_LENGTH, &log_length);
+            char *log = mm_arena_alloc(&arena, log_length + 1);
+            if (log == NULL) {
+                l_critical("Program failed to link. Could not allocate memory to read log (log length = %d).\n", log_length);
+                rc = -1;
+                goto _done;
+            }
+            glGetShaderInfoLog(program_id, log_length, NULL, log);
+            log[log_length] = 0;
+            l_critical("Program failed to link.\n%s\n", log);
+            rc = -1;
+            goto _done;
+        }
+    }
+    glUseProgram(program_id);
 
     // TODO:
     // - create gl program
@@ -112,6 +179,15 @@ int main(int argc, char *argv[]) {
 
     // We're done
 _done:
+    if (program_id != 0) {
+        glDeleteProgram(program_id);
+    }
+    if (shader_vertex_id != 0) {
+        glDeleteShader(shader_vertex_id);
+    }
+    if (shader_fragment_id != 0) {
+        glDeleteShader(shader_fragment_id);
+    }
     mm_arena_destroy(&arena);
     if (sdl_window != NULL) {
         SDL_DestroyWindow(sdl_window);

@@ -1,5 +1,32 @@
 #!/bin/bash
 
+#
+# ARGS
+#
+arg_clean=1
+arg_debug=1
+arg_build=1
+arg_run=1
+for arg in "$@"; do
+    case "$arg" in
+        clean) arg_clean=0 ;;
+        debug) arg_debug=0 ;;
+        build) arg_build=0 ;;
+        run) arg_run=0 ;;
+    esac
+done
+
+# DEFAULTS (build run)
+if [[ "$arg_clean$arg_build$arg_run" == "111" ]]; then
+    arg_clean=1
+    arg_build=0
+    arg_run=0
+fi
+
+
+#
+# VARS
+#
 TARGET_PATH=build/bin
 TARGET=$TARGET_PATH/main.exe
 OBJ_PATH=build/obj
@@ -16,10 +43,19 @@ LINK_FLAGS_ARR=(
     "-lglew32"
     "-lglu32"
     "-lopengl32"
-    "-Xlinker /SUBSYSTEM:WINDOWS" # Remove this if you want to see stdout / stderr on console
 )
+# Use 'debug' option to see stdout/stderr
+if [ $arg_debug -eq 0 ]; then
+    LINK_FLAGS_ARR+=("-Xlinker /SUBSYSTEM:CONSOLE")
+else
+    LINK_FLAGS_ARR+=("-Xlinker /SUBSYSTEM:WINDOWS")
+fi
 LINK_FLAGS="${LINK_FLAGS_ARR[*]}"
 
+
+#
+# UTILS
+#
 run() {
     echo "$@"
     $@
@@ -74,27 +110,6 @@ static() {
     [ -e "$target_file" ] || run cp $file $target_file
 }
 
-
-#
-# ARGS
-#
-arg_clean=1
-arg_build=1
-arg_run=1
-for arg in "$@"; do
-    case "$arg" in
-        clean) arg_clean=0 ;;
-        build) arg_build=0 ;;
-        run) arg_run=0 ;;
-    esac
-done
-
-# DEFAULTS (build run)
-if [[ "$arg_clean$arg_build$arg_run" == "111" ]]; then
-    arg_clean=1
-    arg_build=0
-    arg_run=0
-fi
 
 #
 # CLEAN
