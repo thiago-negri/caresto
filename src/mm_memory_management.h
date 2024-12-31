@@ -14,6 +14,8 @@ mm_arena mm_arena_create(size_t size);
 void *mm_arena_alloc(mm_arena *a, size_t size);
 void mm_arena_reset(mm_arena *a);
 void mm_arena_destroy(mm_arena *a);
+size_t mm_arena_save_offset(mm_arena *a);
+void mm_arena_restore_offset(mm_arena *a, size_t offset);
 
 #endif
 

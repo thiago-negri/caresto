@@ -1,7 +1,8 @@
 /build
 /include
 /lib
-/tmp-dependencies
-/licenses/README-SDL.txt
 /licenses/LICENSE-glew.txt
+/licenses/README-SDL.txt
+/src-gen
+/tmp-dependencies
 

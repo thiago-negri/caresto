@@ -1,4 +1,5 @@
 #include <stdlib.h>
+
 #include <mm_memory_management.h>
 
 //
@@ -17,7 +18,6 @@ void mm_free(void *ptr) {
 //
 // ARENA
 //
-
 mm_arena mm_arena_create(size_t size) {
     unsigned char *buffer = (unsigned char *) mm_alloc(size);
     if (buffer == NULL) {
@@ -52,3 +52,12 @@ void mm_arena_destroy(mm_arena *a) {
     a->size = 0;
     a->buffer = NULL;
 }
+
+size_t mm_arena_save_offset(mm_arena *a) {
+    return a->offset;
+}
+
+void mm_arena_restore_offset(mm_arena *a, size_t offset) {
+    a->offset = offset;
+}
+
