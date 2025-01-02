@@ -149,6 +149,7 @@ int main(int argc, char *argv[]) {
     // Main event loop
     bool running = true;
     SDL_Event sdl_event = {0};
+    Uint64 last_tick = SDL_GetTicks();
     while (running) {
         // Handle input
         while (SDL_PollEvent(&sdl_event)) {
@@ -164,11 +165,29 @@ int main(int argc, char *argv[]) {
             }
         }
 
+        Uint64 current_tick = SDL_GetTicks();
+        Uint64 delta_time = current_tick - last_tick;
+        last_tick = current_tick;
+
+        // Clear screen
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
         // Use our shader program
         glUseProgram(program.program_id);
 
         // Bind the VAO to render
         glBindVertexArray(vertex_array_id);
+
+        // Bind the VBO to the VAO
+        glBindBuffer(GL_ARRAY_BUFFER, buffer_id);
+
+        // Populate the VBO
+        vertices[4] += delta_time / 5000.0f;
+        if (vertices[4] > 0.8f) {
+            vertices[4] = -0.8f;
+        }
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
 
         // Render points using the program
         glDrawArrays(GL_POINTS, 0, object_count);
