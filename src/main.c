@@ -34,6 +34,26 @@ int main(int argc, char *argv[]) {
     unsigned char *buffer = NULL;
     GLuint program_id = 0;
 
+    // App Metadata
+    SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING,
+                               "Caresto");
+    SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_VERSION_STRING,
+                               "0.0.1-dev");
+    SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_IDENTIFIER_STRING,
+                               "com.riverstonegames.caresto");
+    SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_CREATOR_STRING,
+                               "River Stone Games");
+    SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_COPYRIGHT_STRING,
+                               "Copyright (c) River Stone Games LTDA ME");
+    SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_TYPE_STRING,
+                               "game");
+    SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_URL_STRING,
+                               "TODO: steam_url");
+
+    // Log level: DEBUG -- TODO: Change for release
+    SDL_SetLogPriorities(SDL_LOG_PRIORITY_DEBUG);
+
+    // Allocate persistent storage
     buffer = (unsigned char *) mm_alloc(MB_10);
     if (buffer == NULL) {
         l_critical("OOM: Could not create arena.");
@@ -87,6 +107,7 @@ int main(int argc, char *argv[]) {
     // TODO:
     // - create gl program
     // - create gl vertex shader
+    // - create gl geometry shader
     // - create gl fragment shader
     // - create gl vbo
     // - remember to add gl cleanup code

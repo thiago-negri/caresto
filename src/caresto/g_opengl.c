@@ -5,6 +5,7 @@
 #include <caresto/mm_memory_management.h>
 
 #include <gen/glsl_fragment.h>
+#include <gen/glsl_geometry.h>
 #include <gen/glsl_vertex.h>
 
 static const char *g_opengl_shader_type_name(GLenum type) {
@@ -13,6 +14,8 @@ static const char *g_opengl_shader_type_name(GLenum type) {
             return "vertex";
         case GL_FRAGMENT_SHADER:
             return "fragment";
+        case GL_GEOMETRY_SHADER:
+            return "geometry";
     }
     return "unknown";
 }
@@ -54,6 +57,7 @@ static int g_opengl_shader_create(GLenum type, const GLchar *source, struct mm_a
         rc = -1;
         goto _err;
     }
+    l_debug("GL: Compiled %s shader.\n", g_opengl_shader_type_name(type));
 
     *out_shader_id = shader_id;
     goto _done;
@@ -71,9 +75,15 @@ int g_opengl_program_create(struct mm_arena *arena, GLuint *out_program_id) {
     int rc = 0;
     GLuint program_id = 0;
     GLuint shader_vertex_id = 0;
+    GLuint shader_geometry_id = 0;
     GLuint shader_fragment_id = 0;
 
     rc = g_opengl_shader_create(GL_VERTEX_SHADER, glsl_vertex_source, arena, &shader_vertex_id);
+    if (rc != 0) {
+        goto _err;
+    }
+
+    rc = g_opengl_shader_create(GL_GEOMETRY_SHADER, glsl_geometry_source, arena, &shader_geometry_id);
     if (rc != 0) {
         goto _err;
     }
@@ -86,6 +96,7 @@ int g_opengl_program_create(struct mm_arena *arena, GLuint *out_program_id) {
     program_id = glCreateProgram();
 
     glAttachShader(program_id, shader_vertex_id);
+    glAttachShader(program_id, shader_geometry_id);
     glAttachShader(program_id, shader_fragment_id);
 
     glLinkProgram(program_id);
@@ -96,7 +107,7 @@ int g_opengl_program_create(struct mm_arena *arena, GLuint *out_program_id) {
         l_critical("GL: Failed to link program.\n");
         GLint log_length = 0;
         // log_length includes the null terminator
-        glGetShaderiv(program_id, GL_INFO_LOG_LENGTH, &log_length);
+        glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &log_length);
         size_t offset = mm_arena_save_offset(arena);
         char *log = mm_arena_alloc(arena, log_length);
         if (log == NULL) {
@@ -112,9 +123,11 @@ int g_opengl_program_create(struct mm_arena *arena, GLuint *out_program_id) {
     }
 
     glDetachShader(program_id, shader_vertex_id);
+    glDetachShader(program_id, shader_geometry_id);
     glDetachShader(program_id, shader_fragment_id);
 
     glDeleteShader(shader_vertex_id);
+    glDeleteShader(shader_geometry_id);
     glDeleteShader(shader_fragment_id);
 
     glUseProgram(program_id);
@@ -125,6 +138,9 @@ int g_opengl_program_create(struct mm_arena *arena, GLuint *out_program_id) {
 _err:
     if (shader_vertex_id != 0) {
         glDeleteShader(shader_vertex_id);
+    }
+    if (shader_geometry_id != 0) {
+        glDeleteShader(shader_geometry_id);
     }
     if (shader_fragment_id != 0) {
         glDeleteShader(shader_fragment_id);

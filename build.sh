@@ -107,6 +107,11 @@ need_link() {
             return 0
         fi
     done
+    for obj_file in ./$OBJ_CARESTO_PATH/*.o; do
+        if [[ "$TARGET" -ot "$obj_file" ]]; then
+            return 0
+        fi
+    done
     return 1
 }
 
