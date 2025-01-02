@@ -125,15 +125,22 @@ int main(int argc, char *argv[]) {
 
     // Populate the VBO
     GLsizei object_count = 2;
+    GLsizei object_size = 4 * sizeof(GLfloat);
     GLfloat vertices[] = {
-        0.5f, 0.5f, // Object 1
-        0.0f, 0.0f, // Object 2
+        0.5f, 0.5f, // a.pos
+        0.1f, 0.1f, // a.size
+        0.0f, 0.0f, // b.pos
+        0.3f, 0.3f, // b.size
     };
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     // Set program pointer (layout = 0) to the VBO in the VAO
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, object_size, 0);
     glEnableVertexAttribArray(0);
+
+    // Set program pointer (layout = 1) to the VBO in the VAO
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, object_size, (void *)(2 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
 
     // TODO:
     // - texture
