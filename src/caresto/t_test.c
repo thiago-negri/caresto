@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include <t_test.h>
+#include <caresto/t_test.h>
 
 bool t_assert(const char *test_name, const char *message, bool assertion) {
     if (!assertion) {

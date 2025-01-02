@@ -31,7 +31,9 @@ BUILD_PATH=build
 TARGET_PATH=$BUILD_PATH/bin
 TARGET=$TARGET_PATH/main.exe
 OBJ_PATH=$BUILD_PATH/obj
+OBJ_CARESTO_PATH=$BUILD_PATH/obj/caresto
 SRC_PATH=src
+SRC_CARESTO_PATH=src/caresto
 GLSL_PATH=glsl
 GEN_PATH=src-gen
 INCLUDE_PATH=include
@@ -69,8 +71,9 @@ extract_headers() {
 
 need_compile() {
     local source_file=$1
+    local local_obj_path=$2
     local module=$(basename $source_file .c)
-    local obj_file=$OBJ_PATH/$module.o
+    local obj_file=$local_obj_path/$module.o
 
     if [ ! -e "$obj_file" ]; then
         return 0
@@ -87,7 +90,7 @@ need_compile() {
         if [[ -e "$GEN_PATH/$header_file" && "$obj_file" -ot "$GEN_PATH/$header_file" ]]; then
             return 0
         fi
-        if [[ -e "include/$header_file" && "$obj_file" -ot "include/$header_file" ]]; then
+        if [[ -e "$INCLUDE_PATH/$header_file" && "$obj_file" -ot "$INCLUDE_PATH/$header_file" ]]; then
             return 0
         fi
     done
@@ -126,7 +129,7 @@ static() {
 #
 if [ $arg_build -eq 0 ]; then
     # PREPARE
-    run mkdir -p "$OBJ_PATH" "$TARGET_PATH" "$GEN_PATH/gen"
+    run mkdir -p "$OBJ_PATH" "$OBJ_CARESTO_PATH" "$TARGET_PATH" "$GEN_PATH/gen"
 
     #
     # GENERATE FILES
@@ -147,8 +150,15 @@ if [ $arg_build -eq 0 ]; then
     done
 
     # COMPILE
+    for source_file in ./$SRC_CARESTO_PATH/*.c; do
+        if need_compile "$source_file" "$OBJ_CARESTO_PATH"; then
+            module=$(basename $source_file .c)
+            obj_file=$OBJ_CARESTO_PATH/$module.o
+            run clang -c -o "$obj_file" "$source_file" $COMPILE_FLAGS
+        fi
+    done
     for source_file in ./$SRC_PATH/*.c; do
-        if need_compile "$source_file"; then
+        if need_compile "$source_file" "$OBJ_PATH"; then
             module=$(basename $source_file .c)
             obj_file=$OBJ_PATH/$module.o
             run clang -c -o "$obj_file" "$source_file" $COMPILE_FLAGS
@@ -157,7 +167,7 @@ if [ $arg_build -eq 0 ]; then
 
     # LINK
     if need_link; then
-        run clang -o "$TARGET" "$OBJ_PATH/*.o" $LINK_FLAGS
+        run clang -o "$TARGET" "$OBJ_PATH/*.o" "$OBJ_CARESTO_PATH/*.o" $LINK_FLAGS
     fi
 
     # COPY DLLS AND LICENSES

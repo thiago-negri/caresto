@@ -1,8 +1,8 @@
 #include <stddef.h>
 
-#include <g_opengl.h>
-#include <l_log.h>
-#include <mm_memory_management.h>
+#include <caresto/g_opengl.h>
+#include <caresto/l_log.h>
+#include <caresto/mm_memory_management.h>
 
 #include <gen/glsl_fragment.h>
 #include <gen/glsl_vertex.h>

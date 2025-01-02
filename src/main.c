@@ -7,9 +7,9 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
-#include <g_opengl.h>
-#include <l_log.h>
-#include <mm_memory_management.h>
+#include <caresto/g_opengl.h>
+#include <caresto/l_log.h>
+#include <caresto/mm_memory_management.h>
 
 // Create our game window
 SDL_Window *create_sdl_window() {
@@ -110,6 +110,8 @@ int main(int argc, char *argv[]) {
         }
         SDL_GL_SwapWindow(sdl_window);
     }
+
+    goto _done;
 
 _err:
 _done:
