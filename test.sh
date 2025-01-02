@@ -17,9 +17,10 @@ for source_file in src/*.c; do
 done
 
 echo "int main(void) {" >> $TEST_C
+echo "int done = 0;" >> $TEST_C
 
 for source_file in src/*.c; do
-    grep 'T_TEST' "$source_file" | sed 's/T_TEST(\(.*\)) {/t_\1_();/' >> $TEST_C
+    grep 'T_TEST' "$source_file" | sed 's/T_TEST(\(.*\)) {/done = 0; t_\1_(\&done); if (done != 1) { fprintf(stderr, "missing T_DONE on \1\\n"); }/' >> $TEST_C
 done
 
 echo "return 0; }" >> $TEST_C

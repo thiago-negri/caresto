@@ -9,7 +9,6 @@ struct mm_arena {
     size_t size;
     unsigned char *buffer;
 };
-#define mm_arena_zero ((struct mm_arena){ .offset = 0, .size = 0, .buffer = NULL })
 struct mm_arena mm_arena_create(size_t size, unsigned char *buffer);
 void *mm_arena_alloc(struct mm_arena *a, size_t size);
 void mm_arena_reset(struct mm_arena *a);
