@@ -26,18 +26,22 @@ SDL_Window *create_sdl_window() {
     return sdl_window;
 }
 
+#define MB_10 (10 * 1024 * 1024)
+
 int main(int argc, char *argv[]) {
     int rc = 0;
     SDL_Window *sdl_window = NULL;
-    mm_arena arena = mm_arena_zero;
+    unsigned char *buffer = NULL;
     GLuint program_id = 0;
 
-    arena = mm_arena_create(10 * 1024 * 1024); // 10 MB
-    if (arena.size <= 0) {
+    buffer = (unsigned char *) mm_alloc(MB_10);
+    if (buffer == NULL) {
         l_critical("OOM: Could not create arena.");
         rc = -1;
         goto _err;
     }
+
+    struct mm_arena arena = mm_arena_create(MB_10, buffer);
 
     // Initialize SDL
     Uint32 sdl_flags = SDL_INIT_VIDEO;
@@ -112,7 +116,7 @@ _done:
     if (program_id != 0) {
         glDeleteProgram(program_id);
     }
-    mm_arena_destroy(&arena);
+    mm_free(buffer);
     if (sdl_window != NULL) {
         SDL_DestroyWindow(sdl_window);
     }

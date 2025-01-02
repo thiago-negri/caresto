@@ -17,7 +17,7 @@ static const char *g_opengl_shader_type_name(GLenum type) {
     return "unknown";
 }
 
-static int g_opengl_shader_create(GLenum type, const GLchar *source, mm_arena *arena, GLuint *out_shader_id) {
+static int g_opengl_shader_create(GLenum type, const GLchar *source, struct mm_arena *arena, GLuint *out_shader_id) {
     int rc = 0;
     GLuint shader_id = 0;
 
@@ -67,7 +67,7 @@ _done:
     return rc;
 }
 
-int g_opengl_program_create(mm_arena *arena, GLuint *out_program_id) {
+int g_opengl_program_create(struct mm_arena *arena, GLuint *out_program_id) {
     int rc = 0;
     GLuint program_id = 0;
     GLuint shader_vertex_id = 0;
