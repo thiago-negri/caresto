@@ -10,29 +10,32 @@
 
 static const char *g_shader_type_name(GLenum type) {
     switch (type) {
-        case GL_VERTEX_SHADER:
-            return "vertex";
-        case GL_FRAGMENT_SHADER:
-            return "fragment";
-        case GL_GEOMETRY_SHADER:
-            return "geometry";
+    case GL_VERTEX_SHADER:
+        return "vertex";
+    case GL_FRAGMENT_SHADER:
+        return "fragment";
+    case GL_GEOMETRY_SHADER:
+        return "geometry";
     }
     return "unknown";
 }
 
-static int g_shader_create(GLenum type, const GLchar *source, struct mm_arena *arena, GLuint *out_shader_id) {
+static int g_shader_create(GLenum type, const GLchar *source,
+                           struct mm_arena *arena, GLuint *out_shader_id) {
     int rc = 0;
     GLuint shader_id = 0;
 
     shader_id = glCreateShader(type);
     if (shader_id == 0) {
-        l_critical("Failed to create shader (type = %s).\n", g_shader_type_name(type));
+        l_critical("Failed to create shader (type = %s).\n",
+                   g_shader_type_name(type));
         rc = -1;
         goto _err;
     }
 
     GLsizei count = 1;
-    GLint *length = NULL; // If length is NULL, each string is assumed to be null terminated.
+    GLint *length = NULL; // If length is NULL, each string is assumed to be
+                          // null terminated.
     glShaderSource(shader_id, count, &source, length);
 
     glCompileShader(shader_id);
@@ -40,14 +43,17 @@ static int g_shader_create(GLenum type, const GLchar *source, struct mm_arena *a
     GLint compile_status = 0;
     glGetShaderiv(shader_id, GL_COMPILE_STATUS, &compile_status);
     if (compile_status != GL_TRUE) {
-        l_critical("GL: Failed to compile shader (type = %s).\n", g_shader_type_name(type));
+        l_critical("GL: Failed to compile shader (type = %s).\n",
+                   g_shader_type_name(type));
         GLint log_length = 0;
         // log_length includes the null terminator
         glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &log_length);
         size_t offset = mm_arena_save_offset(arena);
         char *log = mm_arena_alloc(arena, log_length);
         if (log == NULL) {
-            l_critical("GL: Could not allocate memory to read log (length = %d).\n", log_length);
+            l_critical(
+                "GL: Could not allocate memory to read log (length = %d).\n",
+                log_length);
         } else {
             glGetShaderInfoLog(shader_id, log_length, NULL, log);
             log[log_length] = 0;
@@ -78,17 +84,20 @@ int g_program_create(struct mm_arena *arena, struct g_program *out_program) {
     GLuint shader_geometry_id = 0;
     GLuint shader_fragment_id = 0;
 
-    rc = g_shader_create(GL_VERTEX_SHADER, glsl_vertex_source, arena, &shader_vertex_id);
+    rc = g_shader_create(GL_VERTEX_SHADER, glsl_vertex_source, arena,
+                         &shader_vertex_id);
     if (rc != 0) {
         goto _err;
     }
 
-    rc = g_shader_create(GL_GEOMETRY_SHADER, glsl_geometry_source, arena, &shader_geometry_id);
+    rc = g_shader_create(GL_GEOMETRY_SHADER, glsl_geometry_source, arena,
+                         &shader_geometry_id);
     if (rc != 0) {
         goto _err;
     }
 
-    rc = g_shader_create(GL_FRAGMENT_SHADER, glsl_fragment_source, arena, &shader_fragment_id);
+    rc = g_shader_create(GL_FRAGMENT_SHADER, glsl_fragment_source, arena,
+                         &shader_fragment_id);
     if (rc != 0) {
         goto _err;
     }
@@ -111,7 +120,9 @@ int g_program_create(struct mm_arena *arena, struct g_program *out_program) {
         size_t offset = mm_arena_save_offset(arena);
         char *log = mm_arena_alloc(arena, log_length);
         if (log == NULL) {
-            l_critical("GL: Could not allocate memory to read log (length = %d).\n", log_length);
+            l_critical(
+                "GL: Could not allocate memory to read log (length = %d).\n",
+                log_length);
         } else {
             glGetProgramInfoLog(program_id, log_length, NULL, log);
             log[log_length] = 0;
@@ -135,7 +146,6 @@ int g_program_create(struct mm_arena *arena, struct g_program *out_program) {
     glDeleteShader(shader_fragment_id);
     shader_fragment_id = 0;
 
-
     out_program->program_id = program_id;
     goto _done;
 
@@ -156,4 +166,3 @@ _err:
 _done:
     return rc;
 }
-

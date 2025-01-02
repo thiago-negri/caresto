@@ -9,6 +9,4 @@ bool t_assert(const char *test_name, const char *message, bool assertion) {
     return assertion;
 }
 
-void t_done(const char *test_name) {
-    fprintf(stderr, "OK: %s\n", test_name);
-}
+void t_done(const char *test_name) { fprintf(stderr, "OK: %s\n", test_name); }

@@ -15,10 +15,10 @@
 SDL_Window *create_sdl_window() {
     const char *title = "Hello";
 
-    // 640x360 is the perfect res for pixel art games because it scales evenly to all
-    // target resolutions.  We need to start the window at user's native res though.
-    // We use a 640x360 to paint the game, then scale it to native res.  GUI should
-    // be painted on the native res surface.
+    // 640x360 is the perfect res for pixel art games because it scales evenly
+    // to all target resolutions.  We need to start the window at user's native
+    // res though.  We use a 640x360 to paint the game, then scale it to native
+    // res.  GUI should be painted on the native res surface.
     int width = 640;
     int height = 360;
     Uint32 flags = SDL_WINDOW_OPENGL;
@@ -37,8 +37,7 @@ int main(int argc, char *argv[]) {
     GLuint buffer_id = 0;
 
     // App Metadata
-    SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING,
-                               "Caresto");
+    SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING, "Caresto");
     SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_VERSION_STRING,
                                "0.0.1-dev");
     SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_IDENTIFIER_STRING,
@@ -47,8 +46,7 @@ int main(int argc, char *argv[]) {
                                "River Stone Games");
     SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_COPYRIGHT_STRING,
                                "Copyright (c) River Stone Games LTDA ME");
-    SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_TYPE_STRING,
-                               "game");
+    SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_TYPE_STRING, "game");
     SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_URL_STRING,
                                "TODO: steam_url");
 
@@ -56,7 +54,7 @@ int main(int argc, char *argv[]) {
     SDL_SetLogPriorities(SDL_LOG_PRIORITY_DEBUG);
 
     // Allocate persistent storage
-    buffer = (unsigned char *) mm_alloc(MB_10);
+    buffer = (unsigned char *)mm_alloc(MB_10);
     if (buffer == NULL) {
         l_critical("OOM: Could not create arena.");
         rc = -1;
@@ -139,7 +137,8 @@ int main(int argc, char *argv[]) {
     glEnableVertexAttribArray(0);
 
     // Set program pointer (layout = 1) to the VBO in the VAO
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, object_size, (void *)(2 * sizeof(GLfloat)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, object_size,
+                          (void *)(2 * sizeof(GLfloat)));
     glEnableVertexAttribArray(1);
 
     // TODO:
@@ -154,14 +153,14 @@ int main(int argc, char *argv[]) {
         // Handle input
         while (SDL_PollEvent(&sdl_event)) {
             switch (sdl_event.type) {
-                case SDL_EVENT_QUIT:
+            case SDL_EVENT_QUIT:
+                running = false;
+                break;
+            case SDL_EVENT_KEY_DOWN:
+                if (sdl_event.key.key == SDLK_Q) {
                     running = false;
-                    break;
-                case SDL_EVENT_KEY_DOWN:
-                    if (sdl_event.key.key == SDLK_Q) {
-                        running = false;
-                    }
-                    break;
+                }
+                break;
             }
         }
 
@@ -220,4 +219,3 @@ _done:
     SDL_Quit();
     return rc;
 }
-

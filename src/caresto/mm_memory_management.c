@@ -11,10 +11,7 @@ void *mm_alloc(size_t size) {
     return ptr;
 }
 
-void mm_free(void *ptr) {
-    free(ptr);
-}
-
+void mm_free(void *ptr) { free(ptr); }
 
 //
 // ARENA
@@ -37,9 +34,7 @@ void *mm_arena_alloc(struct mm_arena *a, size_t size) {
     return ptr;
 }
 
-void mm_arena_reset(struct mm_arena *a) {
-    a->offset = 0;
-}
+void mm_arena_reset(struct mm_arena *a) { a->offset = 0; }
 
 void mm_arena_destroy(struct mm_arena *a) {
     a->offset = 0;
@@ -47,9 +42,7 @@ void mm_arena_destroy(struct mm_arena *a) {
     a->buffer = NULL;
 }
 
-size_t mm_arena_save_offset(struct mm_arena *a) {
-    return a->offset;
-}
+size_t mm_arena_save_offset(struct mm_arena *a) { return a->offset; }
 
 void mm_arena_restore_offset(struct mm_arena *a, size_t offset) {
     a->offset = offset;
@@ -63,26 +56,26 @@ T_TEST(arena) {
     T_ASSERT(arena.size == 10);
     T_ASSERT(arena.buffer == buffer);
 
-    int *first_int = (int *) mm_arena_alloc(&arena, 4);
+    int *first_int = (int *)mm_arena_alloc(&arena, 4);
     T_ASSERT(first_int != NULL);
     T_ASSERT(arena.offset == 4);
 
     size_t offset = mm_arena_save_offset(&arena);
     T_ASSERT(offset == 4);
 
-    int *second_int = (int *) mm_arena_alloc(&arena, 4);
+    int *second_int = (int *)mm_arena_alloc(&arena, 4);
     T_ASSERT(second_int != NULL);
     T_ASSERT(arena.offset == 8);
 
     // OOM
-    int *third_int = (int *) mm_arena_alloc(&arena, 4);
+    int *third_int = (int *)mm_arena_alloc(&arena, 4);
     T_ASSERT(third_int == NULL);
     T_ASSERT(arena.offset == 8);
 
     mm_arena_restore_offset(&arena, offset);
     T_ASSERT(arena.offset == 4);
 
-    int *fourth_int = (int *) mm_arena_alloc(&arena, 4);
+    int *fourth_int = (int *)mm_arena_alloc(&arena, 4);
     T_ASSERT(second_int != NULL);
     T_ASSERT(arena.offset == 8);
 
@@ -97,4 +90,3 @@ T_TEST(arena) {
 
     T_DONE;
 }
-
