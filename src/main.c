@@ -7,7 +7,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
-#include <caresto/g_opengl.h>
+#include <caresto/g_graphics.h>
 #include <caresto/l_log.h>
 #include <caresto/mm_memory_management.h>
 
@@ -33,6 +33,8 @@ int main(int argc, char *argv[]) {
     SDL_Window *sdl_window = NULL;
     unsigned char *buffer = NULL;
     GLuint program_id = 0;
+    GLuint vertex_array_id = 0;
+    GLuint buffer_id = 0;
 
     // App Metadata
     SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING,
@@ -81,6 +83,10 @@ int main(int argc, char *argv[]) {
         goto _err;
     }
 
+    // Set OpenGL version to at least 3.2
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+
     // Create a OpenGL Context
     SDL_GLContext sdl_gl_context = SDL_GL_CreateContext(sdl_window);
     if (sdl_gl_context == NULL) {
@@ -99,24 +105,45 @@ int main(int argc, char *argv[]) {
         goto _err;
     }
 
-    rc = g_opengl_program_create(&arena, &program_id);
+    struct g_program program = {0};
+    rc = g_program_create(&arena, &program);
     if (rc != 0) {
         goto _err;
     }
 
+    // Generate a VAO
+    glGenVertexArrays(1, &vertex_array_id);
+
+    // Generate a VBO
+    glGenBuffers(1, &buffer_id);
+
+    // Bind the VAO
+    glBindVertexArray(vertex_array_id);
+
+    // Bind the VBO to the VAO
+    glBindBuffer(GL_ARRAY_BUFFER, buffer_id);
+
+    // Populate the VBO
+    GLsizei object_count = 2;
+    GLfloat vertices[] = {
+        0.5f, 0.5f, // Object 1
+        0.0f, 0.0f, // Object 2
+    };
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    // Set program pointer (layout = 0) to the VBO in the VAO
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
+    glEnableVertexAttribArray(0);
+
     // TODO:
-    // - create gl program
-    // - create gl vertex shader
-    // - create gl geometry shader
-    // - create gl fragment shader
-    // - create gl vbo
-    // - remember to add gl cleanup code
-    // - draw something to screen
+    // - texture
+    // - camera
 
     // Main event loop
     bool running = true;
     SDL_Event sdl_event = {0};
     while (running) {
+        // Handle input
         while (SDL_PollEvent(&sdl_event)) {
             switch (sdl_event.type) {
                 case SDL_EVENT_QUIT:
@@ -129,6 +156,21 @@ int main(int argc, char *argv[]) {
                     break;
             }
         }
+
+        // Use our shader program
+        glUseProgram(program.program_id);
+
+        // Bind the VAO to render
+        glBindVertexArray(vertex_array_id);
+
+        // Render points using the program
+        glDrawArrays(GL_POINTS, 0, object_count);
+
+        // Reset context (not really required)
+        glBindVertexArray(0);
+        glUseProgram(0);
+
+        // Swap buffers
         SDL_GL_SwapWindow(sdl_window);
     }
 
@@ -136,6 +178,12 @@ int main(int argc, char *argv[]) {
 
 _err:
 _done:
+    if (buffer_id != 0) {
+        glDeleteBuffers(1, &buffer_id);
+    }
+    if (vertex_array_id != 0) {
+        glDeleteVertexArrays(1, &vertex_array_id);
+    }
     if (program_id != 0) {
         glDeleteProgram(program_id);
     }
