@@ -1,5 +1,5 @@
-#ifndef _T_TEST_H
-#define _T_TEST_H
+#ifndef T_TEST_H
+#define T_TEST_H
 
 #include <stdbool.h>
 
@@ -26,4 +26,4 @@
 bool t_assert(const char *test_name, const char *message, bool assertion);
 void t_done(const char *test_name);
 
-#endif // _T_TEST_H
+#endif // T_TEST_H

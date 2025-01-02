@@ -1,5 +1,5 @@
-#ifndef _L_LOG_H
-#define _L_LOG_H
+#ifndef L_LOG_H
+#define L_LOG_H
 
 #include <SDL3/SDL.h>
 
@@ -12,4 +12,4 @@
 #define l_critical(fmt, ...)                                                   \
     SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, fmt, __VA_ARGS__)
 
-#endif
+#endif // L_LOG_H

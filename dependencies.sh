@@ -56,6 +56,13 @@ cp khrplatform.h ../include/KHR/khrplatform.h
 
 
 #
+# STBI_IMAGE
+#
+wget https://raw.githubusercontent.com/nothings/stb/refs/heads/master/stb_image.h
+cp stb_image.h ../include/stb_image.h
+
+
+#
 # DONE
 #
 cd ..

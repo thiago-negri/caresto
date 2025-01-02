@@ -32,9 +32,7 @@ int main(int argc, char *argv[]) {
     int rc = 0;
     SDL_Window *sdl_window = NULL;
     unsigned char *buffer = NULL;
-    GLuint program_id = 0;
-    GLuint vertex_array_id = 0;
-    GLuint buffer_id = 0;
+    struct g_program program = {0};
 
     // App Metadata
     SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING, "Caresto");
@@ -103,43 +101,16 @@ int main(int argc, char *argv[]) {
         goto _err;
     }
 
-    struct g_program program = {0};
     rc = g_program_create(&arena, &program);
     if (rc != 0) {
         goto _err;
     }
 
-    // Generate a VAO
-    glGenVertexArrays(1, &vertex_array_id);
-
-    // Generate a VBO
-    glGenBuffers(1, &buffer_id);
-
-    // Bind the VAO
-    glBindVertexArray(vertex_array_id);
-
-    // Bind the VBO to the VAO
-    glBindBuffer(GL_ARRAY_BUFFER, buffer_id);
-
-    // Populate the VBO
     GLsizei object_count = 2;
-    GLsizei object_size = 4 * sizeof(GLfloat);
-    GLfloat vertices[] = {
-        0.5f, 0.5f, // a.pos
-        0.1f, 0.1f, // a.size
-        0.0f, 0.0f, // b.pos
-        0.3f, 0.3f, // b.size
+    struct g_sprite sprites[] = {
+        { .x = 0.5f, .y = 0.5f, .w = 0.1f, .h = 0.1f },
+        { .x = 0.0f, .y = 0.0f, .w = 0.3f, .h = 0.3f },
     };
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    // Set program pointer (layout = 0) to the VBO in the VAO
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, object_size, 0);
-    glEnableVertexAttribArray(0);
-
-    // Set program pointer (layout = 1) to the VBO in the VAO
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, object_size,
-                          (void *)(2 * sizeof(GLfloat)));
-    glEnableVertexAttribArray(1);
 
     // TODO:
     // - texture
@@ -168,27 +139,22 @@ int main(int argc, char *argv[]) {
         Uint64 delta_time = current_tick - last_tick;
         last_tick = current_tick;
 
+        // Update the VBO
+        glBindBuffer(GL_ARRAY_BUFFER, program.buffer_id);
+        sprites[0].x += delta_time / 5000.0f;
+        if (sprites[0].x > 0.8f) {
+            sprites[0].x = -0.8f;
+        }
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(sprites), sprites);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+
         // Clear screen
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // Use our shader program
+        // Render the VAO
         glUseProgram(program.program_id);
-
-        // Bind the VAO to render
-        glBindVertexArray(vertex_array_id);
-
-        // Bind the VBO to the VAO
-        glBindBuffer(GL_ARRAY_BUFFER, buffer_id);
-
-        // Populate the VBO
-        vertices[4] += delta_time / 5000.0f;
-        if (vertices[4] > 0.8f) {
-            vertices[4] = -0.8f;
-        }
-        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
-
-        // Render points using the program
+        glBindVertexArray(program.vertex_array_id);
         glDrawArrays(GL_POINTS, 0, object_count);
 
         // Reset context (not really required)
@@ -203,15 +169,7 @@ int main(int argc, char *argv[]) {
 
 _err:
 _done:
-    if (buffer_id != 0) {
-        glDeleteBuffers(1, &buffer_id);
-    }
-    if (vertex_array_id != 0) {
-        glDeleteVertexArrays(1, &vertex_array_id);
-    }
-    if (program_id != 0) {
-        glDeleteProgram(program_id);
-    }
+    g_program_destroy(&program);
     mm_free(buffer);
     if (sdl_window != NULL) {
         SDL_DestroyWindow(sdl_window);
