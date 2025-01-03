@@ -140,8 +140,8 @@ int main(int argc, char *argv[]) {
     };
 
     // TODO:
-    // - texture
-    // - camera
+    // - Sprite atlas generator
+    // - Render function for sprites
 
     // Main event loop
     bool running = true;
