@@ -59,7 +59,7 @@ if [ $arg_release -eq 0 ]; then
     BUILD_TYPE_FLAGS="-O3"
 else
     LINK_FLAGS_ARR+=("-Xlinker /SUBSYSTEM:CONSOLE")
-    BUILD_TYPE_FLAGS="-fsanitize=address -g"
+    BUILD_TYPE_FLAGS="-fsanitize=address -g -DDEBUG"
 fi
 LINK_FLAGS="${LINK_FLAGS_ARR[*]}"
 

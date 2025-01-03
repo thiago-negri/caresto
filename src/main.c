@@ -45,8 +45,9 @@ int main(int argc, char *argv[]) {
     SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_URL_STRING,
                                "TODO: steam_url");
 
-    // Log level: DEBUG -- TODO: Change for release
+#ifdef DEBUG
     SDL_SetLogPriorities(SDL_LOG_PRIORITY_DEBUG);
+#endif
 
     // Allocate persistent storage
     buffer = (unsigned char *)mm_alloc(MB_10);
