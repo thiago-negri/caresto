@@ -8,4 +8,7 @@ uniform sampler2D g_sprite_atlas;
 
 void main() {
     FragColor = texelFetch(g_sprite_atlas, ivec2(f_texture), 0);
+    if (FragColor.a == 0.0f) {
+        discard;
+    }
 }
