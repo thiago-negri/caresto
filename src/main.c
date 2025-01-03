@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,6 +11,8 @@
 #include <caresto/g_graphics.h>
 #include <caresto/l_log.h>
 #include <caresto/mm_memory_management.h>
+
+#define SPRITE_MAX 1024
 
 // Create our game window
 SDL_Window *create_sdl_window() {
@@ -30,6 +33,7 @@ int main(int argc, char *argv[]) {
     struct g_program program = {0};
     struct g_texture texture = {0};
     SDL_GLContext sdl_gl_context = NULL;
+    struct g_sprite_buffer sprite_buffer = {0};
 
     // App Metadata
     SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING, "Caresto");
@@ -120,6 +124,8 @@ int main(int argc, char *argv[]) {
         goto _err;
     }
 
+    g_sprite_buffer_create(SPRITE_MAX, &sprite_buffer);
+
     // Set orthographic projection camera
     // 640x360 is the perfect res for pixel art games because it scales evenly
     // to all target resolutions.  We need to start the window at user's native
@@ -135,7 +141,7 @@ int main(int argc, char *argv[]) {
         goto _err;
     }
 
-    GLsizei object_count = 1;
+    size_t sprite_count = 1;
     struct g_sprite sprites[] = {
         {.x = 0.0f, .y = 0.0f, .w = 16, .h = 16, .u = 0, .v = 0},
     };
@@ -159,24 +165,14 @@ int main(int argc, char *argv[]) {
         if (sprites[0].x > 100.0f) {
             sprites[0].x = 0.0f;
         }
-        glBindBuffer(GL_ARRAY_BUFFER, program.buffer_id);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(sprites), sprites);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        g_sprite_buffer_data(&sprite_buffer, sprite_count, sprites);
 
         // Clear screen
         glClearColor(0.3f, 0.1f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // Render the VAO
-        glUseProgram(program.program_id);
-        glBindTexture(GL_TEXTURE_2D, texture.id);
-        glBindVertexArray(program.vertex_array_id);
-        glUniformMatrix4fv(program.g_transform_mat_id, 1, GL_FALSE,
-                           ortho.values);
-        glDrawArrays(GL_POINTS, 0, object_count);
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glBindVertexArray(0);
-        glUseProgram(0);
+        g_program_render(&program, &ortho, &texture, sprite_count,
+                         &sprite_buffer);
 
         // Swap buffers
         SDL_GL_SwapWindow(sdl_window);
@@ -200,6 +196,7 @@ int main(int argc, char *argv[]) {
 
 _err:
 _done:
+    g_sprite_buffer_destroy(&sprite_buffer);
     g_program_destroy(&program);
     g_texture_destroy(&texture);
     if (sdl_gl_context != NULL) {

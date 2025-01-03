@@ -148,8 +148,6 @@ int g_program_create(struct mm_arena *arena, struct g_program *out_program) {
     GLuint shader_vertex_id = 0;
     GLuint shader_geometry_id = 0;
     GLuint shader_fragment_id = 0;
-    GLuint buffer_id = 0;
-    GLuint vertex_array_id = 0;
 
     rc = g_shader_create(GL_VERTEX_SHADER, glsl_vertex_source, arena,
                          &shader_vertex_id);
@@ -213,28 +211,6 @@ int g_program_create(struct mm_arena *arena, struct g_program *out_program) {
     glDeleteShader(shader_fragment_id);
     shader_fragment_id = 0;
 
-    // Generate the VBO to be used
-    glGenBuffers(1, &buffer_id);
-    glBindBuffer(GL_ARRAY_BUFFER, buffer_id);
-    glBufferData(GL_ARRAY_BUFFER, G_SPRITE_MAX * G_SPRITE_SIZE, NULL,
-                 GL_DYNAMIC_DRAW);
-
-    // Generate the VAO to be used
-    glGenVertexArrays(1, &vertex_array_id);
-    glBindVertexArray(vertex_array_id);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, G_SPRITE_SIZE,
-                          (void *)offsetof(struct g_sprite, x));
-    glEnableVertexAttribArray(0);
-    glVertexAttribIPointer(1, 2, GL_INT, G_SPRITE_SIZE,
-                           (void *)offsetof(struct g_sprite, w));
-    glEnableVertexAttribArray(1);
-    glVertexAttribIPointer(2, 2, GL_INT, G_SPRITE_SIZE,
-                           (void *)offsetof(struct g_sprite, u));
-    glEnableVertexAttribArray(2);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-
     GLint g_transform_mat_id =
         glGetUniformLocation(program_id, "g_transform_mat");
     if (g_transform_mat_id == -1) {
@@ -244,18 +220,10 @@ int g_program_create(struct mm_arena *arena, struct g_program *out_program) {
     }
 
     out_program->program_id = program_id;
-    out_program->buffer_id = buffer_id;
-    out_program->vertex_array_id = vertex_array_id;
     out_program->g_transform_mat_id = g_transform_mat_id;
     goto _done;
 
 _err:
-    if (buffer_id != 0) {
-        glDeleteBuffers(1, &buffer_id);
-    }
-    if (vertex_array_id != 0) {
-        glDeleteVertexArrays(1, &vertex_array_id);
-    }
     if (shader_vertex_id != 0) {
         glDeleteShader(shader_vertex_id);
     }
@@ -278,14 +246,75 @@ void g_program_destroy(struct g_program *program) {
         glDeleteProgram(program->program_id);
         program->program_id = 0;
     }
-    if (program->vertex_array_id != 0) {
-        glDeleteVertexArrays(1, &program->vertex_array_id);
-        program->vertex_array_id = 0;
+}
+
+void g_program_render(struct g_program *program, struct g_mat4 *g_transform_mat,
+                      struct g_texture *texture, size_t sprite_count,
+                      struct g_sprite_buffer *sprite_buffer) {
+    // Bind GL objects
+    glUseProgram(program->program_id);
+    glBindTexture(GL_TEXTURE_2D, texture->id);
+    glBindVertexArray(sprite_buffer->vertex_array_id);
+    glUniformMatrix4fv(program->g_transform_mat_id, 1, GL_FALSE,
+                       g_transform_mat->values);
+
+    // Draw sprites
+    glDrawArrays(GL_POINTS, 0, sprite_count);
+
+    // Reset GL objects
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindVertexArray(0);
+    glUseProgram(0);
+}
+
+void g_sprite_buffer_create(GLsizei count,
+                            struct g_sprite_buffer *out_sprite_buffer) {
+    GLuint buffer_id = 0;
+    GLuint vertex_array_id = 0;
+
+    // Generate the VBO to be used
+    glGenBuffers(1, &buffer_id);
+    glBindBuffer(GL_ARRAY_BUFFER, buffer_id);
+    glBufferData(GL_ARRAY_BUFFER, count * sizeof(struct g_sprite), NULL,
+                 GL_DYNAMIC_DRAW);
+
+    // Generate the VAO to be used
+    glGenVertexArrays(1, &vertex_array_id);
+    glBindVertexArray(vertex_array_id);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(struct g_sprite),
+                          (void *)offsetof(struct g_sprite, x));
+    glEnableVertexAttribArray(0);
+    glVertexAttribIPointer(1, 2, GL_INT, sizeof(struct g_sprite),
+                           (void *)offsetof(struct g_sprite, w));
+    glEnableVertexAttribArray(1);
+    glVertexAttribIPointer(2, 2, GL_INT, sizeof(struct g_sprite),
+                           (void *)offsetof(struct g_sprite, u));
+    glEnableVertexAttribArray(2);
+
+    // Reset GL objects
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    out_sprite_buffer->buffer_id = buffer_id;
+    out_sprite_buffer->vertex_array_id = vertex_array_id;
+}
+
+void g_sprite_buffer_destroy(struct g_sprite_buffer *sprite_buffer) {
+    if (sprite_buffer->vertex_array_id != 0) {
+        glDeleteVertexArrays(1, &sprite_buffer->vertex_array_id);
+        sprite_buffer->vertex_array_id = 0;
     }
-    if (program->buffer_id != 0) {
-        glDeleteBuffers(1, &program->buffer_id);
-        program->buffer_id = 0;
+    if (sprite_buffer->buffer_id != 0) {
+        glDeleteBuffers(1, &sprite_buffer->buffer_id);
+        sprite_buffer->buffer_id = 0;
     }
+}
+
+void g_sprite_buffer_data(struct g_sprite_buffer *buffer, size_t count,
+                          struct g_sprite *data) {
+    glBindBuffer(GL_ARRAY_BUFFER, buffer->buffer_id);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, count * sizeof(struct g_sprite), data);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 int g_texture_load(const char *file_path, struct g_texture *out_texture) {
