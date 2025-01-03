@@ -86,6 +86,8 @@ int main(int argc, char *argv[]) {
     // Request OpenGL version 4.3
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+                        SDL_GL_CONTEXT_PROFILE_CORE);
 
     // Create a OpenGL Context
     sdl_gl_context = SDL_GL_CreateContext(sdl_window);
@@ -149,17 +151,18 @@ int main(int argc, char *argv[]) {
     bool running = true;
     SDL_Event sdl_event = {0};
     Uint64 last_tick = SDL_GetTicks();
+
     while (running) {
         Uint64 current_tick = SDL_GetTicks();
         Uint64 delta_time = current_tick - last_tick;
         last_tick = current_tick;
 
         // Update the VBO
-        glBindBuffer(GL_ARRAY_BUFFER, program.buffer_id);
         sprites[0].x += delta_time / 100.0f;
         if (sprites[0].x > 100.0f) {
             sprites[0].x = 0.0f;
         }
+        glBindBuffer(GL_ARRAY_BUFFER, program.buffer_id);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(sprites), sprites);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
@@ -174,6 +177,7 @@ int main(int argc, char *argv[]) {
         glUniformMatrix4fv(program.g_transform_mat_id, 1, GL_FALSE,
                            ortho.values);
         glDrawArrays(GL_POINTS, 0, object_count);
+        glBindTexture(GL_TEXTURE_2D, 0);
         glBindVertexArray(0);
         glUseProgram(0);
 
