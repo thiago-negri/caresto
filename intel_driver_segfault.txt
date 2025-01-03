@@ -1,0 +1,21 @@
+=================================================================
+==3296==ERROR: AddressSanitizer: access-violation on unknown address 0x022787c67af4 (pc 0x7ffdeb04ab27 bp 0x000000000001 sp 0x003ed8cff360 T0)
+==3296==The signal is caused by a READ memory access.
+    #0 0x7ffdeb04ab26  (C:\WINDOWS\System32\DriverStore\FileRepository\iigd_dch.inf_amd64_258bfdda6f2bfa20\igxelpicd64.dll+0x1802bab26)
+    #1 0x7ffdeb04a908  (C:\WINDOWS\System32\DriverStore\FileRepository\iigd_dch.inf_amd64_258bfdda6f2bfa20\igxelpicd64.dll+0x1802ba908)
+    #2 0x7ffdeb04f2dd  (C:\WINDOWS\System32\DriverStore\FileRepository\iigd_dch.inf_amd64_258bfdda6f2bfa20\igxelpicd64.dll+0x1802bf2dd)
+    #3 0x7ffdeb04f0d3  (C:\WINDOWS\System32\DriverStore\FileRepository\iigd_dch.inf_amd64_258bfdda6f2bfa20\igxelpicd64.dll+0x1802bf0d3)
+    #4 0x7ffdeb697031  (C:\WINDOWS\System32\DriverStore\FileRepository\iigd_dch.inf_amd64_258bfdda6f2bfa20\igxelpicd64.dll+0x180907031)
+    #5 0x7fff6401d85f  (C:\WINDOWS\SYSTEM32\ntdll.dll+0x18001d85f)
+    #6 0x7fff640e0bbf  (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800e0bbf)
+    #7 0x7fff640dfd83  (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800dfd83)
+    #8 0x7fff629518aa  (C:\WINDOWS\System32\KERNEL32.DLL+0x1800418aa)
+    #9 0x7ff77d439464 in exit_or_terminate_process minkernel\crts\ucrt\src\appcrt\startup\exit.cpp:137
+    #10 0x7ff77d43942f in common_exit minkernel\crts\ucrt\src\appcrt\startup\exit.cpp:274
+    #11 0x7ff77d3f96da in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:295
+    #12 0x7fff6293e8d6  (C:\WINDOWS\System32\KERNEL32.DLL+0x18002e8d6)
+    #13 0x7fff640dfbcb  (C:\WINDOWS\SYSTEM32\ntdll.dll+0x1800dfbcb)
+
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: access-violation (C:\WINDOWS\System32\DriverStore\FileRepository\iigd_dch.inf_amd64_258bfdda6f2bfa20\igxelpicd64.dll+0x1802bab26)
+==3296==ABORTING

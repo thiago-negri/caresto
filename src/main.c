@@ -1,3 +1,4 @@
+#include "SDL3/SDL_timer.h"
 #include "SDL3/SDL_video.h"
 #include <stdbool.h>
 #include <stdint.h>
@@ -35,6 +36,7 @@ int main(int argc, char *argv[]) {
     unsigned char *buffer = NULL;
     struct g_program program = {0};
     struct g_texture texture = {0};
+    SDL_GLContext sdl_gl_context = NULL;
 
     // App Metadata
     SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING, "Caresto");
@@ -86,7 +88,7 @@ int main(int argc, char *argv[]) {
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 
     // Create a OpenGL Context
-    SDL_GLContext sdl_gl_context = SDL_GL_CreateContext(sdl_window);
+    sdl_gl_context = SDL_GL_CreateContext(sdl_window);
     if (sdl_gl_context == NULL) {
         const char *sdl_error = SDL_GetError();
         l_critical("SDL: Could not create OpenGL context. %s\n", sdl_error);
@@ -148,20 +150,6 @@ int main(int argc, char *argv[]) {
     SDL_Event sdl_event = {0};
     Uint64 last_tick = SDL_GetTicks();
     while (running) {
-        // Handle input
-        while (SDL_PollEvent(&sdl_event)) {
-            switch (sdl_event.type) {
-            case SDL_EVENT_QUIT:
-                running = false;
-                break;
-            case SDL_EVENT_KEY_DOWN:
-                if (sdl_event.key.key == SDLK_Q) {
-                    running = false;
-                }
-                break;
-            }
-        }
-
         Uint64 current_tick = SDL_GetTicks();
         Uint64 delta_time = current_tick - last_tick;
         last_tick = current_tick;
@@ -191,18 +179,35 @@ int main(int argc, char *argv[]) {
 
         // Swap buffers
         SDL_GL_SwapWindow(sdl_window);
+
+        // Handle input
+        while (SDL_PollEvent(&sdl_event)) {
+            switch (sdl_event.type) {
+            case SDL_EVENT_QUIT:
+                running = false;
+                break;
+            case SDL_EVENT_KEY_DOWN:
+                if (sdl_event.key.key == SDLK_Q) {
+                    running = false;
+                }
+                break;
+            }
+        }
     }
 
     goto _done;
 
 _err:
 _done:
-    g_texture_destroy(&texture);
-    g_program_destroy(&program);
-    mm_free(buffer);
+    if (sdl_gl_context != NULL) {
+        SDL_GL_DestroyContext(sdl_gl_context);
+    }
     if (sdl_window != NULL) {
         SDL_DestroyWindow(sdl_window);
     }
     SDL_Quit();
+    g_program_destroy(&program);
+    g_texture_destroy(&texture);
+    mm_free(buffer);
     return rc;
 }

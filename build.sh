@@ -50,8 +50,10 @@ LINK_FLAGS_ARR=(
 # Use 'release' option to create an executable that doesn't spawn a console
 if [ $arg_release -eq 0 ]; then
     LINK_FLAGS_ARR+=("-Xlinker /SUBSYSTEM:WINDOWS")
+    DEBUG_FLAGS=""
 else
     LINK_FLAGS_ARR+=("-Xlinker /SUBSYSTEM:CONSOLE")
+    DEBUG_FLAGS="-fsanitize=address -g"
 fi
 LINK_FLAGS="${LINK_FLAGS_ARR[*]}"
 
@@ -159,20 +161,20 @@ if [ $arg_build -eq 0 ]; then
         if need_compile "$source_file" "$OBJ_CARESTO_PATH"; then
             module=$(basename $source_file .c)
             obj_file=$OBJ_CARESTO_PATH/$module.o
-            run clang -c -o "$obj_file" "$source_file" $COMPILE_FLAGS
+            run clang -c -o "$obj_file" "$source_file" $COMPILE_FLAGS $DEBUG_FLAGS
         fi
     done
     for source_file in ./$SRC_PATH/*.c; do
         if need_compile "$source_file" "$OBJ_PATH"; then
             module=$(basename $source_file .c)
             obj_file=$OBJ_PATH/$module.o
-            run clang -c -o "$obj_file" "$source_file" $COMPILE_FLAGS
+            run clang -c -o "$obj_file" "$source_file" $COMPILE_FLAGS $DEBUG_FLAGS
         fi
     done
 
     # LINK
     if need_link; then
-        run clang -o "$TARGET" "$OBJ_PATH/*.o" "$OBJ_CARESTO_PATH/*.o" $LINK_FLAGS
+        run clang -o "$TARGET" "$OBJ_PATH/*.o" "$OBJ_CARESTO_PATH/*.o" $LINK_FLAGS $DEBUG_FLAGS
     fi
 
     # COPY DLLS AND LICENSES

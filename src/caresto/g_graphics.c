@@ -274,17 +274,17 @@ _done:
 }
 
 void g_program_destroy(struct g_program *program) {
-    if (program->buffer_id != 0) {
-        glDeleteBuffers(1, &program->buffer_id);
-        program->buffer_id = 0;
+    if (program->program_id != 0) {
+        glDeleteProgram(program->program_id);
+        program->program_id = 0;
     }
     if (program->vertex_array_id != 0) {
         glDeleteVertexArrays(1, &program->vertex_array_id);
         program->vertex_array_id = 0;
     }
-    if (program->program_id != 0) {
-        glDeleteProgram(program->program_id);
-        program->program_id = 0;
+    if (program->buffer_id != 0) {
+        glDeleteBuffers(1, &program->buffer_id);
+        program->buffer_id = 0;
     }
 }
 
