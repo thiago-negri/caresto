@@ -59,10 +59,10 @@ Se alterar algum fonte e rodar o `build.sh` de novo, apenas os fontes alterados 
 
 O executável fica em `build/bin`, junto com as DLLs que precisa e os arquivos de licença das bibliotecas utilizadas.
 
-Pra compilar uma versão que não abra um console:
+Pra compilar uma versão que não abra um console (gera um artefato pra publicar):
 
 ```
-./build.sh clean build release
+./build.sh release
 ```
 
 
