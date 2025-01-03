@@ -199,6 +199,8 @@ int main(int argc, char *argv[]) {
 
 _err:
 _done:
+    g_program_destroy(&program);
+    g_texture_destroy(&texture);
     if (sdl_gl_context != NULL) {
         SDL_GL_DestroyContext(sdl_gl_context);
     }
@@ -206,8 +208,6 @@ _done:
         SDL_DestroyWindow(sdl_window);
     }
     SDL_Quit();
-    g_program_destroy(&program);
-    g_texture_destroy(&texture);
     mm_free(buffer);
     return rc;
 }
