@@ -1,3 +1,4 @@
+#include "caresto/g_game.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -31,7 +32,7 @@ int main(int argc, char *argv[]) {
     SDL_Window *sdl_window = NULL;
     unsigned char *buffer = NULL;
     struct gl_program program = {0};
-    struct gl_texture texture = {0};
+    struct gl_texture sprite_atlas = {0};
     SDL_GLContext sdl_gl_context = NULL;
     struct gl_sprite_buffer sprite_buffer = {0};
 
@@ -133,63 +134,39 @@ int main(int argc, char *argv[]) {
     // res.  GUI should be painted on the native res surface.
     GLfloat screen_width = 640.0f;
     GLfloat screen_height = 360.0f;
-    struct gl_mat4 ortho = {.values = {0.0f}};
-    gl_ortho(&ortho, 0.0f, screen_width, 0.0f, screen_height, 0.0f, 1.0f);
+    struct gl_mat4 camera_transform = {.values = {0.0f}};
+    gl_ortho(&camera_transform, 0.0f, screen_width, 0.0f, screen_height, 0.0f,
+             1.0f);
 
-    rc = gl_texture_load("assets/sprite_atlas.png", &texture);
+    rc = gl_texture_load("assets/sprite_atlas.png", &sprite_atlas);
     if (rc != 0) {
         goto _err;
     }
 
-    size_t sprite_count = 1;
-    struct gl_sprite sprites[] = {
-        {.x = 0.0f, .y = 0.0f, .w = 16, .h = 16, .u = 0, .v = 0},
-    };
-
-    // TODO:
-    // - Sprite atlas generator
-    // - Render function for sprites
+    // Initialize game
+    void *game_data = g_game_init(&arena);
 
     // Main event loop
     bool running = true;
-    SDL_Event sdl_event = {0};
     Uint64 last_tick = SDL_GetTicks();
-
     while (running) {
         Uint64 current_tick = SDL_GetTicks();
         Uint64 delta_time = current_tick - last_tick;
         last_tick = current_tick;
 
-        // Update the VBO
-        sprites[0].x += delta_time / 100.0f;
-        if (sprites[0].x > 100.0f) {
-            sprites[0].x = 0.0f;
-        }
-        gl_sprite_buffer_data(&sprite_buffer, sprite_count, sprites);
-
-        // Clear screen
-        glClearColor(0.3f, 0.1f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        gl_program_render(&program, &ortho, &texture, sprite_count,
-                         &sprite_buffer);
+        // Process game frame, game is responsible for writing to
+        // the current OpenGL buffer
+        struct g_frame frame = {
+            .delta_time = delta_time,
+            .sprite_buffer = &sprite_buffer,
+            .program = &program,
+            .camera_transform = &camera_transform,
+            .sprite_atlas = &sprite_atlas,
+        };
+        running = g_process_frame(&frame, game_data);
 
         // Swap buffers
         SDL_GL_SwapWindow(sdl_window);
-
-        // Handle input
-        while (SDL_PollEvent(&sdl_event)) {
-            switch (sdl_event.type) {
-            case SDL_EVENT_QUIT:
-                running = false;
-                break;
-            case SDL_EVENT_KEY_DOWN:
-                if (sdl_event.key.key == SDLK_Q) {
-                    running = false;
-                }
-                break;
-            }
-        }
     }
 
     goto _done;
@@ -198,7 +175,7 @@ _err:
 _done:
     gl_sprite_buffer_destroy(&sprite_buffer);
     gl_program_destroy(&program);
-    gl_texture_destroy(&texture);
+    gl_texture_destroy(&sprite_atlas);
     if (sdl_gl_context != NULL) {
         SDL_GL_DestroyContext(sdl_gl_context);
     }
