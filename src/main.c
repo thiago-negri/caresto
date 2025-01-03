@@ -1,3 +1,4 @@
+#include "SDL3/SDL_video.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -33,6 +34,7 @@ int main(int argc, char *argv[]) {
     SDL_Window *sdl_window = NULL;
     unsigned char *buffer = NULL;
     struct g_program program = {0};
+    struct g_texture texture = {0};
 
     // App Metadata
     SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING, "Caresto");
@@ -79,9 +81,9 @@ int main(int argc, char *argv[]) {
         goto _err;
     }
 
-    // Set OpenGL version to at least 3.2
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+    // Request OpenGL version 4.3
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 
     // Create a OpenGL Context
     SDL_GLContext sdl_gl_context = SDL_GL_CreateContext(sdl_window);
@@ -101,15 +103,40 @@ int main(int argc, char *argv[]) {
         goto _err;
     }
 
+    // Check what version of OpenGL we got
+    int gl_major_version = 0;
+    int gl_minor_version = 0;
+    SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_major_version);
+    SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_version);
+    l_debug("GL: Version %d.%d\n", gl_major_version, gl_minor_version);
+
+    // Debug callback is only available in 4.3+
+    if (gl_major_version > 4 ||
+        (gl_major_version == 4 && gl_minor_version >= 3)) {
+        // This always generates a GL_INVALID_ENUM
+        // glEnable(GL_DEBUG_OUTPUT);
+        glDebugMessageCallback(g_debug_message_callback, NULL);
+    }
+
     rc = g_program_create(&arena, &program);
     if (rc != 0) {
         goto _err;
     }
 
-    GLsizei object_count = 2;
+    // Set orthographic projection camera
+    GLfloat screen_width = 640.0f;
+    GLfloat screen_height = 360.0f;
+    struct g_mat4 ortho = {.values = {0.0f}};
+    g_ortho(&ortho, 0.0f, screen_width, 0.0f, screen_height, 0.0f, 1.0f);
+
+    rc = g_texture_load("assets/sprite_atlas.png", &texture);
+    if (rc != 0) {
+        goto _err;
+    }
+
+    GLsizei object_count = 1;
     struct g_sprite sprites[] = {
-        { .x = 0.5f, .y = 0.5f, .w = 0.1f, .h = 0.1f },
-        { .x = 0.0f, .y = 0.0f, .w = 0.3f, .h = 0.3f },
+        {.x = 0.0f, .y = 0.0f, .w = 16, .h = 16, .u = 0, .v = 0},
     };
 
     // TODO:
@@ -141,9 +168,9 @@ int main(int argc, char *argv[]) {
 
         // Update the VBO
         glBindBuffer(GL_ARRAY_BUFFER, program.buffer_id);
-        sprites[0].x += delta_time / 5000.0f;
-        if (sprites[0].x > 0.8f) {
-            sprites[0].x = -0.8f;
+        sprites[0].x += delta_time / 100.0f;
+        if (sprites[0].x > 100.0f) {
+            sprites[0].x = 0.0f;
         }
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(sprites), sprites);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -154,10 +181,11 @@ int main(int argc, char *argv[]) {
 
         // Render the VAO
         glUseProgram(program.program_id);
+        glBindTexture(GL_TEXTURE_2D, texture.id);
         glBindVertexArray(program.vertex_array_id);
+        glUniformMatrix4fv(program.g_transform_mat_id, 1, GL_FALSE,
+                           ortho.values);
         glDrawArrays(GL_POINTS, 0, object_count);
-
-        // Reset context (not really required)
         glBindVertexArray(0);
         glUseProgram(0);
 
@@ -169,6 +197,7 @@ int main(int argc, char *argv[]) {
 
 _err:
 _done:
+    g_texture_destroy(&texture);
     g_program_destroy(&program);
     mm_free(buffer);
     if (sdl_window != NULL) {

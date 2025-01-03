@@ -6,10 +6,72 @@
 #include <caresto/g_graphics.h>
 #include <caresto/l_log.h>
 #include <caresto/mm_memory_management.h>
+#include <caresto/t_test.h>
 
 #include <gen/glsl_fragment.h>
 #include <gen/glsl_geometry.h>
 #include <gen/glsl_vertex.h>
+
+void g_identity(struct g_mat4 *out) {
+    out->ax = 1.0f;
+    out->ay = 0.0f;
+    out->az = 0.0f;
+    out->aw = 0.0f;
+    out->bx = 0.0f;
+    out->by = 1.0f;
+    out->bz = 0.0f;
+    out->bw = 0.0f;
+    out->cx = 0.0f;
+    out->cy = 0.0f;
+    out->cz = 1.0f;
+    out->cw = 0.0f;
+    out->dx = 0.0f;
+    out->dy = 0.0f;
+    out->dz = 0.0f;
+    out->dw = 1.0f;
+}
+
+void g_ortho(struct g_mat4 *out, GLfloat left, GLfloat right, GLfloat top,
+             GLfloat bottom, GLfloat near, GLfloat far) {
+    out->ax = 2.0f / (right - left);
+    out->ay = 0.0f;
+    out->az = 0.0f;
+    out->aw = -1.0f * (right + left) / (right - left);
+    out->bx = 0.0f;
+    out->by = -2.0f / (top - bottom);
+    out->bz = 0.0f;
+    out->bw = -1.0f * (top + bottom) / (top - bottom);
+    out->cx = 0.0f;
+    out->cy = 0.0f;
+    out->cz = -2.0f / (far - near);
+    out->cw = -1.0f * (far + near) / (far - near);
+    out->dx = 0.0f;
+    out->dy = 0.0f;
+    out->dz = 0.0f;
+    out->dw = 1.0f;
+}
+
+T_TEST(ortho) {
+    struct g_mat4 a = {.values = {0.0f}};
+    g_ortho(&a, 0.0f, 360.0f, 0.0f, 640.0f, 0.0f, 1.0f);
+    T_ASSERT(a.ax >= 0.005555f && a.ax <= 0.005557f);
+    T_ASSERT(a.ay == 0.0f);
+    T_ASSERT(a.az == 0.0f);
+    T_ASSERT(a.aw == -1.0f);
+    T_ASSERT(a.bx == 0.0f);
+    T_ASSERT(a.by >= 0.003124f && a.by <= 0.003126f);
+    T_ASSERT(a.bz == 0.0f);
+    T_ASSERT(a.bw == 1.0f);
+    T_ASSERT(a.cx == 0.0f);
+    T_ASSERT(a.cy == 0.0f);
+    T_ASSERT(a.cz == -2.0f);
+    T_ASSERT(a.cw == -1.0f);
+    T_ASSERT(a.dx == 0.0f);
+    T_ASSERT(a.dy == 0.0f);
+    T_ASSERT(a.dz == 0.0f);
+    T_ASSERT(a.dw == 1.0f);
+    T_DONE;
+}
 
 static const char *g_shader_type_name(GLenum type) {
     switch (type) {
@@ -163,16 +225,28 @@ int g_program_create(struct mm_arena *arena, struct g_program *out_program) {
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, G_SPRITE_SIZE,
                           (void *)offsetof(struct g_sprite, x));
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, G_SPRITE_SIZE,
-                          (void *)offsetof(struct g_sprite, w));
+    glVertexAttribIPointer(1, 2, GL_INT, G_SPRITE_SIZE,
+                           (void *)offsetof(struct g_sprite, w));
     glEnableVertexAttribArray(1);
+    glVertexAttribIPointer(2, 2, GL_INT, G_SPRITE_SIZE,
+                           (void *)offsetof(struct g_sprite, u));
+    glEnableVertexAttribArray(2);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
+    GLint g_transform_mat_id =
+        glGetUniformLocation(program_id, "g_transform_mat");
+    if (g_transform_mat_id == -1) {
+        l_critical("GL: Can't find uniform 'g_transform_mat'.\n");
+        rc = -1;
+        goto _err;
+    }
+
     out_program->program_id = program_id;
     out_program->buffer_id = buffer_id;
     out_program->vertex_array_id = vertex_array_id;
+    out_program->g_transform_mat_id = g_transform_mat_id;
     goto _done;
 
 _err:
@@ -233,6 +307,10 @@ int g_texture_load(const char *file_path, struct g_texture *out_texture) {
     glBindTexture(GL_TEXTURE_2D, texture_id);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
                  GL_UNSIGNED_BYTE, image_data);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     stbi_image_free(image_data);
 
@@ -249,4 +327,18 @@ _err:
 
 _done:
     return rc;
+}
+
+void g_texture_destroy(struct g_texture *texture) {
+    if (texture->id != 0) {
+        glDeleteTextures(1, &texture->id);
+        texture->id = 0;
+    }
+}
+
+void g_debug_message_callback(GLenum source, GLenum type, GLuint id,
+                              GLenum severity, GLsizei length,
+                              const GLchar *message, const void *user_param) {
+    l_debug("GL: Callback: %d %d %d %d %s\n", source, type, id, severity,
+            message);
 }
