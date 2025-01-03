@@ -16,13 +16,8 @@
 // Create our game window
 SDL_Window *create_sdl_window() {
     const char *title = "Hello";
-
-    // 640x360 is the perfect res for pixel art games because it scales evenly
-    // to all target resolutions.  We need to start the window at user's native
-    // res though.  We use a 640x360 to paint the game, then scale it to native
-    // res.  GUI should be painted on the native res surface.
-    int width = 640;
-    int height = 360;
+    int width = 1280;
+    int height = 720;
     Uint32 flags = SDL_WINDOW_OPENGL;
     SDL_Window *sdl_window = SDL_CreateWindow(title, width, height, flags);
     return sdl_window;
@@ -128,6 +123,10 @@ int main(int argc, char *argv[]) {
     }
 
     // Set orthographic projection camera
+    // 640x360 is the perfect res for pixel art games because it scales evenly
+    // to all target resolutions.  We need to start the window at user's native
+    // res though.  We use a 640x360 to paint the game, then scale it to native
+    // res.  GUI should be painted on the native res surface.
     GLfloat screen_width = 640.0f;
     GLfloat screen_height = 360.0f;
     struct g_mat4 ortho = {.values = {0.0f}};
