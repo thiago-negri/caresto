@@ -8,7 +8,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
-#include <caresto/g_graphics.h>
+#include <caresto/gl_opengl.h>
 #include <caresto/l_log.h>
 #include <caresto/mm_memory_management.h>
 
@@ -30,10 +30,10 @@ int main(int argc, char *argv[]) {
     int rc = 0;
     SDL_Window *sdl_window = NULL;
     unsigned char *buffer = NULL;
-    struct g_program program = {0};
-    struct g_texture texture = {0};
+    struct gl_program program = {0};
+    struct gl_texture texture = {0};
     SDL_GLContext sdl_gl_context = NULL;
-    struct g_sprite_buffer sprite_buffer = {0};
+    struct gl_sprite_buffer sprite_buffer = {0};
 
     // App Metadata
     SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING, "Caresto");
@@ -116,15 +116,15 @@ int main(int argc, char *argv[]) {
     // Debug callback is only available in 4.3+
     if (gl_major_version > 4 ||
         (gl_major_version == 4 && gl_minor_version >= 3)) {
-        glDebugMessageCallback(g_debug_message_callback, NULL);
+        glDebugMessageCallback(gl_debug_message_callback, NULL);
     }
 
-    rc = g_program_create(&arena, &program);
+    rc = gl_program_create(&arena, &program);
     if (rc != 0) {
         goto _err;
     }
 
-    g_sprite_buffer_create(SPRITE_MAX, &sprite_buffer);
+    gl_sprite_buffer_create(SPRITE_MAX, &sprite_buffer);
 
     // Set orthographic projection camera
     // 640x360 is the perfect res for pixel art games because it scales evenly
@@ -133,16 +133,16 @@ int main(int argc, char *argv[]) {
     // res.  GUI should be painted on the native res surface.
     GLfloat screen_width = 640.0f;
     GLfloat screen_height = 360.0f;
-    struct g_mat4 ortho = {.values = {0.0f}};
-    g_ortho(&ortho, 0.0f, screen_width, 0.0f, screen_height, 0.0f, 1.0f);
+    struct gl_mat4 ortho = {.values = {0.0f}};
+    gl_ortho(&ortho, 0.0f, screen_width, 0.0f, screen_height, 0.0f, 1.0f);
 
-    rc = g_texture_load("assets/sprite_atlas.png", &texture);
+    rc = gl_texture_load("assets/sprite_atlas.png", &texture);
     if (rc != 0) {
         goto _err;
     }
 
     size_t sprite_count = 1;
-    struct g_sprite sprites[] = {
+    struct gl_sprite sprites[] = {
         {.x = 0.0f, .y = 0.0f, .w = 16, .h = 16, .u = 0, .v = 0},
     };
 
@@ -165,13 +165,13 @@ int main(int argc, char *argv[]) {
         if (sprites[0].x > 100.0f) {
             sprites[0].x = 0.0f;
         }
-        g_sprite_buffer_data(&sprite_buffer, sprite_count, sprites);
+        gl_sprite_buffer_data(&sprite_buffer, sprite_count, sprites);
 
         // Clear screen
         glClearColor(0.3f, 0.1f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        g_program_render(&program, &ortho, &texture, sprite_count,
+        gl_program_render(&program, &ortho, &texture, sprite_count,
                          &sprite_buffer);
 
         // Swap buffers
@@ -196,9 +196,9 @@ int main(int argc, char *argv[]) {
 
 _err:
 _done:
-    g_sprite_buffer_destroy(&sprite_buffer);
-    g_program_destroy(&program);
-    g_texture_destroy(&texture);
+    gl_sprite_buffer_destroy(&sprite_buffer);
+    gl_program_destroy(&program);
+    gl_texture_destroy(&texture);
     if (sdl_gl_context != NULL) {
         SDL_GL_DestroyContext(sdl_gl_context);
     }

@@ -3,7 +3,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-#include <caresto/g_graphics.h>
+#include <caresto/gl_opengl.h>
 #include <caresto/l_log.h>
 #include <caresto/mm_memory_management.h>
 #include <caresto/t_test.h>
@@ -12,7 +12,7 @@
 #include <gen/glsl_geometry.h>
 #include <gen/glsl_vertex.h>
 
-void g_identity(struct g_mat4 *out) {
+void gl_identity(struct gl_mat4 *out) {
     out->ax = 1.0f;
     out->ay = 0.0f;
     out->az = 0.0f;
@@ -31,8 +31,8 @@ void g_identity(struct g_mat4 *out) {
     out->dw = 1.0f;
 }
 
-void g_ortho(struct g_mat4 *out, GLfloat left, GLfloat right, GLfloat top,
-             GLfloat bottom, GLfloat near, GLfloat far) {
+void gl_ortho(struct gl_mat4 *out, GLfloat left, GLfloat right, GLfloat top,
+              GLfloat bottom, GLfloat near, GLfloat far) {
     out->ax = 2.0f / (right - left);
     out->ay = 0.0f;
     out->az = 0.0f;
@@ -52,8 +52,8 @@ void g_ortho(struct g_mat4 *out, GLfloat left, GLfloat right, GLfloat top,
 }
 
 T_TEST(ortho) {
-    struct g_mat4 a = {.values = {0.0f}};
-    g_ortho(&a, 0.0f, 360.0f, 0.0f, 640.0f, 0.0f, 1.0f);
+    struct gl_mat4 a = {.values = {0.0f}};
+    gl_ortho(&a, 0.0f, 360.0f, 0.0f, 640.0f, 0.0f, 1.0f);
     T_ASSERT(a.ax >= 0.005555f && a.ax <= 0.005557f);
     T_ASSERT(a.ay == 0.0f);
     T_ASSERT(a.az == 0.0f);
@@ -73,7 +73,7 @@ T_TEST(ortho) {
     T_DONE;
 }
 
-static const char *g_shader_type_name(GLenum type) {
+static const char *gl_shader_type_name(GLenum type) {
     switch (type) {
     case GL_VERTEX_SHADER:
         return "vertex";
@@ -85,15 +85,15 @@ static const char *g_shader_type_name(GLenum type) {
     return "unknown";
 }
 
-static int g_shader_create(GLenum type, const GLchar *source,
-                           struct mm_arena *arena, GLuint *out_shader_id) {
+static int gl_shader_create(GLenum type, const GLchar *source,
+                            struct mm_arena *arena, GLuint *out_shader_id) {
     int rc = 0;
     GLuint shader_id = 0;
 
     shader_id = glCreateShader(type);
     if (shader_id == 0) {
         l_critical("Failed to create shader (type = %s).\n",
-                   g_shader_type_name(type));
+                   gl_shader_type_name(type));
         rc = -1;
         goto _err;
     }
@@ -109,7 +109,7 @@ static int g_shader_create(GLenum type, const GLchar *source,
     glGetShaderiv(shader_id, GL_COMPILE_STATUS, &compile_status);
     if (compile_status != GL_TRUE) {
         l_critical("GL: Failed to compile shader (type = %s).\n",
-                   g_shader_type_name(type));
+                   gl_shader_type_name(type));
         GLint log_length = 0;
         // log_length includes the null terminator
         glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &log_length);
@@ -128,7 +128,7 @@ static int g_shader_create(GLenum type, const GLchar *source,
         rc = -1;
         goto _err;
     }
-    l_debug("GL: Compiled %s shader.\n", g_shader_type_name(type));
+    l_debug("GL: Compiled %s shader.\n", gl_shader_type_name(type));
 
     *out_shader_id = shader_id;
     goto _done;
@@ -142,27 +142,27 @@ _done:
     return rc;
 }
 
-int g_program_create(struct mm_arena *arena, struct g_program *out_program) {
+int gl_program_create(struct mm_arena *arena, struct gl_program *out_program) {
     int rc = 0;
     GLuint program_id = 0;
     GLuint shader_vertex_id = 0;
     GLuint shader_geometry_id = 0;
     GLuint shader_fragment_id = 0;
 
-    rc = g_shader_create(GL_VERTEX_SHADER, glsl_vertex_source, arena,
-                         &shader_vertex_id);
+    rc = gl_shader_create(GL_VERTEX_SHADER, glsl_vertex_source, arena,
+                          &shader_vertex_id);
     if (rc != 0) {
         goto _err;
     }
 
-    rc = g_shader_create(GL_GEOMETRY_SHADER, glsl_geometry_source, arena,
-                         &shader_geometry_id);
+    rc = gl_shader_create(GL_GEOMETRY_SHADER, glsl_geometry_source, arena,
+                          &shader_geometry_id);
     if (rc != 0) {
         goto _err;
     }
 
-    rc = g_shader_create(GL_FRAGMENT_SHADER, glsl_fragment_source, arena,
-                         &shader_fragment_id);
+    rc = gl_shader_create(GL_FRAGMENT_SHADER, glsl_fragment_source, arena,
+                          &shader_fragment_id);
     if (rc != 0) {
         goto _err;
     }
@@ -241,16 +241,17 @@ _done:
     return rc;
 }
 
-void g_program_destroy(struct g_program *program) {
+void gl_program_destroy(struct gl_program *program) {
     if (program->program_id != 0) {
         glDeleteProgram(program->program_id);
         program->program_id = 0;
     }
 }
 
-void g_program_render(struct g_program *program, struct g_mat4 *g_transform_mat,
-                      struct g_texture *texture, size_t sprite_count,
-                      struct g_sprite_buffer *sprite_buffer) {
+void gl_program_render(struct gl_program *program,
+                       struct gl_mat4 *g_transform_mat,
+                       struct gl_texture *texture, size_t sprite_count,
+                       struct gl_sprite_buffer *sprite_buffer) {
     // Bind GL objects
     glUseProgram(program->program_id);
     glBindTexture(GL_TEXTURE_2D, texture->id);
@@ -267,28 +268,28 @@ void g_program_render(struct g_program *program, struct g_mat4 *g_transform_mat,
     glUseProgram(0);
 }
 
-void g_sprite_buffer_create(GLsizei count,
-                            struct g_sprite_buffer *out_sprite_buffer) {
+void gl_sprite_buffer_create(GLsizei count,
+                             struct gl_sprite_buffer *out_sprite_buffer) {
     GLuint buffer_id = 0;
     GLuint vertex_array_id = 0;
 
     // Generate the VBO to be used
     glGenBuffers(1, &buffer_id);
     glBindBuffer(GL_ARRAY_BUFFER, buffer_id);
-    glBufferData(GL_ARRAY_BUFFER, count * sizeof(struct g_sprite), NULL,
+    glBufferData(GL_ARRAY_BUFFER, count * sizeof(struct gl_sprite), NULL,
                  GL_DYNAMIC_DRAW);
 
     // Generate the VAO to be used
     glGenVertexArrays(1, &vertex_array_id);
     glBindVertexArray(vertex_array_id);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(struct g_sprite),
-                          (void *)offsetof(struct g_sprite, x));
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(struct gl_sprite),
+                          (void *)offsetof(struct gl_sprite, x));
     glEnableVertexAttribArray(0);
-    glVertexAttribIPointer(1, 2, GL_INT, sizeof(struct g_sprite),
-                           (void *)offsetof(struct g_sprite, w));
+    glVertexAttribIPointer(1, 2, GL_INT, sizeof(struct gl_sprite),
+                           (void *)offsetof(struct gl_sprite, w));
     glEnableVertexAttribArray(1);
-    glVertexAttribIPointer(2, 2, GL_INT, sizeof(struct g_sprite),
-                           (void *)offsetof(struct g_sprite, u));
+    glVertexAttribIPointer(2, 2, GL_INT, sizeof(struct gl_sprite),
+                           (void *)offsetof(struct gl_sprite, u));
     glEnableVertexAttribArray(2);
 
     // Reset GL objects
@@ -299,7 +300,7 @@ void g_sprite_buffer_create(GLsizei count,
     out_sprite_buffer->vertex_array_id = vertex_array_id;
 }
 
-void g_sprite_buffer_destroy(struct g_sprite_buffer *sprite_buffer) {
+void gl_sprite_buffer_destroy(struct gl_sprite_buffer *sprite_buffer) {
     if (sprite_buffer->vertex_array_id != 0) {
         glDeleteVertexArrays(1, &sprite_buffer->vertex_array_id);
         sprite_buffer->vertex_array_id = 0;
@@ -310,14 +311,14 @@ void g_sprite_buffer_destroy(struct g_sprite_buffer *sprite_buffer) {
     }
 }
 
-void g_sprite_buffer_data(struct g_sprite_buffer *buffer, size_t count,
-                          struct g_sprite *data) {
+void gl_sprite_buffer_data(struct gl_sprite_buffer *buffer, size_t count,
+                           struct gl_sprite *data) {
     glBindBuffer(GL_ARRAY_BUFFER, buffer->buffer_id);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, count * sizeof(struct g_sprite), data);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, count * sizeof(struct gl_sprite), data);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-int g_texture_load(const char *file_path, struct g_texture *out_texture) {
+int gl_texture_load(const char *file_path, struct gl_texture *out_texture) {
     int rc = 0;
     GLuint texture_id = 0;
     unsigned char *image_data = NULL;
@@ -358,16 +359,16 @@ _done:
     return rc;
 }
 
-void g_texture_destroy(struct g_texture *texture) {
+void gl_texture_destroy(struct gl_texture *texture) {
     if (texture->id != 0) {
         glDeleteTextures(1, &texture->id);
         texture->id = 0;
     }
 }
 
-void g_debug_message_callback(GLenum source, GLenum type, GLuint id,
-                              GLenum severity, GLsizei length,
-                              const GLchar *message, const void *user_param) {
+void gl_debug_message_callback(GLenum source, GLenum type, GLuint id,
+                               GLenum severity, GLsizei length,
+                               const GLchar *message, const void *user_param) {
     l_debug("GL: Callback: %d %d %d %d %s\n", source, type, id, severity,
             message);
 }
