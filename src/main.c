@@ -1,5 +1,3 @@
-#include "SDL3/SDL_timer.h"
-#include "SDL3/SDL_video.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -83,6 +81,7 @@ int main(int argc, char *argv[]) {
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
                         SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 
     // Create a OpenGL Context
     sdl_gl_context = SDL_GL_CreateContext(sdl_window);
@@ -112,8 +111,6 @@ int main(int argc, char *argv[]) {
     // Debug callback is only available in 4.3+
     if (gl_major_version > 4 ||
         (gl_major_version == 4 && gl_minor_version >= 3)) {
-        // This always generates a GL_INVALID_ENUM
-        // glEnable(GL_DEBUG_OUTPUT);
         glDebugMessageCallback(g_debug_message_callback, NULL);
     }
 
@@ -166,7 +163,7 @@ int main(int argc, char *argv[]) {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
         // Clear screen
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClearColor(0.3f, 0.1f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         // Render the VAO
