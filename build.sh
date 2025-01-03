@@ -27,7 +27,13 @@ fi
 #
 # VARS
 #
-BUILD_PATH=build
+if [ $arg_release -eq 0 ]; then
+    BUILD_TYPE="release"
+else
+    BUILD_TYPE="debug"
+fi
+BUILD_ROOT_PATH=build
+BUILD_PATH=$BUILD_ROOT_PATH/$BUILD_TYPE
 TARGET_PATH=$BUILD_PATH/bin
 TARGET=$TARGET_PATH/main.exe
 OBJ_PATH=$BUILD_PATH/obj
@@ -128,7 +134,7 @@ static() {
 #
 # CLEAN
 #
-[ $arg_clean -eq 0 ] && run rm -rf $BUILD_PATH $GEN_PATH
+[ $arg_clean -eq 0 ] && run rm -rf $BUILD_ROOT_PATH $GEN_PATH
 
 
 #

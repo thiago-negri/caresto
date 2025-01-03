@@ -1,5 +1,10 @@
 # Caresto
 
+## TODOs
+
+[GitHub Issues](https://github.com/thiago-negri/caresto/issues)
+
+
 ## Windows
 
 ### Compilador
@@ -58,5 +63,17 @@ Pra compilar uma versão que não abra um console:
 
 ```
 ./build.sh clean build release
+```
+
+
+### Test
+
+```sh
+./test.sh
+```
+
+```
+OK: ortho
+OK: arena
 ```
 

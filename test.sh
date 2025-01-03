@@ -34,10 +34,10 @@ done
 echo "return 0; }" >> $TEST_C
 
 # compile test.c
-clang test/test.c -c -o test/test.o -Isrc -Iinclude -Isrc-gen
+clang test/test.c -c -o test/test.o -Isrc -Iinclude -Isrc-gen -fsanitize=address -g
 
 # link test binary
-clang build/obj/caresto/*.o test/*.o -o test/test.exe \
+clang build/debug/obj/caresto/*.o test/*.o -o test/test.exe -fsanitize=address -g \
     -Llib/windows/SDL3/x64 \
     -Llib/windows/glew/x64 \
     -lSDL3 \
