@@ -1,7 +1,7 @@
 #include <stdio.h>
 
-#include <engine/l_log.h>
-#include <engine/u_utils.h>
+#include <engine/el_log.h>
+#include <engine/eu_utils.h>
 
 int u_copy_file(const char *from, const char *to, struct mm_arena *arena) {
     int rc = 0;

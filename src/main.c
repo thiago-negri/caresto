@@ -1,5 +1,3 @@
-#include "SDL3/SDL_timer.h"
-#include "SDL3/SDL_video.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -10,13 +8,13 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
-#include <engine/gl_opengl.h>
-#include <engine/l_log.h>
-#include <engine/mm_memory_management.h>
-#include <engine/p_platform.h>
+#include <engine/egl_opengl.h>
+#include <engine/el_log.h>
+#include <engine/em_memory.h>
+#include <engine/ep_platform.h>
 
 #define CARESTO_MAIN
-#include <caresto/g_game.h>
+#include <caresto/cg_game.h>
 
 #define MB_10 (10 * 1024 * 1024)
 #define MB_20 (20 * 1024 * 1024)

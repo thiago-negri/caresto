@@ -1,11 +1,11 @@
-#ifndef GL_OPENGL_H
-#define GL_OPENGL_H
+#ifndef EGL_OPENGL_H
+#define EGL_OPENGL_H
 
 #include <stdint.h>
 
 #include <GL/glew.h>
 
-#include <engine/mm_memory_management.h>
+#include <engine/em_memory.h>
 
 // VAO and VBO are not linked to the program, but right now we only use it here
 struct gl_program {
@@ -77,4 +77,4 @@ void gl_debug_message_callback(GLenum source, GLenum type, GLuint id,
                                 GLenum severity, GLsizei length,
                                 const GLchar *message, const void *user_param);
 
-#endif // GL_OPENGL_H
+#endif // EGL_OPENGL_H

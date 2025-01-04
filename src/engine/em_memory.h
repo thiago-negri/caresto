@@ -1,5 +1,5 @@
-#ifndef MM_MEMORY_MANAGEMENT_H
-#define MM_MEMORY_MANAGEMENT_H
+#ifndef EM_MEMORY_H
+#define EM_MEMORY_H
 
 //
 // ARENA
@@ -22,4 +22,4 @@ void mm_arena_restore_offset(struct mm_arena *a, size_t offset);
 void *mm_alloc(size_t size);
 void mm_free(void *ptr);
 
-#endif // MM_MEMORY_MANAGEMENT_H
+#endif // EM_MEMORY_H

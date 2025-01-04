@@ -1,4 +1,4 @@
-#include <engine/p_platform.h>
+#include <engine/ep_platform.h>
 
 #ifdef SHARED
 
@@ -7,8 +7,8 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
-#include <engine/l_log.h>
-#include <engine/u_utils.h>
+#include <engine/el_log.h>
+#include <engine/eu_utils.h>
 
 int p_shared_load(const char *path, struct mm_arena *arena,
                   struct p_shared_game *out_shared_game) {

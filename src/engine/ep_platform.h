@@ -1,12 +1,12 @@
-#ifndef P_PLATFORM_H
-#define P_PLATFORM_H
+#ifndef EP_PLATFORM_H
+#define EP_PLATFORM_H
 
 #ifdef SHARED
 
 #include <stdbool.h>
 
-#include <engine/gl_opengl.h>
-#include <engine/mm_memory_management.h>
+#include <engine/egl_opengl.h>
+#include <engine/em_memory.h>
 
 #ifdef _WIN32
 
@@ -37,4 +37,4 @@ void p_shared_free(p_shared shared);
 
 #endif // SHARED
 
-#endif // P_PLATFORM_H
+#endif // EP_PLATFORM_H

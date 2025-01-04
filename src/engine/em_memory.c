@@ -1,7 +1,7 @@
 #include <stdlib.h>
 
-#include <engine/mm_memory_management.h>
-#include <engine/t_test.h>
+#include <engine/em_memory.h>
+#include <engine/et_test.h>
 
 //
 // ALLOC

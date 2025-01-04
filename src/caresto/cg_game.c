@@ -1,8 +1,8 @@
 #include <SDL3/SDL.h>
 
-#include <engine/gl_opengl.h>
+#include <engine/egl_opengl.h>
 
-#include <caresto/g_game.h>
+#include <caresto/cg_game.h>
 
 // FIXME(tnegri): SPRITE_MAX is shared between main and g_game
 #define SPRITE_MAX 1024

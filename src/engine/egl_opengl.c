@@ -3,10 +3,10 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-#include <engine/gl_opengl.h>
-#include <engine/l_log.h>
-#include <engine/mm_memory_management.h>
-#include <engine/t_test.h>
+#include <engine/egl_opengl.h>
+#include <engine/el_log.h>
+#include <engine/em_memory.h>
+#include <engine/et_test.h>
 
 #include <gen/glsl_fragment.h>
 #include <gen/glsl_geometry.h>

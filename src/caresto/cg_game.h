@@ -1,11 +1,11 @@
-#ifndef G_GAME_H
-#define G_GAME_H
+#ifndef CG_GAME_H
+#define CG_GAME_H
 
 #include <stdint.h>
 #include <stdbool.h>
 
-#include <engine/gl_opengl.h>
-#include <engine/mm_memory_management.h>
+#include <engine/egl_opengl.h>
+#include <engine/em_memory.h>
 
 // FIXME(tnegri): How to avoid having to declare those twice?
 
@@ -35,4 +35,4 @@ DLLEXPORT bool g_process_frame(struct gl_frame *frame, void *data);
 
 #endif // defined(SHARED) && defined(CARESTO_MAIN)
 
-#endif // G_GAME_H
+#endif // CG_GAME_H
