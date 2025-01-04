@@ -234,6 +234,13 @@ int egl_texture_load(const char *file_path, struct egl_texture *out_texture) {
     GLuint texture_id = 0;
     unsigned char *image_data = NULL;
 
+#ifdef SHARED
+    long long timestamp = eu_file_timestamp(file_path);
+    if (out_texture->id != 0 && timestamp <= out_texture->timestamp) {
+        goto _done;
+    }
+#endif
+
     int width = 0;
     int height = 0;
     int channels = 0;
@@ -244,7 +251,12 @@ int egl_texture_load(const char *file_path, struct egl_texture *out_texture) {
         goto _err;
     }
 
-    glGenTextures(1, &texture_id);
+    if (out_texture->id == 0) {
+        glGenTextures(1, &texture_id);
+    } else {
+        texture_id = out_texture->id;
+    }
+
     glBindTexture(GL_TEXTURE_2D, texture_id);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
                  GL_UNSIGNED_BYTE, image_data);
@@ -255,7 +267,11 @@ int egl_texture_load(const char *file_path, struct egl_texture *out_texture) {
 
     stbi_image_free(image_data);
 
+    el_debug("GL: Texture loaded: %s.\n", file_path);
     out_texture->id = texture_id;
+#if SHARED
+    out_texture->timestamp = timestamp;
+#endif
     goto _done;
 
 _err:

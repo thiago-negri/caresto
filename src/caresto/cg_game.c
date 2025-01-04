@@ -6,6 +6,7 @@
 #include <caresto/cg_game.h>
 #include <caresto/cs_shaders.h>
 
+#define SPRITE_ATLAS_PATH "assets/sprite_atlas.png"
 #define SPRITE_MAX 1024
 
 struct cg_state {
@@ -43,7 +44,7 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
               1.0f);
 
     // TODO(tnegri): Bake atlas in
-    rc = egl_texture_load("assets/sprite_atlas.png", &sprite_atlas);
+    rc = egl_texture_load(SPRITE_ATLAS_PATH, &sprite_atlas);
     if (rc != 0) {
         goto _err;
     }
@@ -80,6 +81,7 @@ _done:
 void cg_reload(void *data, struct em_arena *transient_storage) {
     struct cg_state *state = (struct cg_state *)data;
     cs_sprite_shader_load(&state->sprite_shader, transient_storage);
+    egl_texture_load(SPRITE_ATLAS_PATH, &state->sprite_atlas);
 }
 
 bool cg_frame(void *data, struct egl_frame *frame) {

@@ -172,8 +172,10 @@ int main(int argc, char *argv[]) {
                 cg_reload_ptr = shared_game.cg_reload;
                 cg_frame_ptr = shared_game.cg_frame;
                 cg_destroy_ptr = shared_game.cg_destroy;
-                cg_reload(game_data, &transient_storage);
             }
+            // Call reload even if the same DLL is still loaded,
+            // this way the game can reload external assets (e.g. sprite atlas)
+            cg_reload(game_data, &transient_storage);
         }
 #endif
 

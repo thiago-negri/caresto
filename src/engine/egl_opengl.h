@@ -25,6 +25,9 @@ struct egl_sprite_buffer {
 
 struct egl_texture {
     GLuint id;
+#if SHARED
+    long long timestamp;
+#endif
 };
 
 struct egl_mat4 {
