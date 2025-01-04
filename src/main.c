@@ -1,4 +1,3 @@
-#include "caresto/g_game.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -9,10 +8,13 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
+#include <caresto/g_game.h>
 #include <caresto/gl_opengl.h>
 #include <caresto/l_log.h>
 #include <caresto/mm_memory_management.h>
 
+#define MB_10 (10 * 1024 * 1024)
+// FIXME(tnegri): SPRITE_MAX is shared between main and g_game
 #define SPRITE_MAX 1024
 
 // Create our game window
@@ -24,8 +26,6 @@ SDL_Window *create_sdl_window() {
     SDL_Window *sdl_window = SDL_CreateWindow(title, width, height, flags);
     return sdl_window;
 }
-
-#define MB_10 (10 * 1024 * 1024)
 
 int main(int argc, char *argv[]) {
     int rc = 0;
@@ -144,7 +144,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Initialize game
-    void *game_data = g_game_init(&arena);
+    void *game_data = g_init(&arena);
 
     // Main event loop
     bool running = true;

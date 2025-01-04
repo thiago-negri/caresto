@@ -3,20 +3,21 @@
 #include <caresto/g_game.h>
 #include <caresto/gl_opengl.h>
 
+// FIXME(tnegri): SPRITE_MAX is shared between main and g_game
 #define SPRITE_MAX 1024
 
-struct g_game_state {
+struct g_state {
     size_t sprite_count;
     struct gl_sprite sprites[SPRITE_MAX];
 };
 
-void *g_game_init(struct mm_arena *persistent_storage) {
-    struct g_game_state *game_state = (struct g_game_state *)mm_arena_alloc(
-        persistent_storage, sizeof(struct g_game_state));
+void *g_init(struct mm_arena *persistent_storage) {
+    struct g_state *state = (struct g_state *)mm_arena_alloc(
+        persistent_storage, sizeof(struct g_state));
 
     // Initial state
-    game_state->sprite_count = 1;
-    game_state->sprites[0] = (struct gl_sprite){
+    state->sprite_count = 1;
+    state->sprites[0] = (struct gl_sprite){
         .x = 0.0f,
         .y = 0.0f,
         .w = 16,
@@ -25,11 +26,11 @@ void *g_game_init(struct mm_arena *persistent_storage) {
         .v = 0,
     };
 
-    return (void *)game_state;
+    return (void *)state;
 }
 
-bool g_process_frame(struct g_frame *frame, void *game_data) {
-    struct g_game_state *game_state = (struct g_game_state *)game_data;
+bool g_process_frame(struct g_frame *frame, void *data) {
+    struct g_state *state = (struct g_state *)data;
 
     // Handle input
     SDL_Event sdl_event = {0};
@@ -47,14 +48,14 @@ bool g_process_frame(struct g_frame *frame, void *game_data) {
     }
 
     // Move sprite
-    game_state->sprites[0].x += frame->delta_time / 100.0f;
-    if (game_state->sprites[0].x > 100.0f) {
-        game_state->sprites[0].x = 0.0f;
+    state->sprites[0].x += frame->delta_time / 100.0f;
+    if (state->sprites[0].x > 100.0f) {
+        state->sprites[0].x = 0.0f;
     }
 
     // Update the VBO
-    gl_sprite_buffer_data(frame->sprite_buffer, game_state->sprite_count,
-                          game_state->sprites);
+    gl_sprite_buffer_data(frame->sprite_buffer, state->sprite_count,
+                          state->sprites);
 
     // Clear screen
     glClearColor(0.3f, 0.1f, 0.3f, 1.0f);
@@ -62,7 +63,7 @@ bool g_process_frame(struct g_frame *frame, void *game_data) {
 
     // Render sprites
     gl_program_render(frame->program, frame->camera_transform,
-                      frame->sprite_atlas, game_state->sprite_count,
+                      frame->sprite_atlas, state->sprite_count,
                       frame->sprite_buffer);
 
     return true;

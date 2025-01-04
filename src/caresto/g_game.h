@@ -17,8 +17,8 @@ struct g_frame {
     struct gl_sprite_buffer *sprite_buffer;
 };
 
-void *g_game_init(struct mm_arena *persistent_storage);
+void *g_init(struct mm_arena *persistent_storage);
 
-bool g_process_frame(struct g_frame *frame, void *game_data);
+bool g_process_frame(struct g_frame *frame, void *data);
 
 #endif // G_GAME_H
