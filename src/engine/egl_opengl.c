@@ -35,9 +35,9 @@ void egl_ortho(struct egl_mat4 *out, GLfloat left, GLfloat right, GLfloat top,
     out->az = 0.0f;
     out->aw = -1.0f * (right + left) / (right - left);
     out->bx = 0.0f;
-    out->by = -2.0f / (top - bottom);
+    out->by = -2.0f / (bottom - top);
     out->bz = 0.0f;
-    out->bw = -1.0f * (top + bottom) / (top - bottom);
+    out->bw = (bottom + top) / (bottom - top);
     out->cx = 0.0f;
     out->cy = 0.0f;
     out->cz = -2.0f / (far - near);

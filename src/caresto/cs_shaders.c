@@ -4,17 +4,18 @@
 
 #include <caresto/cs_shaders.h>
 
-#include <gen/glsl_fragment.h>
-#include <gen/glsl_geometry.h>
-#include <gen/glsl_vertex.h>
+#include <gen/glsl_sprite_fragment.h>
+#include <gen/glsl_sprite_geometry.h>
+#include <gen/glsl_sprite_vertex.h>
 
 int cs_sprite_shader_load(struct cs_sprite_shader *shader,
                           struct em_arena *arena) {
     int rc = 0;
 
 #ifdef SHARED
-    long long timestamp = eu_max(glsl_vertex_timestamp, glsl_geometry_timestamp,
-                                 glsl_fragment_timestamp);
+    long long timestamp =
+        eu_max(glsl_sprite_vertex_timestamp, glsl_sprite_geometry_timestamp,
+               glsl_sprite_fragment_timestamp);
     if (timestamp <= shader->timestamp) {
         return rc;
     }
@@ -25,20 +26,20 @@ int cs_sprite_shader_load(struct cs_sprite_shader *shader,
     GLuint shader_geometry_id = 0;
     GLuint shader_fragment_id = 0;
 
-    rc = egl_shader_create(GL_VERTEX_SHADER, glsl_vertex_source, arena,
+    rc = egl_shader_create(GL_VERTEX_SHADER, glsl_sprite_vertex_source, arena,
                            &shader_vertex_id);
     if (rc != 0) {
         goto _err;
     }
 
-    rc = egl_shader_create(GL_GEOMETRY_SHADER, glsl_geometry_source, arena,
-                           &shader_geometry_id);
+    rc = egl_shader_create(GL_GEOMETRY_SHADER, glsl_sprite_geometry_source,
+                           arena, &shader_geometry_id);
     if (rc != 0) {
         goto _err;
     }
 
-    rc = egl_shader_create(GL_FRAGMENT_SHADER, glsl_fragment_source, arena,
-                           &shader_fragment_id);
+    rc = egl_shader_create(GL_FRAGMENT_SHADER, glsl_sprite_fragment_source,
+                           arena, &shader_fragment_id);
     if (rc != 0) {
         goto _err;
     }
@@ -74,8 +75,9 @@ int cs_sprite_shader_load(struct cs_sprite_shader *shader,
     shader->program_id = program_id;
     shader->g_transform_mat_id = g_transform_mat_id;
 #ifdef SHARED
-    shader->timestamp = eu_max(glsl_vertex_timestamp, glsl_geometry_timestamp,
-                               glsl_fragment_timestamp);
+    shader->timestamp =
+        eu_max(glsl_sprite_vertex_timestamp, glsl_sprite_geometry_timestamp,
+               glsl_sprite_fragment_timestamp);
 #endif
     goto _done;
 

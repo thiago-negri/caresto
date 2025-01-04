@@ -30,6 +30,15 @@ struct egl_texture {
 #endif
 };
 
+struct egl_vec2 {
+    union {
+        GLfloat values[2];
+        struct {
+            GLfloat x, y;
+        };
+    };
+};
+
 struct egl_mat4 {
     union {
         GLfloat values[16];

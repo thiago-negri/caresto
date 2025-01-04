@@ -20,17 +20,17 @@ void main() {
     EmitVertex();
 
     // bottom left
-    gl_Position = g_transform_mat * (pos + vec4(0.0, -1.0 * size.y, 0.0, 0.0));
+    gl_Position = g_transform_mat * (pos + vec4(0.0, size.y, 0.0, 0.0));
     f_texture = texture + ivec2(0, size.y);
     EmitVertex();
 
     // bottom right
-    gl_Position = g_transform_mat * (pos + vec4(size.x, -1.0 * size.y, 0.0, 0.0));
+    gl_Position = g_transform_mat * (pos + vec4(size.x, size.y, 0.0, 0.0));
     f_texture = texture + size.xy;
     EmitVertex();
 
     // bottom right
-    gl_Position = g_transform_mat * (pos + vec4(size.x, -1.0 * size.y, 0.0, 0.0));
+    gl_Position = g_transform_mat * (pos + vec4(size.x, size.y, 0.0, 0.0));
     f_texture = texture + size.xy;
     EmitVertex();
 

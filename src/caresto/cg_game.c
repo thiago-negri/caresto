@@ -7,15 +7,36 @@
 #include <caresto/cs_shaders.h>
 
 #define SPRITE_ATLAS_PATH "assets/sprite_atlas.png"
-#define SPRITE_MAX 1024
+#define GAME_CAMERA_HEIGHT 360.0f
+#define GAME_CAMERA_WIDTH 640.0f
+#define TILE_SIZE 8
+
+#define CG_TILES_MAX_WIDTH 100
+#define CG_TILES_MAX_HEIGHT 100
+#define CG_SPRITES_MAX 1024
+
+enum cg_tile {
+    CG_TILE_EMPTY = 0,
+    CG_TILE_FLOOR = 1,
+};
 
 struct cg_state {
+    // Game camera
+    struct egl_vec2 camera_position;
+
+    // Sprite shader
     struct cs_sprite_shader sprite_shader;
     struct egl_sprite_buffer sprite_buffer;
     struct egl_texture sprite_atlas;
-    struct egl_mat4 camera_transform;
+
+    // Sprites
     size_t sprite_count;
-    struct egl_sprite sprites[SPRITE_MAX];
+    struct egl_sprite sprites[CG_SPRITES_MAX];
+
+    // World tilemap
+    size_t tilemap_width;
+    size_t tilemap_height;
+    enum cg_tile tiles[CG_TILES_MAX_HEIGHT][CG_TILES_MAX_WIDTH];
 };
 
 int cg_init(void **out_data, struct em_arena *persistent_storage,
@@ -30,18 +51,12 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
         goto _err;
     }
 
-    egl_sprite_buffer_create(SPRITE_MAX, &sprite_buffer);
+    egl_sprite_buffer_create(CG_SPRITES_MAX, &sprite_buffer);
 
-    // Set orthographic projection camera
-    // 640x360 is the perfect res for pixel art games because it scales evenly
-    // to all target resolutions.  We need to start the window at user's native
-    // res though.  We use a 640x360 to paint the game, then scale it to native
-    // res.  GUI should be painted on the native res surface.
-    GLfloat screen_width = 640.0f;
-    GLfloat screen_height = 360.0f;
-    struct egl_mat4 camera_transform = {.values = {0.0f}};
-    egl_ortho(&camera_transform, 0.0f, screen_width, 0.0f, screen_height, 0.0f,
-              1.0f);
+    struct egl_vec2 camera_position = {
+        .x = (GLfloat)GAME_CAMERA_WIDTH * 0.5f,
+        .y = (GLfloat)GAME_CAMERA_HEIGHT * 0.5f,
+    };
 
     // TODO(tnegri): Bake atlas in
     rc = egl_texture_load(SPRITE_ATLAS_PATH, &sprite_atlas);
@@ -52,10 +67,11 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
     // Initial state
     struct cg_state *state = (struct cg_state *)em_arena_alloc(
         persistent_storage, sizeof(struct cg_state));
+    memset(state, 0, sizeof(struct cg_state));
     state->sprite_shader = sprite_shader;
     state->sprite_buffer = sprite_buffer;
     state->sprite_atlas = sprite_atlas;
-    state->camera_transform = camera_transform;
+    state->camera_position = camera_position;
     state->sprite_count = 1;
     state->sprites[0] = (struct egl_sprite){
         .x = 0.0f,
@@ -103,14 +119,17 @@ bool cg_frame(void *data, struct egl_frame *frame) {
     }
 
     // Move sprite
-    state->sprites[0].x += frame->delta_time / 10.0f;
-    state->sprites[0].y -= frame->delta_time / 10.0f;
-    if (state->sprites[0].x > 100.0f) {
-        state->sprites[0].x = 0.0f;
-    }
-    if (state->sprites[0].y < -100.0f) {
-        state->sprites[0].y = 0.0f;
-    }
+    state->sprites[0].x = 10;
+    state->sprites[0].y = 10;
+    state->sprites[1] = (struct egl_sprite){
+        .x = 100.0f,
+        .y = 100.0f,
+        .w = 489,
+        .h = 509,
+        .u = 100,
+        .v = 100,
+    };
+    state->sprite_count = 1;
 
     // Update the VBO
     egl_sprite_buffer_data(&state->sprite_buffer, state->sprite_count,
@@ -120,8 +139,21 @@ bool cg_frame(void *data, struct egl_frame *frame) {
     glClearColor(0.3f, 0.1f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
+    // Orthographic projection camera
+    struct egl_mat4 camera_transform = {.values = {0.0f}};
+    GLfloat half_width = GAME_CAMERA_WIDTH * 0.5f;
+    GLfloat half_height = GAME_CAMERA_HEIGHT * 0.5f;
+    GLfloat camera_x = half_width;
+    GLfloat camera_y = half_height;
+    GLfloat screen_top = camera_y - half_height;
+    GLfloat screen_left = camera_x - half_width;
+    GLfloat screen_right = camera_x + half_width;
+    GLfloat screen_bottom = camera_y + half_height;
+    egl_ortho(&camera_transform, screen_left, screen_right, screen_top,
+              screen_bottom, 0.0f, 1.0f);
+
     // Render sprites
-    cs_sprite_shader_render(&state->sprite_shader, &state->camera_transform,
+    cs_sprite_shader_render(&state->sprite_shader, &camera_transform,
                             &state->sprite_atlas, state->sprite_count,
                             &state->sprite_buffer);
 
