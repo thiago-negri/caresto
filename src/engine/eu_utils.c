@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <sys/stat.h>
 
 #include <engine/el_log.h>
 #include <engine/eu_utils.h>
@@ -62,4 +63,11 @@ _err:
 _done:
     em_arena_restore_offset(arena, arena_offset);
     return rc;
+}
+
+long long eu_file_timestamp(const char *path) {
+    struct stat file_stat = {0};
+    stat(path, &file_stat);
+    long long timestamp = file_stat.st_mtime;
+    return timestamp;
 }

@@ -5,7 +5,6 @@
 #ifdef _WIN32
 
 #include <stdio.h>
-#include <sys/stat.h>
 
 #include <engine/el_log.h>
 #include <engine/eu_utils.h>
@@ -19,10 +18,7 @@ int ep_shared_load(const char *path, struct em_arena *arena,
 
     // Save DLL timestamp, we will use this to check whether we need to
     // reload it
-    // FIXME(tnegri): Extract to a eu_file_timestamp
-    struct stat file_stat = {0};
-    stat(path, &file_stat);
-    long long timestamp = file_stat.st_mtime;
+    long long timestamp = eu_file_timestamp(path);
 
     // Copy DLL to a new location to avoid locking the DLL we build
     // +2 ("-b") +1 (NULL terminator)
