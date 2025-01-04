@@ -60,17 +60,6 @@ int main(int argc, char *argv[]) {
     SDL_SetLogPriorities(SDL_LOG_PRIORITY_DEBUG);
 #endif
 
-#ifdef SHARED
-    struct p_shared_game shared_game = {0};
-    shared = p_shared_load("caresto.dll", &shared_game);
-    if (shared == NULL) {
-        rc = -1;
-        goto _err;
-    }
-    g_init_ptr = shared_game.g_init;
-    g_process_frame_ptr = shared_game.g_process_frame;
-#endif
-
     // Allocate persistent storage
     buffer = (unsigned char *)mm_alloc(MB_10);
     if (buffer == NULL) {
@@ -80,6 +69,16 @@ int main(int argc, char *argv[]) {
     }
 
     struct mm_arena arena = mm_arena_create(MB_10, buffer);
+
+#ifdef SHARED
+    struct p_shared_game shared_game = {0};
+    rc = p_shared_load("build/debug/bin/caresto.dll", &arena, &shared_game);
+    if (rc != 0) {
+        goto _err;
+    }
+    g_init_ptr = shared_game.g_init;
+    g_process_frame_ptr = shared_game.g_process_frame;
+#endif
 
     // Initialize SDL
     Uint32 sdl_flags = SDL_INIT_VIDEO;
