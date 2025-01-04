@@ -3,27 +3,23 @@
 
 #include <stdbool.h>
 
-#define T_TEST(x)                                                              \
-    void t_##x##_(int *t_done_called) {                                        \
-        const char *t_name = #x;                                               \
-        if (1)
+#define ET_TEST(x) void et_##x##_(const char *et_name, int *et_done_called)
 
-#define T_DONE                                                                 \
+#define ET_DONE                                                                \
     {                                                                          \
-        *t_done_called = 1;                                                    \
-        t_done(t_name);                                                        \
-    }                                                                          \
+        *et_done_called = 1;                                                   \
+        et_done(et_name);                                                      \
     }
 
-#define T_ASSERT(x)                                                            \
+#define ET_ASSERT(x)                                                           \
     {                                                                          \
-        if (!t_assert(t_name, #x, (x))) {                                      \
-            *t_done_called = 1;                                                \
+        if (!et_assert(et_name, #x, (x))) {                                    \
+            *et_done_called = 1;                                               \
             return;                                                            \
         }                                                                      \
     }
 
-bool t_assert(const char *test_name, const char *message, bool assertion);
-void t_done(const char *test_name);
+bool et_assert(const char *et_name, const char *message, bool assertion);
+void et_done(const char *et_name);
 
 #endif // ET_TEST_H

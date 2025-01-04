@@ -2,3 +2,5 @@
 -Iinclude
 -Isrc
 -Isrc-gen
+-DDEBUG
+-DSHARED

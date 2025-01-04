@@ -12,7 +12,7 @@
 #include <gen/glsl_geometry.h>
 #include <gen/glsl_vertex.h>
 
-void gl_identity(struct gl_mat4 *out) {
+void egl_identity(struct egl_mat4 *out) {
     out->ax = 1.0f;
     out->ay = 0.0f;
     out->az = 0.0f;
@@ -31,8 +31,8 @@ void gl_identity(struct gl_mat4 *out) {
     out->dw = 1.0f;
 }
 
-void gl_ortho(struct gl_mat4 *out, GLfloat left, GLfloat right, GLfloat top,
-              GLfloat bottom, GLfloat near, GLfloat far) {
+void egl_ortho(struct egl_mat4 *out, GLfloat left, GLfloat right, GLfloat top,
+               GLfloat bottom, GLfloat near, GLfloat far) {
     out->ax = 2.0f / (right - left);
     out->ay = 0.0f;
     out->az = 0.0f;
@@ -51,29 +51,29 @@ void gl_ortho(struct gl_mat4 *out, GLfloat left, GLfloat right, GLfloat top,
     out->dw = 1.0f;
 }
 
-T_TEST(ortho) {
-    struct gl_mat4 a = {.values = {0.0f}};
-    gl_ortho(&a, 0.0f, 360.0f, 0.0f, 640.0f, 0.0f, 1.0f);
-    T_ASSERT(a.ax >= 0.005555f && a.ax <= 0.005557f);
-    T_ASSERT(a.ay == 0.0f);
-    T_ASSERT(a.az == 0.0f);
-    T_ASSERT(a.aw == -1.0f);
-    T_ASSERT(a.bx == 0.0f);
-    T_ASSERT(a.by >= 0.003124f && a.by <= 0.003126f);
-    T_ASSERT(a.bz == 0.0f);
-    T_ASSERT(a.bw == 1.0f);
-    T_ASSERT(a.cx == 0.0f);
-    T_ASSERT(a.cy == 0.0f);
-    T_ASSERT(a.cz == -2.0f);
-    T_ASSERT(a.cw == -1.0f);
-    T_ASSERT(a.dx == 0.0f);
-    T_ASSERT(a.dy == 0.0f);
-    T_ASSERT(a.dz == 0.0f);
-    T_ASSERT(a.dw == 1.0f);
-    T_DONE;
+ET_TEST(ortho) {
+    struct egl_mat4 a = {.values = {0.0f}};
+    egl_ortho(&a, 0.0f, 360.0f, 0.0f, 640.0f, 0.0f, 1.0f);
+    ET_ASSERT(a.ax >= 0.005555f && a.ax <= 0.005557f);
+    ET_ASSERT(a.ay == 0.0f);
+    ET_ASSERT(a.az == 0.0f);
+    ET_ASSERT(a.aw == -1.0f);
+    ET_ASSERT(a.bx == 0.0f);
+    ET_ASSERT(a.by >= 0.003124f && a.by <= 0.003126f);
+    ET_ASSERT(a.bz == 0.0f);
+    ET_ASSERT(a.bw == 1.0f);
+    ET_ASSERT(a.cx == 0.0f);
+    ET_ASSERT(a.cy == 0.0f);
+    ET_ASSERT(a.cz == -2.0f);
+    ET_ASSERT(a.cw == -1.0f);
+    ET_ASSERT(a.dx == 0.0f);
+    ET_ASSERT(a.dy == 0.0f);
+    ET_ASSERT(a.dz == 0.0f);
+    ET_ASSERT(a.dw == 1.0f);
+    ET_DONE;
 }
 
-static const char *gl_shader_type_name(GLenum type) {
+static const char *egl_shader_type_name(GLenum type) {
     switch (type) {
     case GL_VERTEX_SHADER:
         return "vertex";
@@ -85,15 +85,15 @@ static const char *gl_shader_type_name(GLenum type) {
     return "unknown";
 }
 
-static int gl_shader_create(GLenum type, const GLchar *source,
-                            struct mm_arena *arena, GLuint *out_shader_id) {
+static int egl_shader_create(GLenum type, const GLchar *source,
+                             struct em_arena *arena, GLuint *out_shader_id) {
     int rc = 0;
     GLuint shader_id = 0;
 
     shader_id = glCreateShader(type);
     if (shader_id == 0) {
-        l_critical("Failed to create shader (type = %s).\n",
-                   gl_shader_type_name(type));
+        el_critical("Failed to create shader (type = %s).\n",
+                    egl_shader_type_name(type));
         rc = -1;
         goto _err;
     }
@@ -108,27 +108,27 @@ static int gl_shader_create(GLenum type, const GLchar *source,
     GLint compile_status = 0;
     glGetShaderiv(shader_id, GL_COMPILE_STATUS, &compile_status);
     if (compile_status != GL_TRUE) {
-        l_critical("GL: Failed to compile shader (type = %s).\n",
-                   gl_shader_type_name(type));
+        el_critical("GL: Failed to compile shader (type = %s).\n",
+                    egl_shader_type_name(type));
         GLint log_length = 0;
         // log_length includes the null terminator
         glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &log_length);
-        size_t offset = mm_arena_save_offset(arena);
-        char *log = mm_arena_alloc(arena, log_length);
+        size_t offset = em_arena_save_offset(arena);
+        char *log = em_arena_alloc(arena, log_length);
         if (log == NULL) {
-            l_critical(
+            el_critical(
                 "GL: Could not allocate memory to read log (length = %d).\n",
                 log_length);
         } else {
             glGetShaderInfoLog(shader_id, log_length, NULL, log);
             log[log_length] = 0;
-            l_critical("GL: Compile logs:\n%s\n", log);
-            mm_arena_restore_offset(arena, offset);
+            el_critical("GL: Compile logs:\n%s\n", log);
+            em_arena_restore_offset(arena, offset);
         }
         rc = -1;
         goto _err;
     }
-    l_debug("GL: Compiled %s shader.\n", gl_shader_type_name(type));
+    el_debug("GL: Compiled %s shader.\n", egl_shader_type_name(type));
 
     *out_shader_id = shader_id;
     goto _done;
@@ -142,27 +142,28 @@ _done:
     return rc;
 }
 
-int gl_program_create(struct mm_arena *arena, struct gl_program *out_program) {
+int egl_program_create(struct em_arena *arena,
+                       struct egl_program *out_program) {
     int rc = 0;
     GLuint program_id = 0;
     GLuint shader_vertex_id = 0;
     GLuint shader_geometry_id = 0;
     GLuint shader_fragment_id = 0;
 
-    rc = gl_shader_create(GL_VERTEX_SHADER, glsl_vertex_source, arena,
-                          &shader_vertex_id);
+    rc = egl_shader_create(GL_VERTEX_SHADER, glsl_vertex_source, arena,
+                           &shader_vertex_id);
     if (rc != 0) {
         goto _err;
     }
 
-    rc = gl_shader_create(GL_GEOMETRY_SHADER, glsl_geometry_source, arena,
-                          &shader_geometry_id);
+    rc = egl_shader_create(GL_GEOMETRY_SHADER, glsl_geometry_source, arena,
+                           &shader_geometry_id);
     if (rc != 0) {
         goto _err;
     }
 
-    rc = gl_shader_create(GL_FRAGMENT_SHADER, glsl_fragment_source, arena,
-                          &shader_fragment_id);
+    rc = egl_shader_create(GL_FRAGMENT_SHADER, glsl_fragment_source, arena,
+                           &shader_fragment_id);
     if (rc != 0) {
         goto _err;
     }
@@ -178,21 +179,21 @@ int gl_program_create(struct mm_arena *arena, struct gl_program *out_program) {
     GLint link_status = 0;
     glGetProgramiv(program_id, GL_LINK_STATUS, &link_status);
     if (link_status != GL_TRUE) {
-        l_critical("GL: Failed to link program.\n");
+        el_critical("GL: Failed to link program.\n");
         GLint log_length = 0;
         // log_length includes the null terminator
         glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &log_length);
-        size_t offset = mm_arena_save_offset(arena);
-        char *log = mm_arena_alloc(arena, log_length);
+        size_t offset = em_arena_save_offset(arena);
+        char *log = em_arena_alloc(arena, log_length);
         if (log == NULL) {
-            l_critical(
+            el_critical(
                 "GL: Could not allocate memory to read log (length = %d).\n",
                 log_length);
         } else {
             glGetProgramInfoLog(program_id, log_length, NULL, log);
             log[log_length] = 0;
-            l_critical("GL: Link logs:\n%s\n", log);
-            mm_arena_restore_offset(arena, offset);
+            el_critical("GL: Link logs:\n%s\n", log);
+            em_arena_restore_offset(arena, offset);
         }
         rc = -1;
         goto _err;
@@ -214,7 +215,7 @@ int gl_program_create(struct mm_arena *arena, struct gl_program *out_program) {
     GLint g_transform_mat_id =
         glGetUniformLocation(program_id, "g_transform_mat");
     if (g_transform_mat_id == -1) {
-        l_critical("GL: Can't find uniform 'g_transform_mat'.\n");
+        el_critical("GL: Can't find uniform 'g_transform_mat'.\n");
         rc = -1;
         goto _err;
     }
@@ -241,17 +242,17 @@ _done:
     return rc;
 }
 
-void gl_program_destroy(struct gl_program *program) {
+void egl_program_destroy(struct egl_program *program) {
     if (program->program_id != 0) {
         glDeleteProgram(program->program_id);
         program->program_id = 0;
     }
 }
 
-void gl_program_render(struct gl_program *program,
-                       struct gl_mat4 *g_transform_mat,
-                       struct gl_texture *texture, size_t sprite_count,
-                       struct gl_sprite_buffer *sprite_buffer) {
+void egl_program_render(struct egl_program *program,
+                        struct egl_mat4 *g_transform_mat,
+                        struct egl_texture *texture, size_t sprite_count,
+                        struct egl_sprite_buffer *sprite_buffer) {
     // Bind GL objects
     glUseProgram(program->program_id);
     glBindTexture(GL_TEXTURE_2D, texture->id);
@@ -268,28 +269,28 @@ void gl_program_render(struct gl_program *program,
     glUseProgram(0);
 }
 
-void gl_sprite_buffer_create(GLsizei count,
-                             struct gl_sprite_buffer *out_sprite_buffer) {
+void egl_sprite_buffer_create(GLsizei count,
+                              struct egl_sprite_buffer *out_sprite_buffer) {
     GLuint buffer_id = 0;
     GLuint vertex_array_id = 0;
 
     // Generate the VBO to be used
     glGenBuffers(1, &buffer_id);
     glBindBuffer(GL_ARRAY_BUFFER, buffer_id);
-    glBufferData(GL_ARRAY_BUFFER, count * sizeof(struct gl_sprite), NULL,
+    glBufferData(GL_ARRAY_BUFFER, count * sizeof(struct egl_sprite), NULL,
                  GL_DYNAMIC_DRAW);
 
     // Generate the VAO to be used
     glGenVertexArrays(1, &vertex_array_id);
     glBindVertexArray(vertex_array_id);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(struct gl_sprite),
-                          (void *)offsetof(struct gl_sprite, x));
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(struct egl_sprite),
+                          (void *)offsetof(struct egl_sprite, x));
     glEnableVertexAttribArray(0);
-    glVertexAttribIPointer(1, 2, GL_INT, sizeof(struct gl_sprite),
-                           (void *)offsetof(struct gl_sprite, w));
+    glVertexAttribIPointer(1, 2, GL_INT, sizeof(struct egl_sprite),
+                           (void *)offsetof(struct egl_sprite, w));
     glEnableVertexAttribArray(1);
-    glVertexAttribIPointer(2, 2, GL_INT, sizeof(struct gl_sprite),
-                           (void *)offsetof(struct gl_sprite, u));
+    glVertexAttribIPointer(2, 2, GL_INT, sizeof(struct egl_sprite),
+                           (void *)offsetof(struct egl_sprite, u));
     glEnableVertexAttribArray(2);
 
     // Reset GL objects
@@ -300,7 +301,7 @@ void gl_sprite_buffer_create(GLsizei count,
     out_sprite_buffer->vertex_array_id = vertex_array_id;
 }
 
-void gl_sprite_buffer_destroy(struct gl_sprite_buffer *sprite_buffer) {
+void egl_sprite_buffer_destroy(struct egl_sprite_buffer *sprite_buffer) {
     if (sprite_buffer->vertex_array_id != 0) {
         glDeleteVertexArrays(1, &sprite_buffer->vertex_array_id);
         sprite_buffer->vertex_array_id = 0;
@@ -311,14 +312,15 @@ void gl_sprite_buffer_destroy(struct gl_sprite_buffer *sprite_buffer) {
     }
 }
 
-void gl_sprite_buffer_data(struct gl_sprite_buffer *buffer, size_t count,
-                           struct gl_sprite *data) {
+void egl_sprite_buffer_data(struct egl_sprite_buffer *buffer, size_t count,
+                            struct egl_sprite *data) {
     glBindBuffer(GL_ARRAY_BUFFER, buffer->buffer_id);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, count * sizeof(struct gl_sprite), data);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, count * sizeof(struct egl_sprite),
+                    data);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-int gl_texture_load(const char *file_path, struct gl_texture *out_texture) {
+int egl_texture_load(const char *file_path, struct egl_texture *out_texture) {
     int rc = 0;
     GLuint texture_id = 0;
     unsigned char *image_data = NULL;
@@ -328,7 +330,7 @@ int gl_texture_load(const char *file_path, struct gl_texture *out_texture) {
     int channels = 0;
     image_data = stbi_load(file_path, &width, &height, &channels, 0);
     if (!image_data) {
-        l_critical("GL: Can't load image %s.\n", file_path);
+        el_critical("GL: Can't load image %s.\n", file_path);
         rc = -1;
         goto _err;
     }
@@ -359,16 +361,16 @@ _done:
     return rc;
 }
 
-void gl_texture_destroy(struct gl_texture *texture) {
+void egl_texture_destroy(struct egl_texture *texture) {
     if (texture->id != 0) {
         glDeleteTextures(1, &texture->id);
         texture->id = 0;
     }
 }
 
-void gl_debug_message_callback(GLenum source, GLenum type, GLuint id,
-                               GLenum severity, GLsizei length,
-                               const GLchar *message, const void *user_param) {
-    l_debug("GL: Callback: %d %d %d %d %s\n", source, type, id, severity,
-            message);
+void egl_debug_message_callback(GLenum source, GLenum type, GLuint id,
+                                GLenum severity, GLsizei length,
+                                const GLchar *message, const void *user_param) {
+    el_debug("GL: Callback: %d %d %d %d %s\n", source, type, id, severity,
+             message);
 }

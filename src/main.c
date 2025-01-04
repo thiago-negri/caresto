@@ -19,7 +19,7 @@
 #define MB_10 (10 * 1024 * 1024)
 #define MB_20 (20 * 1024 * 1024)
 
-// FIXME(tnegri): SPRITE_MAX is shared between main and g_game
+// FIXME(tnegri): SPRITE_MAX is shared between main and cg_game
 #define SPRITE_MAX 1024
 
 // Create our game window
@@ -41,12 +41,12 @@ int main(int argc, char *argv[]) {
     int rc = 0;
     SDL_Window *sdl_window = NULL;
     unsigned char *buffer = NULL;
-    struct gl_program program = {0};
-    struct gl_texture sprite_atlas = {0};
+    struct egl_program program = {0};
+    struct egl_texture sprite_atlas = {0};
     SDL_GLContext sdl_gl_context = NULL;
-    struct gl_sprite_buffer sprite_buffer = {0};
+    struct egl_sprite_buffer sprite_buffer = {0};
 #ifdef SHARED
-    p_shared shared = NULL;
+    ep_shared shared = NULL;
 #endif
 
     // App Metadata
@@ -68,32 +68,32 @@ int main(int argc, char *argv[]) {
 #endif
 
     // Allocate persistent storage
-    buffer = (unsigned char *)mm_alloc(MB_20);
+    buffer = (unsigned char *)em_alloc(MB_20);
     if (buffer == NULL) {
-        l_critical("OOM: Could not allocate memory.");
+        el_critical("OOM: Could not allocate memory.");
         rc = -1;
         goto _err;
     }
 
-    struct mm_arena persistent_storage = mm_arena_create(MB_10, buffer);
-    struct mm_arena transient_storage = mm_arena_create(MB_10, buffer + MB_10);
+    struct em_arena persistent_storage = em_arena_create(MB_10, buffer);
+    struct em_arena transient_storage = em_arena_create(MB_10, buffer + MB_10);
 
 #ifdef SHARED
-    struct p_shared_game shared_game = {0};
-    rc = p_shared_load("build/debug/bin/caresto.dll", &transient_storage,
-                       &shared_game);
+    struct ep_shared_game shared_game = {0};
+    rc = ep_shared_load("build/debug/bin/caresto.dll", &transient_storage,
+                        &shared_game);
     if (rc != 0) {
         goto _err;
     }
-    g_init_ptr = shared_game.g_init;
-    g_process_frame_ptr = shared_game.g_process_frame;
+    cg_init_ptr = shared_game.cg_init;
+    cg_process_frame_ptr = shared_game.cg_process_frame;
 #endif
 
     // Initialize SDL
     Uint32 sdl_flags = SDL_INIT_VIDEO;
     if (!SDL_Init(sdl_flags)) {
         const char *sdl_error = SDL_GetError();
-        l_critical("SDL: Could not initialize. %s\n", sdl_error);
+        el_critical("SDL: Could not initialize. %s\n", sdl_error);
         rc = -1;
         goto _err;
     }
@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
     sdl_window = create_sdl_window();
     if (sdl_window == NULL) {
         const char *sdl_error = SDL_GetError();
-        l_critical("SDL: Could not create window. %s\n", sdl_error);
+        el_critical("SDL: Could not create window. %s\n", sdl_error);
         rc = -1;
         goto _err;
     }
@@ -118,7 +118,7 @@ int main(int argc, char *argv[]) {
     sdl_gl_context = SDL_GL_CreateContext(sdl_window);
     if (sdl_gl_context == NULL) {
         const char *sdl_error = SDL_GetError();
-        l_critical("SDL: Could not create OpenGL context. %s\n", sdl_error);
+        el_critical("SDL: Could not create OpenGL context. %s\n", sdl_error);
         rc = -1;
         goto _err;
     }
@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
     GLenum glew_rc = glewInit();
     if (GLEW_OK != glew_rc) {
         const GLubyte *glew_error = glewGetErrorString(glew_rc);
-        l_critical("GL: Could not initialize glew. %s\n", glew_error);
+        el_critical("GL: Could not initialize glew. %s\n", glew_error);
         rc = -1;
         goto _err;
     }
@@ -137,20 +137,20 @@ int main(int argc, char *argv[]) {
     int gl_minor_version = 0;
     SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_major_version);
     SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_version);
-    l_debug("GL: Version %d.%d\n", gl_major_version, gl_minor_version);
+    el_debug("GL: Version %d.%d\n", gl_major_version, gl_minor_version);
 
     // Debug callback is only available in 4.3+
     if (gl_major_version > 4 ||
         (gl_major_version == 4 && gl_minor_version >= 3)) {
-        glDebugMessageCallback(gl_debug_message_callback, NULL);
+        glDebugMessageCallback(egl_debug_message_callback, NULL);
     }
 
-    rc = gl_program_create(&transient_storage, &program);
+    rc = egl_program_create(&transient_storage, &program);
     if (rc != 0) {
         goto _err;
     }
 
-    gl_sprite_buffer_create(SPRITE_MAX, &sprite_buffer);
+    egl_sprite_buffer_create(SPRITE_MAX, &sprite_buffer);
 
     // Set orthographic projection camera
     // 640x360 is the perfect res for pixel art games because it scales evenly
@@ -159,17 +159,17 @@ int main(int argc, char *argv[]) {
     // res.  GUI should be painted on the native res surface.
     GLfloat screen_width = 640.0f;
     GLfloat screen_height = 360.0f;
-    struct gl_mat4 camera_transform = {.values = {0.0f}};
-    gl_ortho(&camera_transform, 0.0f, screen_width, 0.0f, screen_height, 0.0f,
-             1.0f);
+    struct egl_mat4 camera_transform = {.values = {0.0f}};
+    egl_ortho(&camera_transform, 0.0f, screen_width, 0.0f, screen_height, 0.0f,
+              1.0f);
 
-    rc = gl_texture_load("assets/sprite_atlas.png", &sprite_atlas);
+    rc = egl_texture_load("assets/sprite_atlas.png", &sprite_atlas);
     if (rc != 0) {
         goto _err;
     }
 
     // Initialize game
-    void *game_data = g_init(&persistent_storage);
+    void *game_data = cg_init(&persistent_storage);
 
 #if SHARED
     Uint64 last_shared_lib_check = SDL_GetTicks();
@@ -186,38 +186,38 @@ int main(int argc, char *argv[]) {
 #ifdef SHARED
         if (current_tick - last_shared_lib_check > 5000) {
             last_shared_lib_check = current_tick;
-            bool reloaded = p_shared_reload(&transient_storage, &shared_game);
+            bool reloaded = ep_shared_reload(&transient_storage, &shared_game);
             if (reloaded) {
-                g_init_ptr = shared_game.g_init;
-                g_process_frame_ptr = shared_game.g_process_frame;
+                cg_init_ptr = shared_game.cg_init;
+                cg_process_frame_ptr = shared_game.cg_process_frame;
             }
         }
 #endif
 
         // Process game frame, game is responsible for writing to
         // the current OpenGL buffer
-        struct gl_frame frame = {
+        struct egl_frame frame = {
             .delta_time = delta_time,
             .sprite_buffer = &sprite_buffer,
             .program = &program,
             .camera_transform = &camera_transform,
             .sprite_atlas = &sprite_atlas,
         };
-        running = g_process_frame(&frame, game_data);
+        running = cg_process_frame(&frame, game_data);
 
         // Swap buffers
         SDL_GL_SwapWindow(sdl_window);
 
-        mm_arena_reset(&transient_storage);
+        em_arena_reset(&transient_storage);
     }
 
     goto _done;
 
 _err:
 _done:
-    gl_sprite_buffer_destroy(&sprite_buffer);
-    gl_program_destroy(&program);
-    gl_texture_destroy(&sprite_atlas);
+    egl_sprite_buffer_destroy(&sprite_buffer);
+    egl_program_destroy(&program);
+    egl_texture_destroy(&sprite_atlas);
     if (sdl_gl_context != NULL) {
         SDL_GL_DestroyContext(sdl_gl_context);
     }
@@ -225,10 +225,10 @@ _done:
         SDL_DestroyWindow(sdl_window);
     }
     SDL_Quit();
-    mm_free(buffer);
+    em_free(buffer);
 #if DEBUG
     if (shared != NULL) {
-        p_shared_free(shared);
+        ep_shared_free(shared);
     }
 #endif
     return rc;

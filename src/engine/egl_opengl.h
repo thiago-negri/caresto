@@ -8,12 +8,12 @@
 #include <engine/em_memory.h>
 
 // VAO and VBO are not linked to the program, but right now we only use it here
-struct gl_program {
+struct egl_program {
     GLuint program_id;
     GLint g_transform_mat_id;
 };
 
-struct gl_sprite {
+struct egl_sprite {
     // World position (top left)
     GLfloat x, y;
 
@@ -24,16 +24,16 @@ struct gl_sprite {
     GLint u, v;
 };
 
-struct gl_sprite_buffer {
+struct egl_sprite_buffer {
     GLuint vertex_array_id;
     GLuint buffer_id;
 };
 
-struct gl_texture {
+struct egl_texture {
     GLuint id;
 };
 
-struct gl_mat4 {
+struct egl_mat4 {
     union {
         GLfloat values[16];
         struct {
@@ -45,35 +45,35 @@ struct gl_mat4 {
     };
 };
 
-struct gl_frame {
+struct egl_frame {
     uint64_t delta_time;
-    struct gl_program *program;
-    struct gl_mat4 *camera_transform;
-    struct gl_texture *sprite_atlas;
-    struct gl_sprite_buffer *sprite_buffer;
+    struct egl_program *program;
+    struct egl_mat4 *camera_transform;
+    struct egl_texture *sprite_atlas;
+    struct egl_sprite_buffer *sprite_buffer;
 };
 
-int gl_program_create(struct mm_arena *arena, struct gl_program *out_program);
-void gl_program_destroy(struct gl_program *program);
-void gl_program_render(struct gl_program *program,
-                       struct gl_mat4 *g_transform_mat,
-                       struct gl_texture *texture, size_t sprite_count,
-                       struct gl_sprite_buffer *sprite_buffer);
+int egl_program_create(struct em_arena *arena, struct egl_program *out_program);
+void egl_program_destroy(struct egl_program *program);
+void egl_program_render(struct egl_program *program,
+                        struct egl_mat4 *g_transform_mat,
+                        struct egl_texture *texture, size_t sprite_count,
+                        struct egl_sprite_buffer *sprite_buffer);
 
-void gl_sprite_buffer_create(GLsizei count,
-                             struct gl_sprite_buffer *out_sprite_buffer);
-void gl_sprite_buffer_destroy(struct gl_sprite_buffer *buffer);
-void gl_sprite_buffer_data(struct gl_sprite_buffer *buffer, size_t count,
-                           struct gl_sprite *data);
+void egl_sprite_buffer_create(GLsizei count,
+                              struct egl_sprite_buffer *out_sprite_buffer);
+void egl_sprite_buffer_destroy(struct egl_sprite_buffer *buffer);
+void egl_sprite_buffer_data(struct egl_sprite_buffer *buffer, size_t count,
+                            struct egl_sprite *data);
 
-int gl_texture_load(const char *file_path, struct gl_texture *out_texture);
-void gl_texture_destroy(struct gl_texture *texture);
+int egl_texture_load(const char *file_path, struct egl_texture *out_texture);
+void egl_texture_destroy(struct egl_texture *texture);
 
-void gl_ortho(struct gl_mat4 *out, GLfloat left, GLfloat right, GLfloat top,
-              GLfloat bottom, GLfloat near, GLfloat far);
-void gl_identity(struct gl_mat4 *out);
+void egl_ortho(struct egl_mat4 *out, GLfloat left, GLfloat right, GLfloat top,
+               GLfloat bottom, GLfloat near, GLfloat far);
+void egl_identity(struct egl_mat4 *out);
 
-void gl_debug_message_callback(GLenum source, GLenum type, GLuint id,
+void egl_debug_message_callback(GLenum source, GLenum type, GLuint id,
                                 GLenum severity, GLsizei length,
                                 const GLchar *message, const void *user_param);
 

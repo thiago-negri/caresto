@@ -6,25 +6,25 @@
 //
 // ALLOC
 //
-void *mm_alloc(size_t size) {
+void *em_alloc(size_t size) {
     void *ptr = malloc(size);
     return ptr;
 }
 
-void mm_free(void *ptr) { free(ptr); }
+void em_free(void *ptr) { free(ptr); }
 
 //
 // ARENA
 //
-struct mm_arena mm_arena_create(size_t size, unsigned char *buffer) {
-    return (struct mm_arena){
+struct em_arena em_arena_create(size_t size, unsigned char *buffer) {
+    return (struct em_arena){
         .offset = 0,
         .size = size,
         .buffer = buffer,
     };
 }
 
-void *mm_arena_alloc(struct mm_arena *a, size_t size) {
+void *em_arena_alloc(struct em_arena *a, size_t size) {
     size_t free_space = a->size - a->offset;
     if (size > free_space) {
         return NULL;
@@ -34,62 +34,62 @@ void *mm_arena_alloc(struct mm_arena *a, size_t size) {
     return ptr;
 }
 
-void mm_arena_reset(struct mm_arena *a) { a->offset = 0; }
+void em_arena_reset(struct em_arena *a) { a->offset = 0; }
 
-void mm_arena_destroy(struct mm_arena *a) {
+void em_arena_destroy(struct em_arena *a) {
     a->offset = 0;
     a->size = 0;
     a->buffer = NULL;
 }
 
-size_t mm_arena_save_offset(struct mm_arena *a) { return a->offset; }
+size_t em_arena_save_offset(struct em_arena *a) { return a->offset; }
 
 /// FIXME(tnegri): arena restore
 /// This is a bit dangerous when the arena is passed around.  Probably not worth
 /// it.  Remove?
-void mm_arena_restore_offset(struct mm_arena *a, size_t offset) {
+void em_arena_restore_offset(struct em_arena *a, size_t offset) {
     a->offset = offset;
 }
 
-T_TEST(arena) {
+ET_TEST(arena) {
     unsigned char buffer[10];
 
-    struct mm_arena arena = mm_arena_create(10, buffer);
-    T_ASSERT(arena.offset == 0);
-    T_ASSERT(arena.size == 10);
-    T_ASSERT(arena.buffer == buffer);
+    struct em_arena arena = em_arena_create(10, buffer);
+    ET_ASSERT(arena.offset == 0);
+    ET_ASSERT(arena.size == 10);
+    ET_ASSERT(arena.buffer == buffer);
 
-    int *first_int = (int *)mm_arena_alloc(&arena, 4);
-    T_ASSERT(first_int != NULL);
-    T_ASSERT(arena.offset == 4);
+    int *first_int = (int *)em_arena_alloc(&arena, 4);
+    ET_ASSERT(first_int != NULL);
+    ET_ASSERT(arena.offset == 4);
 
-    size_t offset = mm_arena_save_offset(&arena);
-    T_ASSERT(offset == 4);
+    size_t offset = em_arena_save_offset(&arena);
+    ET_ASSERT(offset == 4);
 
-    int *second_int = (int *)mm_arena_alloc(&arena, 4);
-    T_ASSERT(second_int != NULL);
-    T_ASSERT(arena.offset == 8);
+    int *second_int = (int *)em_arena_alloc(&arena, 4);
+    ET_ASSERT(second_int != NULL);
+    ET_ASSERT(arena.offset == 8);
 
     // OOM
-    int *third_int = (int *)mm_arena_alloc(&arena, 4);
-    T_ASSERT(third_int == NULL);
-    T_ASSERT(arena.offset == 8);
+    int *third_int = (int *)em_arena_alloc(&arena, 4);
+    ET_ASSERT(third_int == NULL);
+    ET_ASSERT(arena.offset == 8);
 
-    mm_arena_restore_offset(&arena, offset);
-    T_ASSERT(arena.offset == 4);
+    em_arena_restore_offset(&arena, offset);
+    ET_ASSERT(arena.offset == 4);
 
-    int *fourth_int = (int *)mm_arena_alloc(&arena, 4);
-    T_ASSERT(second_int != NULL);
-    T_ASSERT(arena.offset == 8);
+    int *fourth_int = (int *)em_arena_alloc(&arena, 4);
+    ET_ASSERT(second_int != NULL);
+    ET_ASSERT(arena.offset == 8);
 
     // 2nd and 4th share the same memory
     *second_int = 2;
-    T_ASSERT(*fourth_int == 2);
+    ET_ASSERT(*fourth_int == 2);
 
-    mm_arena_destroy(&arena);
-    T_ASSERT(arena.offset == 0);
-    T_ASSERT(arena.size == 0);
-    T_ASSERT(arena.buffer == NULL);
+    em_arena_destroy(&arena);
+    ET_ASSERT(arena.offset == 0);
+    ET_ASSERT(arena.size == 0);
+    ET_ASSERT(arena.buffer == NULL);
 
-    T_DONE;
+    ET_DONE;
 }
