@@ -50,8 +50,12 @@ bool g_process_frame(struct gl_frame *frame, void *data) {
 
     // Move sprite
     state->sprites[0].x += frame->delta_time / 100.0f;
+    state->sprites[0].y -= frame->delta_time / 100.0f;
     if (state->sprites[0].x > 100.0f) {
         state->sprites[0].x = 0.0f;
+    }
+    if (state->sprites[0].y < -100.0f) {
+        state->sprites[0].y = 0.0f;
     }
 
     // Update the VBO

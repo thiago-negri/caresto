@@ -1,3 +1,4 @@
+#include "SDL3/SDL_timer.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -17,6 +18,8 @@
 #include <caresto/g_game.h>
 
 #define MB_10 (10 * 1024 * 1024)
+#define MB_20 (20 * 1024 * 1024)
+
 // FIXME(tnegri): SPRITE_MAX is shared between main and g_game
 #define SPRITE_MAX 1024
 
@@ -61,18 +64,20 @@ int main(int argc, char *argv[]) {
 #endif
 
     // Allocate persistent storage
-    buffer = (unsigned char *)mm_alloc(MB_10);
+    buffer = (unsigned char *)mm_alloc(MB_20);
     if (buffer == NULL) {
-        l_critical("OOM: Could not create arena.");
+        l_critical("OOM: Could not allocate memory.");
         rc = -1;
         goto _err;
     }
 
-    struct mm_arena arena = mm_arena_create(MB_10, buffer);
+    struct mm_arena persistent_storage = mm_arena_create(MB_10, buffer);
+    struct mm_arena transient_storage = mm_arena_create(MB_10, buffer + MB_10);
 
 #ifdef SHARED
     struct p_shared_game shared_game = {0};
-    rc = p_shared_load("build/debug/bin/caresto.dll", &arena, &shared_game);
+    rc = p_shared_load("build/debug/bin/caresto.dll", &transient_storage,
+                       &shared_game);
     if (rc != 0) {
         goto _err;
     }
@@ -136,7 +141,7 @@ int main(int argc, char *argv[]) {
         glDebugMessageCallback(gl_debug_message_callback, NULL);
     }
 
-    rc = gl_program_create(&arena, &program);
+    rc = gl_program_create(&transient_storage, &program);
     if (rc != 0) {
         goto _err;
     }
@@ -160,7 +165,11 @@ int main(int argc, char *argv[]) {
     }
 
     // Initialize game
-    void *game_data = g_init(&arena);
+    void *game_data = g_init(&persistent_storage);
+
+#if SHARED
+    Uint64 last_shared_lib_check = SDL_GetTicks();
+#endif // SHARED
 
     // Main event loop
     bool running = true;
@@ -169,6 +178,17 @@ int main(int argc, char *argv[]) {
         Uint64 current_tick = SDL_GetTicks();
         Uint64 delta_time = current_tick - last_tick;
         last_tick = current_tick;
+
+#ifdef SHARED
+        if (current_tick - last_shared_lib_check > 5000) {
+            last_shared_lib_check = current_tick;
+            bool reloaded = p_shared_reload(&transient_storage, &shared_game);
+            if (reloaded) {
+                g_init_ptr = shared_game.g_init;
+                g_process_frame_ptr = shared_game.g_process_frame;
+            }
+        }
+#endif
 
         // Process game frame, game is responsible for writing to
         // the current OpenGL buffer
@@ -183,6 +203,8 @@ int main(int argc, char *argv[]) {
 
         // Swap buffers
         SDL_GL_SwapWindow(sdl_window);
+
+        mm_arena_reset(&transient_storage);
     }
 
     goto _done;
