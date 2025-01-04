@@ -1,4 +1,5 @@
 #include "SDL3/SDL_timer.h"
+#include "SDL3/SDL_video.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -30,6 +31,11 @@ SDL_Window *create_sdl_window() {
     int height = 720;
     Uint32 flags = SDL_WINDOW_OPENGL;
     SDL_Window *sdl_window = SDL_CreateWindow(title, width, height, flags);
+
+#ifdef DEBUG
+    SDL_SetWindowPosition(sdl_window, 1250, 40);
+#endif
+
     return sdl_window;
 }
 
