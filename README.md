@@ -73,6 +73,10 @@ no botão "X" da janela do Windows ou apertando a tecla Q no seu teclado.
 Se alterar algum fonte e rodar o `build.sh` de novo, apenas os fontes alterados
 vão ser recompilados.
 
+Se a alteração for apenas nos arquivos em `src/caresto`, pode recompilar com `build.sh build`
+sem fechar o jogo, que ele irá recarregar o código sozinho.  Alterações em 
+`src/engine` e `src/main.c` precisam estar com o jogo fechado pra conseguir recompilar.
+
 O executável fica em `build/debug/bin`, junto com as DLLs que precisa e os
 arquivos de licença das bibliotecas utilizadas.
 
