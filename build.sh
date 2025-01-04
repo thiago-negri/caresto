@@ -81,7 +81,7 @@ if [ $arg_release -eq 0 ]; then
     OBJ_FILES_TO_LINK_ARR+=("$OBJ_CARESTO_PATH/*.o")
 else
     LINK_FLAGS_ARR+=("-Xlinker /SUBSYSTEM:CONSOLE")
-    BUILD_TYPE_FLAGS="-fsanitize=address -g -DDEBUG"
+    BUILD_TYPE_FLAGS="-fsanitize=address -g -DDEBUG -DSHARED"
 fi
 
 LINK_FLAGS="${LINK_FLAGS_ARR[*]}"

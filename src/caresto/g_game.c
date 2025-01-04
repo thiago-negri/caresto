@@ -30,7 +30,7 @@ void *g_init(struct mm_arena *persistent_storage) {
     return (void *)state;
 }
 
-bool g_process_frame(struct g_frame *frame, void *data) {
+bool g_process_frame(struct gl_frame *frame, void *data) {
     struct g_state *state = (struct g_state *)data;
 
     // Handle input

@@ -1,6 +1,8 @@
 #ifndef GL_OPENGL_H
 #define GL_OPENGL_H
 
+#include <stdint.h>
+
 #include <GL/glew.h>
 
 #include <engine/mm_memory_management.h>
@@ -41,6 +43,14 @@ struct gl_mat4 {
             GLfloat aw, bw, cw, dw;
         };
     };
+};
+
+struct gl_frame {
+    uint64_t delta_time;
+    struct gl_program *program;
+    struct gl_mat4 *camera_transform;
+    struct gl_texture *sprite_atlas;
+    struct gl_sprite_buffer *sprite_buffer;
 };
 
 int gl_program_create(struct mm_arena *arena, struct gl_program *out_program);

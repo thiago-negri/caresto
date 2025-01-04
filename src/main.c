@@ -11,6 +11,7 @@
 #include <engine/gl_opengl.h>
 #include <engine/l_log.h>
 #include <engine/mm_memory_management.h>
+#include <engine/p_platform.h>
 
 #define CARESTO_MAIN
 #include <caresto/g_game.h>
@@ -18,45 +19,6 @@
 #define MB_10 (10 * 1024 * 1024)
 // FIXME(tnegri): SPRITE_MAX is shared between main and g_game
 #define SPRITE_MAX 1024
-
-#if defined(DEBUG) && defined(_WIN32)
-#include <windows.h>
-
-void *shared_load(void) {
-    HMODULE dll = LoadLibraryA("caresto.dll");
-    if (dll == NULL) {
-        l_critical("WIN: Could not load caresto.dll.\n");
-        goto _err;
-    }
-    // FIXME(tnegri): Atomic
-    g_init_ptr = (void *(*)(struct mm_arena *))GetProcAddress(dll, "g_init");
-    if (g_init_ptr == NULL) {
-        l_critical("WIN: Could not find g_init.\n");
-        goto _err;
-    }
-    g_process_frame_ptr = (bool (*)(struct g_frame *, void *))GetProcAddress(
-        dll, "g_process_frame");
-    if (g_init_ptr == NULL) {
-        l_critical("WIN: Could not find g_process_frame.\n");
-        goto _err;
-    }
-    l_debug("WIN: Loaded caresto.dll.\n");
-    goto _done;
-
-_err:
-    if (dll != NULL) {
-        FreeLibrary(dll);
-    }
-    g_init_ptr = NULL;
-    g_process_frame_ptr = NULL;
-    return NULL;
-
-_done:
-    return (void *)dll;
-}
-
-void shared_free(void *dll) { FreeLibrary((HMODULE)dll); }
-#endif // defined(DEBUG) && defined(_WIN32)
 
 // Create our game window
 SDL_Window *create_sdl_window() {
@@ -76,8 +38,8 @@ int main(int argc, char *argv[]) {
     struct gl_texture sprite_atlas = {0};
     SDL_GLContext sdl_gl_context = NULL;
     struct gl_sprite_buffer sprite_buffer = {0};
-#ifdef DEBUG
-    void *shared = NULL;
+#ifdef SHARED
+    p_shared shared = NULL;
 #endif
 
     // App Metadata
@@ -96,12 +58,17 @@ int main(int argc, char *argv[]) {
 
 #ifdef DEBUG
     SDL_SetLogPriorities(SDL_LOG_PRIORITY_DEBUG);
+#endif
 
-    shared = shared_load();
+#ifdef SHARED
+    struct p_shared_game shared_game = {0};
+    shared = p_shared_load("caresto.dll", &shared_game);
     if (shared == NULL) {
         rc = -1;
         goto _err;
     }
+    g_init_ptr = shared_game.g_init;
+    g_process_frame_ptr = shared_game.g_process_frame;
 #endif
 
     // Allocate persistent storage
@@ -206,7 +173,7 @@ int main(int argc, char *argv[]) {
 
         // Process game frame, game is responsible for writing to
         // the current OpenGL buffer
-        struct g_frame frame = {
+        struct gl_frame frame = {
             .delta_time = delta_time,
             .sprite_buffer = &sprite_buffer,
             .program = &program,
@@ -236,7 +203,7 @@ _done:
     mm_free(buffer);
 #if DEBUG
     if (shared != NULL) {
-        shared_free(shared);
+        p_shared_free(shared);
     }
 #endif
     return rc;
