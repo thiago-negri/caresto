@@ -19,9 +19,9 @@
 // FIXME(tnegri): SPRITE_MAX is shared between main and g_game
 #define SPRITE_MAX 1024
 
-#ifdef DEBUG
-#ifdef _WIN32
+#if defined(DEBUG) && defined(_WIN32)
 #include <windows.h>
+
 void *shared_load(void) {
     HMODULE dll = LoadLibraryA("caresto.dll");
     if (dll == NULL) {
@@ -54,9 +54,9 @@ _err:
 _done:
     return (void *)dll;
 }
+
 void shared_free(void *dll) { FreeLibrary((HMODULE)dll); }
-#endif // _WIN32
-#endif // DEBUG
+#endif // defined(DEBUG) && defined(_WIN32)
 
 // Create our game window
 SDL_Window *create_sdl_window() {

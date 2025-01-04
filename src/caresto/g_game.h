@@ -18,9 +18,9 @@ struct g_frame {
     struct gl_sprite_buffer *sprite_buffer;
 };
 
-#ifdef DEBUG
+// FIXME(tnegri): How to avoid having to declare those twice?
 
-#   ifdef CARESTO_MAIN
+#if defined(DEBUG) && defined(CARESTO_MAIN)
 
 void *(*g_init_ptr)(struct mm_arena *persistent_storage);
 bool (*g_process_frame_ptr)(struct g_frame *frame, void *data);
@@ -33,24 +33,17 @@ bool g_process_frame(struct g_frame *frame, void *data) {
     return g_process_frame_ptr(frame, data);
 }
 
-#   else
+#else
 
-#       ifdef _WIN32
-#           define DLLEXPORT __declspec(dllexport)
-#       else
-#           define DLLEXPORT
-#       endif // _WIN32
+#    if defined(DEBUG) && defined(_WIN32)
+#        define DLLEXPORT __declspec(dllexport)
+#    else
+#        define DLLEXPORT
+#    endif // defined(DEBUG) && defined(_WIN32)
 
 DLLEXPORT void *g_init(struct mm_arena *persistent_storage);
 DLLEXPORT bool g_process_frame(struct g_frame *frame, void *data);
 
-#   endif // CARESTO_MAIN
-
-#else
-
-void *g_init(struct mm_arena *persistent_storage);
-bool g_process_frame(struct g_frame *frame, void *data);
-
-#endif // DEBUG
+#endif // defined(DEBUG) && defined(CARESTO_MAIN)
 
 #endif // G_GAME_H
