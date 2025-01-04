@@ -11,16 +11,25 @@
 
 #if defined(SHARED) && defined(CARESTO_MAIN)
 
-void *(*cg_init_ptr)(struct em_arena *persistent_storage);
-bool (*cg_process_frame_ptr)(struct egl_frame *frame, void *data);
+int (*cg_init_ptr)(void **, struct em_arena *, struct em_arena *);
+void (*cg_reload_ptr)(void *, struct em_arena *);
+bool (*cg_frame_ptr)(void *, struct egl_frame *);
+void (*cg_destroy_ptr)(void *);
 
-void *cg_init(struct em_arena *persistent_storage) {
-    return cg_init_ptr(persistent_storage);
+int cg_init(void **out_data, struct em_arena *persistent_storage,
+            struct em_arena *transient_storage) {
+    return cg_init_ptr(out_data, persistent_storage, transient_storage);
 }
 
-bool cg_process_frame(struct egl_frame *frame, void *data) {
-    return cg_process_frame_ptr(frame, data);
+void cg_reload(void *data, struct em_arena *transient_storage) {
+    return cg_reload_ptr(data, transient_storage);
 }
+
+bool cg_frame(void *data, struct egl_frame *frame) {
+    return cg_frame_ptr(data, frame);
+}
+
+void cg_destroy(void *data) { cg_destroy_ptr(data); }
 
 #else
 
@@ -30,8 +39,11 @@ bool cg_process_frame(struct egl_frame *frame, void *data) {
 #define DLLEXPORT
 #endif // defined(SHARED) && defined(_WIN32)
 
-DLLEXPORT void *cg_init(struct em_arena *persistent_storage);
-DLLEXPORT bool cg_process_frame(struct egl_frame *frame, void *data);
+DLLEXPORT int cg_init(void **out_data, struct em_arena *persistent_storage,
+                      struct em_arena *transient_storage);
+DLLEXPORT void cg_reload(void *data, struct em_arena *transient_storage);
+DLLEXPORT bool cg_frame(void *data, struct egl_frame *frame);
+DLLEXPORT void cg_destroy(void *data);
 
 #endif // defined(SHARED) && defined(CARESTO_MAIN)
 

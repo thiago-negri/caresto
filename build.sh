@@ -54,8 +54,11 @@ GEN_PATH=src-gen
 
 INCLUDE_PATH=include
 
-mapfile COMPILE_FLAGS_ARR < compile_flags.txt
-COMPILE_FLAGS="${COMPILE_FLAGS_ARR[*]}"
+if [ $arg_release -eq 0 ]; then
+    mapfile COMPILE_FLAGS_ARR < compile_flags_release.txt
+else
+    mapfile COMPILE_FLAGS_ARR < compile_flags.txt
+fi
 
 LINK_FLAGS_ARR=(
     "-Llib/windows/SDL3/x64"
@@ -86,6 +89,7 @@ fi
 
 LINK_FLAGS="${LINK_FLAGS_ARR[*]}"
 OBJ_FILES_TO_LINK="${OBJ_FILES_TO_LINK_ARR[*]}"
+COMPILE_FLAGS="${COMPILE_FLAGS_ARR[*]}"
 
 
 #
@@ -214,6 +218,9 @@ if [ $arg_build -eq 0 ]; then
             echo "// This file is generated. Do not change it." > $gen_file
             echo "#ifndef _GLSL_${module}_H" >> $gen_file
             echo "#define _GLSL_${module}_H" >> $gen_file
+            echo "const long long glsl_${module}_timestamp =" >> $gen_file
+            date +%s >> $gen_file
+            echo ";" >> $gen_file
             echo "const char *glsl_${module}_source =" >> $gen_file
             sed -E 's/(.*)/"\1\\n"/' $glsl_source >> $gen_file
             echo ";" >> $gen_file

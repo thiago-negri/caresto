@@ -48,17 +48,31 @@ int ep_shared_load(const char *path, struct em_arena *arena,
         goto _err;
     }
 
-    cg_init_fn g_init_ptr = (cg_init_fn)GetProcAddress(dll, "cg_init");
-    if (g_init_ptr == NULL) {
+    cg_init_fn cg_init_ptr = (cg_init_fn)GetProcAddress(dll, "cg_init");
+    if (cg_init_ptr == NULL) {
         el_critical("WIN: Could not find cg_init.\n");
         rc = -1;
         goto _err;
     }
 
-    cg_process_frame_fn g_process_frame_ptr =
-        (cg_process_frame_fn)GetProcAddress(dll, "cg_process_frame");
-    if (g_process_frame_ptr == NULL) {
-        el_critical("WIN: Could not find cg_process_frame.\n");
+    cg_reload_fn cg_reload_ptr = (cg_reload_fn)GetProcAddress(dll, "cg_reload");
+    if (cg_reload_ptr == NULL) {
+        el_critical("WIN: Could not find cg_reload.\n");
+        rc = -1;
+        goto _err;
+    }
+
+    cg_frame_fn cg_frame_ptr = (cg_frame_fn)GetProcAddress(dll, "cg_frame");
+    if (cg_frame_ptr == NULL) {
+        el_critical("WIN: Could not find cg_frame.\n");
+        rc = -1;
+        goto _err;
+    }
+
+    cg_destroy_fn cg_destroy_ptr =
+        (cg_destroy_fn)GetProcAddress(dll, "cg_destroy");
+    if (cg_frame_ptr == NULL) {
+        el_critical("WIN: Could not find cg_destroy.\n");
         rc = -1;
         goto _err;
     }
@@ -68,8 +82,10 @@ int ep_shared_load(const char *path, struct em_arena *arena,
     out_shared_game->shared_lib = dll;
     out_shared_game->timestamp = timestamp;
     out_shared_game->is_red = !out_shared_game->is_red;
-    out_shared_game->cg_init = g_init_ptr;
-    out_shared_game->cg_process_frame = g_process_frame_ptr;
+    out_shared_game->cg_init = cg_init_ptr;
+    out_shared_game->cg_reload = cg_reload_ptr;
+    out_shared_game->cg_frame = cg_frame_ptr;
+    out_shared_game->cg_destroy = cg_destroy_ptr;
     goto _done;
 
 _err:
@@ -108,7 +124,9 @@ bool ep_shared_reload(struct em_arena *arena,
     out_shared_game->timestamp = new_shared_game.timestamp;
     out_shared_game->is_red = new_shared_game.is_red;
     out_shared_game->cg_init = new_shared_game.cg_init;
-    out_shared_game->cg_process_frame = new_shared_game.cg_process_frame;
+    out_shared_game->cg_reload = new_shared_game.cg_reload;
+    out_shared_game->cg_frame = new_shared_game.cg_frame;
+    out_shared_game->cg_destroy = new_shared_game.cg_destroy;
     return true;
 }
 

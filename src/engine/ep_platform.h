@@ -16,8 +16,10 @@ typedef HMODULE ep_shared;
 #endif // _WIN32
 
 // FIXME(tnegri): Fix prefix, these should not be cg_
-typedef void *(*cg_init_fn)(struct em_arena *);
-typedef bool (*cg_process_frame_fn)(struct egl_frame *, void *);
+typedef int (*cg_init_fn)(void **, struct em_arena *, struct em_arena *);
+typedef void (*cg_reload_fn)(void *, struct em_arena *);
+typedef bool (*cg_frame_fn)(void *, struct egl_frame *);
+typedef void (*cg_destroy_fn)(void *);
 
 struct ep_shared_game {
     ep_shared shared_lib;
@@ -25,7 +27,9 @@ struct ep_shared_game {
     const char *path;
     bool is_red;
     cg_init_fn cg_init;
-    cg_process_frame_fn cg_process_frame;
+    cg_reload_fn cg_reload;
+    cg_frame_fn cg_frame;
+    cg_destroy_fn cg_destroy;
 };
 
 int ep_shared_load(const char *path, struct em_arena *arena,

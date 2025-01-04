@@ -2,6 +2,7 @@
 #include <sys/stat.h>
 
 #include <engine/el_log.h>
+#include <engine/et_test.h>
 #include <engine/eu_utils.h>
 
 int eu_copy_file(const char *from, const char *to, struct em_arena *arena) {
@@ -70,4 +71,18 @@ long long eu_file_timestamp(const char *path) {
     stat(path, &file_stat);
     long long timestamp = file_stat.st_mtime;
     return timestamp;
+}
+
+long long eu_max(long long a, long long b, long long c) {
+    return a > b ? a > c ? a : c : b > c ? b : c;
+}
+
+ET_TEST(eu_max) {
+    ET_ASSERT(eu_max(1, 2, 3) == 3);
+    ET_ASSERT(eu_max(2, 1, 3) == 3);
+    ET_ASSERT(eu_max(1, 3, 2) == 3);
+    ET_ASSERT(eu_max(2, 3, 1) == 3);
+    ET_ASSERT(eu_max(3, 1, 2) == 3);
+    ET_ASSERT(eu_max(3, 2, 1) == 3);
+    ET_DONE;
 }

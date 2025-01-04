@@ -7,10 +7,7 @@
 #include <engine/el_log.h>
 #include <engine/em_memory.h>
 #include <engine/et_test.h>
-
-#include <gen/glsl_fragment.h>
-#include <gen/glsl_geometry.h>
-#include <gen/glsl_vertex.h>
+#include <engine/eu_utils.h>
 
 void egl_identity(struct egl_mat4 *out) {
     out->ax = 1.0f;
@@ -85,8 +82,8 @@ static const char *egl_shader_type_name(GLenum type) {
     return "unknown";
 }
 
-static int egl_shader_create(GLenum type, const GLchar *source,
-                             struct em_arena *arena, GLuint *out_shader_id) {
+int egl_shader_create(GLenum type, const GLchar *source, struct em_arena *arena,
+                      GLuint *out_shader_id) {
     int rc = 0;
     GLuint shader_id = 0;
 
@@ -142,37 +139,13 @@ _done:
     return rc;
 }
 
-int egl_program_create(struct em_arena *arena,
-                       struct egl_program *out_program) {
+int egl_program_link(GLuint program_id, size_t shader_count, GLuint *shaders,
+                     struct em_arena *arena) {
     int rc = 0;
-    GLuint program_id = 0;
-    GLuint shader_vertex_id = 0;
-    GLuint shader_geometry_id = 0;
-    GLuint shader_fragment_id = 0;
 
-    rc = egl_shader_create(GL_VERTEX_SHADER, glsl_vertex_source, arena,
-                           &shader_vertex_id);
-    if (rc != 0) {
-        goto _err;
+    for (size_t i = 0; i < shader_count; i++) {
+        glAttachShader(program_id, shaders[i]);
     }
-
-    rc = egl_shader_create(GL_GEOMETRY_SHADER, glsl_geometry_source, arena,
-                           &shader_geometry_id);
-    if (rc != 0) {
-        goto _err;
-    }
-
-    rc = egl_shader_create(GL_FRAGMENT_SHADER, glsl_fragment_source, arena,
-                           &shader_fragment_id);
-    if (rc != 0) {
-        goto _err;
-    }
-
-    program_id = glCreateProgram();
-
-    glAttachShader(program_id, shader_vertex_id);
-    glAttachShader(program_id, shader_geometry_id);
-    glAttachShader(program_id, shader_fragment_id);
 
     glLinkProgram(program_id);
 
@@ -196,77 +169,13 @@ int egl_program_create(struct em_arena *arena,
             em_arena_restore_offset(arena, offset);
         }
         rc = -1;
-        goto _err;
     }
 
-    glDetachShader(program_id, shader_vertex_id);
-    glDetachShader(program_id, shader_geometry_id);
-    glDetachShader(program_id, shader_fragment_id);
-
-    glDeleteShader(shader_vertex_id);
-    shader_vertex_id = 0;
-
-    glDeleteShader(shader_geometry_id);
-    shader_geometry_id = 0;
-
-    glDeleteShader(shader_fragment_id);
-    shader_fragment_id = 0;
-
-    GLint g_transform_mat_id =
-        glGetUniformLocation(program_id, "g_transform_mat");
-    if (g_transform_mat_id == -1) {
-        el_critical("GL: Can't find uniform 'g_transform_mat'.\n");
-        rc = -1;
-        goto _err;
+    for (size_t i = 0; i < shader_count; i++) {
+        glDetachShader(program_id, shaders[i]);
     }
 
-    out_program->program_id = program_id;
-    out_program->g_transform_mat_id = g_transform_mat_id;
-    goto _done;
-
-_err:
-    if (shader_vertex_id != 0) {
-        glDeleteShader(shader_vertex_id);
-    }
-    if (shader_geometry_id != 0) {
-        glDeleteShader(shader_geometry_id);
-    }
-    if (shader_fragment_id != 0) {
-        glDeleteShader(shader_fragment_id);
-    }
-    if (program_id != 0) {
-        glDeleteProgram(program_id);
-    }
-
-_done:
     return rc;
-}
-
-void egl_program_destroy(struct egl_program *program) {
-    if (program->program_id != 0) {
-        glDeleteProgram(program->program_id);
-        program->program_id = 0;
-    }
-}
-
-void egl_program_render(struct egl_program *program,
-                        struct egl_mat4 *g_transform_mat,
-                        struct egl_texture *texture, size_t sprite_count,
-                        struct egl_sprite_buffer *sprite_buffer) {
-    // Bind GL objects
-    glUseProgram(program->program_id);
-    glBindTexture(GL_TEXTURE_2D, texture->id);
-    glBindVertexArray(sprite_buffer->vertex_array_id);
-    glUniformMatrix4fv(program->g_transform_mat_id, 1, GL_FALSE,
-                       g_transform_mat->values);
-
-    // Draw sprites
-    glDrawArrays(GL_POINTS, 0, sprite_count);
-
-    // Reset GL objects
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glBindVertexArray(0);
-    glUseProgram(0);
 }
 
 void egl_sprite_buffer_create(GLsizei count,

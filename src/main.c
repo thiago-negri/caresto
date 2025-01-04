@@ -13,14 +13,14 @@
 #include <engine/em_memory.h>
 #include <engine/ep_platform.h>
 
+#define SHARED_LIB_PATH "build/debug/bin/caresto.dll"
+#define SHARED_LIB_CHECK_INTERVAL 5000
+
 #define CARESTO_MAIN
 #include <caresto/cg_game.h>
 
 #define MB_10 (10 * 1024 * 1024)
 #define MB_20 (20 * 1024 * 1024)
-
-// FIXME(tnegri): SPRITE_MAX is shared between main and cg_game
-#define SPRITE_MAX 1024
 
 // Create our game window
 SDL_Window *create_sdl_window() {
@@ -39,12 +39,10 @@ SDL_Window *create_sdl_window() {
 
 int main(int argc, char *argv[]) {
     int rc = 0;
+    unsigned char *memory_buffer = NULL;
     SDL_Window *sdl_window = NULL;
-    unsigned char *buffer = NULL;
-    struct egl_program program = {0};
-    struct egl_texture sprite_atlas = {0};
     SDL_GLContext sdl_gl_context = NULL;
-    struct egl_sprite_buffer sprite_buffer = {0};
+    void *game_data = NULL;
 #ifdef SHARED
     ep_shared shared = NULL;
 #endif
@@ -68,25 +66,27 @@ int main(int argc, char *argv[]) {
 #endif
 
     // Allocate persistent storage
-    buffer = (unsigned char *)em_alloc(MB_20);
-    if (buffer == NULL) {
+    memory_buffer = (unsigned char *)em_alloc(MB_20);
+    if (memory_buffer == NULL) {
         el_critical("OOM: Could not allocate memory.");
         rc = -1;
         goto _err;
     }
 
-    struct em_arena persistent_storage = em_arena_create(MB_10, buffer);
-    struct em_arena transient_storage = em_arena_create(MB_10, buffer + MB_10);
+    struct em_arena persistent_storage = em_arena_create(MB_10, memory_buffer);
+    struct em_arena transient_storage =
+        em_arena_create(MB_10, memory_buffer + MB_10);
 
 #ifdef SHARED
     struct ep_shared_game shared_game = {0};
-    rc = ep_shared_load("build/debug/bin/caresto.dll", &transient_storage,
-                        &shared_game);
+    rc = ep_shared_load(SHARED_LIB_PATH, &transient_storage, &shared_game);
     if (rc != 0) {
         goto _err;
     }
     cg_init_ptr = shared_game.cg_init;
-    cg_process_frame_ptr = shared_game.cg_process_frame;
+    cg_reload_ptr = shared_game.cg_reload;
+    cg_frame_ptr = shared_game.cg_frame;
+    cg_destroy_ptr = shared_game.cg_destroy;
 #endif
 
     // Initialize SDL
@@ -145,31 +145,11 @@ int main(int argc, char *argv[]) {
         glDebugMessageCallback(egl_debug_message_callback, NULL);
     }
 
-    rc = egl_program_create(&transient_storage, &program);
-    if (rc != 0) {
-        goto _err;
-    }
-
-    egl_sprite_buffer_create(SPRITE_MAX, &sprite_buffer);
-
-    // Set orthographic projection camera
-    // 640x360 is the perfect res for pixel art games because it scales evenly
-    // to all target resolutions.  We need to start the window at user's native
-    // res though.  We use a 640x360 to paint the game, then scale it to native
-    // res.  GUI should be painted on the native res surface.
-    GLfloat screen_width = 640.0f;
-    GLfloat screen_height = 360.0f;
-    struct egl_mat4 camera_transform = {.values = {0.0f}};
-    egl_ortho(&camera_transform, 0.0f, screen_width, 0.0f, screen_height, 0.0f,
-              1.0f);
-
-    rc = egl_texture_load("assets/sprite_atlas.png", &sprite_atlas);
-    if (rc != 0) {
-        goto _err;
-    }
-
     // Initialize game
-    void *game_data = cg_init(&persistent_storage);
+    rc = cg_init(&game_data, &persistent_storage, &transient_storage);
+    if (rc != 0) {
+        goto _err;
+    }
 
 #if SHARED
     Uint64 last_shared_lib_check = SDL_GetTicks();
@@ -184,26 +164,23 @@ int main(int argc, char *argv[]) {
         last_tick = current_tick;
 
 #ifdef SHARED
-        if (current_tick - last_shared_lib_check > 5000) {
+        if (current_tick - last_shared_lib_check > SHARED_LIB_CHECK_INTERVAL) {
             last_shared_lib_check = current_tick;
             bool reloaded = ep_shared_reload(&transient_storage, &shared_game);
             if (reloaded) {
                 cg_init_ptr = shared_game.cg_init;
-                cg_process_frame_ptr = shared_game.cg_process_frame;
+                cg_reload_ptr = shared_game.cg_reload;
+                cg_frame_ptr = shared_game.cg_frame;
+                cg_destroy_ptr = shared_game.cg_destroy;
+                cg_reload(game_data, &transient_storage);
             }
         }
 #endif
 
         // Process game frame, game is responsible for writing to
         // the current OpenGL buffer
-        struct egl_frame frame = {
-            .delta_time = delta_time,
-            .sprite_buffer = &sprite_buffer,
-            .program = &program,
-            .camera_transform = &camera_transform,
-            .sprite_atlas = &sprite_atlas,
-        };
-        running = cg_process_frame(&frame, game_data);
+        struct egl_frame frame = {.delta_time = delta_time};
+        running = cg_frame(game_data, &frame);
 
         // Swap buffers
         SDL_GL_SwapWindow(sdl_window);
@@ -215,9 +192,7 @@ int main(int argc, char *argv[]) {
 
 _err:
 _done:
-    egl_sprite_buffer_destroy(&sprite_buffer);
-    egl_program_destroy(&program);
-    egl_texture_destroy(&sprite_atlas);
+    cg_destroy(game_data);
     if (sdl_gl_context != NULL) {
         SDL_GL_DestroyContext(sdl_gl_context);
     }
@@ -225,7 +200,7 @@ _done:
         SDL_DestroyWindow(sdl_window);
     }
     SDL_Quit();
-    em_free(buffer);
+    em_free(memory_buffer);
 #if DEBUG
     if (shared != NULL) {
         ep_shared_free(shared);

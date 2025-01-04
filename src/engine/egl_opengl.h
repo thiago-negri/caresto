@@ -7,12 +7,6 @@
 
 #include <engine/em_memory.h>
 
-// VAO and VBO are not linked to the program, but right now we only use it here
-struct egl_program {
-    GLuint program_id;
-    GLint g_transform_mat_id;
-};
-
 struct egl_sprite {
     // World position (top left)
     GLfloat x, y;
@@ -47,18 +41,13 @@ struct egl_mat4 {
 
 struct egl_frame {
     uint64_t delta_time;
-    struct egl_program *program;
-    struct egl_mat4 *camera_transform;
-    struct egl_texture *sprite_atlas;
-    struct egl_sprite_buffer *sprite_buffer;
 };
 
-int egl_program_create(struct em_arena *arena, struct egl_program *out_program);
-void egl_program_destroy(struct egl_program *program);
-void egl_program_render(struct egl_program *program,
-                        struct egl_mat4 *g_transform_mat,
-                        struct egl_texture *texture, size_t sprite_count,
-                        struct egl_sprite_buffer *sprite_buffer);
+int egl_shader_create(GLenum type, const GLchar *source, struct em_arena *arena,
+                      GLuint *out_shader_id);
+
+int egl_program_link(GLuint program_id, size_t shader_count, GLuint *shaders,
+                     struct em_arena *arena);
 
 void egl_sprite_buffer_create(GLsizei count,
                               struct egl_sprite_buffer *out_sprite_buffer);
