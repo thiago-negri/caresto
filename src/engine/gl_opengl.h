@@ -2,7 +2,8 @@
 #define GL_OPENGL_H
 
 #include <GL/glew.h>
-#include <caresto/mm_memory_management.h>
+
+#include <engine/mm_memory_management.h>
 
 // VAO and VBO are not linked to the program, but right now we only use it here
 struct gl_program {

@@ -3,10 +3,10 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-#include <caresto/gl_opengl.h>
-#include <caresto/l_log.h>
-#include <caresto/mm_memory_management.h>
-#include <caresto/t_test.h>
+#include <engine/gl_opengl.h>
+#include <engine/l_log.h>
+#include <engine/mm_memory_management.h>
+#include <engine/t_test.h>
 
 #include <gen/glsl_fragment.h>
 #include <gen/glsl_geometry.h>
