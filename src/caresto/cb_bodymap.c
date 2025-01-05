@@ -22,22 +22,22 @@ static bool cb_collision(struct cb_body *a, struct cb_body *b) {
             a_bottom >= b_top);
 }
 
-body_id cb_add(struct cb_bodymap *bodymap, struct cb_body *body) {
+cb_body_id cb_add(struct cb_bodymap *bodymap, struct cb_body *body) {
     eu_assert(bodymap->body_count < CB_BODIES_MAX);
 
-    body_id id = bodymap->body_count;
+    cb_body_id id = bodymap->body_count;
     memcpy(&bodymap->bodies[id], body, sizeof(struct cb_body));
     bodymap->body_count++;
     return id;
 }
 
-struct cb_body *cb_get(struct cb_bodymap *bodymap, body_id id) {
+struct cb_body *cb_get(struct cb_bodymap *bodymap, cb_body_id id) {
     eu_assert(id < bodymap->body_count);
 
     return &bodymap->bodies[id];
 }
 
-void cb_remove(struct cb_bodymap *bodymap, body_id id) {
+void cb_remove(struct cb_bodymap *bodymap, cb_body_id id) {
     eu_assert(id < bodymap->body_count);
 
     bodymap->body_count--;
@@ -47,8 +47,8 @@ void cb_remove(struct cb_bodymap *bodymap, body_id id) {
     }
 }
 
-bool cb_move(struct cb_bodymap *bodymap, struct ct_tilemap *tilemap, body_id id,
-             struct eu_ivec2 *movement) {
+bool cb_move(struct cb_bodymap *bodymap, struct ct_tilemap *tilemap,
+             cb_body_id id, struct eu_ivec2 *movement) {
     eu_assert(id < bodymap->body_count);
 
     struct cb_body *body = &bodymap->bodies[id];

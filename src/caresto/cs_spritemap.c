@@ -2,22 +2,22 @@
 
 #include <caresto/cs_spritemap.h>
 
-sprite_id cs_add(struct cs_spritemap *spritemap, struct egl_sprite *sprite) {
+cs_sprite_id cs_add(struct cs_spritemap *spritemap, struct egl_sprite *sprite) {
     eu_assert(spritemap->sprite_count < CS_SPRITES_MAX);
 
-    sprite_id id = spritemap->sprite_count;
+    cs_sprite_id id = spritemap->sprite_count;
     memcpy(&spritemap->sprites[id], sprite, sizeof(struct egl_sprite));
     spritemap->sprite_count++;
     return id;
 }
 
-struct egl_sprite *cs_get(struct cs_spritemap *spritemap, sprite_id id) {
+struct egl_sprite *cs_get(struct cs_spritemap *spritemap, cs_sprite_id id) {
     eu_assert(id < spritemap->sprite_count);
 
     return &spritemap->sprites[id];
 }
 
-void cs_remove(struct cs_spritemap *spritemap, sprite_id id) {
+void cs_remove(struct cs_spritemap *spritemap, cs_sprite_id id) {
     eu_assert(id < spritemap->sprite_count);
 
     spritemap->sprite_count--;

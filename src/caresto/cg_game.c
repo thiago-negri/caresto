@@ -6,6 +6,7 @@
 #include <engine/eu_utils.h>
 
 #include <caresto/cb_bodymap.h>
+#include <caresto/ce_entity.h>
 #include <caresto/cg_game.h>
 #include <caresto/cgl_opengl.h>
 #include <caresto/cs_spritemap.h>
@@ -20,13 +21,6 @@
 #define ELAPSED_TIME_PER_TICK (1000.0f / TICKS_PER_SECOND)
 
 #define BEETLE_SPEED 0.5f
-struct beetle {
-    sprite_id sprite;
-    body_id body;
-    struct eu_ivec2 position;
-    struct eu_vec2 movement_remaining;
-    struct eu_vec2 velocity;
-};
 
 struct cg_state {
     // Game camera
@@ -45,8 +39,8 @@ struct cg_state {
     uint64_t delta_time_remaining;
 
     // Beetle
-    struct beetle beetle_a;
-    struct beetle beetle_b;
+    struct ce_entity beetle_a;
+    struct ce_entity beetle_b;
 
     struct cs_spritemap spritemap;
     struct ct_tilemap tilemap;
@@ -256,25 +250,8 @@ void cg_reload(void *data, struct em_arena *transient_storage) {
 }
 
 void cg_tick(struct cg_state *state, struct egl_frame *frame) {
-    state->beetle_a.movement_remaining.x += state->beetle_a.velocity.x;
-    state->beetle_a.movement_remaining.y += state->beetle_a.velocity.y;
-
-    struct eu_ivec2 movement = {
-        .x = (int)state->beetle_a.movement_remaining.x,
-        .y = (int)state->beetle_a.movement_remaining.y,
-    };
-
-    if (movement.x != 0 || movement.y != 0) {
-        bool moved = cb_move(&state->bodymap, &state->tilemap,
-                             state->beetle_a.body, &movement);
-        if (moved) {
-            state->beetle_a.position.x += movement.x;
-            state->beetle_a.position.y += movement.y;
-        }
-    }
-
-    state->beetle_a.movement_remaining.x -= movement.x;
-    state->beetle_a.movement_remaining.y -= movement.y;
+    ce_tick(&state->beetle_a, &state->bodymap, &state->tilemap);
+    ce_tick(&state->beetle_b, &state->bodymap, &state->tilemap);
 }
 
 bool cg_frame(void *data, struct egl_frame *frame) {
@@ -377,10 +354,8 @@ bool cg_frame(void *data, struct egl_frame *frame) {
     }
 
     // Move sprite
-    struct egl_sprite *sprite =
-        cs_get(&state->spritemap, state->beetle_a.sprite);
-    sprite->position.x = (int)state->beetle_a.position.x;
-    sprite->position.y = (int)state->beetle_a.position.y;
+    ce_frame(&state->beetle_a, &state->spritemap);
+    ce_frame(&state->beetle_b, &state->spritemap);
 
     // Update the VBOs
     egl_sprite_buffer_data(&state->sprite_buffer, state->spritemap.sprite_count,
