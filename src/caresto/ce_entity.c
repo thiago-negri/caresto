@@ -38,7 +38,6 @@ void ce_tick(struct ce_entity *entity, struct cb_bodymap *bodymap,
         } else {
             // FIXME(tnegri): Until we fix the previous comment this makes sure
             // we can still move
-            entity->velocity.x = 0.0f;
             entity->velocity.y = 0.0f;
         }
     }
