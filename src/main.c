@@ -181,7 +181,8 @@ int main(int argc, char *argv[]) {
 
         // Process game frame, game is responsible for writing to
         // the current OpenGL buffer
-        struct egl_frame frame = {.sdl_window = sdl_window, .delta_time = delta_time};
+        struct egl_frame frame = {.sdl_window = sdl_window,
+                                  .delta_time = delta_time};
         running = cg_frame(game_data, &frame);
 
         // Swap buffers
