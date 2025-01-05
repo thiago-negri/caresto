@@ -29,6 +29,8 @@ int cs_sprite_shader_load(struct cs_sprite_shader *shader,
     GLuint shader_geometry_id = 0;
     GLuint shader_fragment_id = 0;
 
+    el_debug("GL: Creating sprite shader ...");
+
     rc = egl_shader_create(GL_VERTEX_SHADER, glsl_sprite_vertex_source, arena,
                            &shader_vertex_id);
     if (rc != 0) {
@@ -145,6 +147,8 @@ int cs_tile_shader_load(struct cs_tile_shader *shader, struct em_arena *arena) {
         return rc;
     }
 #endif
+
+    el_debug("GL: Creating tile shader ...");
 
     GLuint program_id = shader->program_id;
     GLuint shader_vertex_id = 0;

@@ -1,4 +1,4 @@
-/assets/tiles.json
+/assets/*.json
 /build
 /include
 /lib

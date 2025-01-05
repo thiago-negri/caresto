@@ -169,12 +169,16 @@ int egl_program_link(GLuint program_id, size_t shader_count, GLuint *shaders,
             em_arena_restore_offset(arena, offset);
         }
         rc = -1;
+        goto _err;
     }
 
     for (size_t i = 0; i < shader_count; i++) {
         glDetachShader(program_id, shaders[i]);
     }
 
+    el_debug("GL: Linked program.\n");
+
+_err:
     return rc;
 }
 

@@ -8,10 +8,9 @@
 #include <caresto/cs_shaders.h>
 #include <caresto/ct_tilemap.h>
 
+#include <gen/sprite_atlas.h>
 #include <gen/tile_atlas.h>
 
-#define SPRITE_ATLAS_PATH "assets/sprite_atlas.png"
-#define TILE_ATLAS_PATH "assets/tile_atlas.png"
 #define GAME_CAMERA_HEIGHT 360.0f
 #define GAME_CAMERA_WIDTH 640.0f
 #define TILE_SIZE 8
@@ -78,12 +77,12 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
     };
 
     // TODO(tnegri): Bake atlas in
-    rc = egl_texture_load(SPRITE_ATLAS_PATH, &state->sprite_atlas);
+    rc = egl_texture_load(GEN_SPRITE_ATLAS_PATH, &state->sprite_atlas);
     if (rc != 0) {
         goto _err;
     }
 
-    rc = egl_texture_load(TILE_ATLAS_PATH, &state->tile_atlas);
+    rc = egl_texture_load(GEN_TILE_ATLAS_PATH, &state->tile_atlas);
     if (rc != 0) {
         goto _err;
     }
@@ -91,12 +90,12 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
     // Initial state
     state->sprite_count = 1;
     state->sprites[0] = (struct egl_sprite){
-        .x = 0.0f,
-        .y = 0.0f,
-        .w = 16,
-        .h = 16,
-        .u = 0,
-        .v = 0,
+        .x = 100.0f,
+        .y = 100.0f,
+        .w = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_W,
+        .h = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_H,
+        .u = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_U,
+        .v = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_V,
     };
 
     // Set some tiles
@@ -126,8 +125,8 @@ void cg_reload(void *data, struct em_arena *transient_storage) {
     struct cg_state *state = (struct cg_state *)data;
     cs_sprite_shader_load(&state->sprite_shader, transient_storage);
     cs_tile_shader_load(&state->tile_shader, transient_storage);
-    egl_texture_load(SPRITE_ATLAS_PATH, &state->sprite_atlas);
-    egl_texture_load(TILE_ATLAS_PATH, &state->tile_atlas);
+    egl_texture_load(GEN_SPRITE_ATLAS_PATH, &state->sprite_atlas);
+    egl_texture_load(GEN_TILE_ATLAS_PATH, &state->tile_atlas);
 }
 
 bool cg_frame(void *data, struct egl_frame *frame) {
@@ -199,15 +198,7 @@ bool cg_frame(void *data, struct egl_frame *frame) {
     if (state->sprites[0].y >= 200.0f) {
         state->sprites[0].y = 0.0f;
     }
-    state->sprites[1] = (struct egl_sprite){
-        .x = 100.0f,
-        .y = 100.0f,
-        .w = 489,
-        .h = 509,
-        .u = 100,
-        .v = 100,
-    };
-    state->sprite_count = 2;
+    state->sprite_count = 1;
 
     // Update the VBOs
     egl_sprite_buffer_data(&state->sprite_buffer, state->sprite_count,

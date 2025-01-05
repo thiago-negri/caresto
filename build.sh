@@ -35,6 +35,11 @@ if [ $arg_build -eq 0 ]; then
         generate_tile_atlas
     fi
 
+    # GENERATE SPRITE ATLAS
+    if need_sprite_atlas; then
+        generate_sprite_atlas
+    fi
+
     # COMPILE
     for source_file in ./$SRC_ENGINE_PATH/*.c; do
         if need_compile "$OBJ_ENGINE_PATH" "$source_file"; then
