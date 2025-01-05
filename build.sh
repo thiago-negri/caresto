@@ -13,14 +13,15 @@ source ./sh/generators.sh
 [ $arg_clean -eq 0 ] && run rm -rf $BUILD_ROOT_PATH $GEN_PATH
 
 
-#
-# BUILD
-#
-if [ $arg_build -eq 0 ]; then
-    # PREPARE
-    run mkdir -p "$OBJ_PATH" "$OBJ_CARESTO_PATH" \
-        "$OBJ_ENGINE_PATH" "$TARGET_PATH" "$GEN_PATH/gen"
+# PREPARE
+mkdir -p "$OBJ_PATH" "$OBJ_CARESTO_PATH" \
+    "$OBJ_ENGINE_PATH" "$TARGET_PATH" "$GEN_PATH/gen"
 
+
+#
+# GENERATE
+#
+if [ $arg_generate -eq 0 ]; then
     # GENERATE FILES
     for glsl_source in $GLSL_PATH/*.glsl; do
         module=$(basename $glsl_source .glsl)
@@ -39,7 +40,13 @@ if [ $arg_build -eq 0 ]; then
     if need_sprite_atlas; then
         generate_sprite_atlas
     fi
+fi
 
+
+#
+# BUILD
+#
+if [ $arg_build -eq 0 ]; then
     # COMPILE
     for source_file in ./$SRC_ENGINE_PATH/*.c; do
         if need_compile "$OBJ_ENGINE_PATH" "$source_file"; then

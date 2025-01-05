@@ -141,7 +141,7 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
     state->beetle_animation_walk =
         ca_add(&state->animationmap, 100,
                &(struct eu_ivec2){.w = GEN_SPRITE_ATLAS_BEETLE_WALK_0_W,
-                                  .h = GEN_SPRITE_ATLAS_BEETLE_WALK_0_W},
+                                  .h = GEN_SPRITE_ATLAS_BEETLE_WALK_0_H},
                8, frames_walk);
     struct ca_frame frames_idle[] = {
         {
@@ -152,7 +152,7 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
     state->beetle_animation_idle =
         ca_add(&state->animationmap, 100,
                &(struct eu_ivec2){.w = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_W,
-                                  .h = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_W},
+                                  .h = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_H},
                1, frames_idle);
 
     // Initial state

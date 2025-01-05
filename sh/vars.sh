@@ -5,20 +5,23 @@
 #
 arg_clean=1
 arg_release=1
+arg_generate=1
 arg_build=1
 arg_run=1
 for arg in "$@"; do
     case "$arg" in
         clean) arg_clean=0 ;;
         release) arg_release=0 ;;
+        generate) arg_generate=0 ;;
         build) arg_build=0 ;;
         run) arg_run=0 ;;
     esac
 done
 
-# DEFAULTS (build run)
-if [[ "$arg_clean$arg_build$arg_run" == "111" ]]; then
+# DEFAULTS (generate build run)
+if [[ "$arg_clean$arg_generate$arg_build$arg_run" == "1111" ]]; then
     arg_clean=1
+    arg_generate=0
     arg_build=0
     arg_run=0
 fi
