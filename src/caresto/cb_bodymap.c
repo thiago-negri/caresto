@@ -93,3 +93,45 @@ bool cb_move(struct cb_bodymap *bodymap, struct ct_tilemap *tilemap,
     body->position.y = new_body.position.y;
     return true;
 }
+
+bool cb_grounded(struct cb_bodymap *bodymap, struct ct_tilemap *tilemap,
+                 cb_body_id id) {
+    struct cb_body *body = &bodymap->bodies[id];
+    struct cb_body new_body = {
+        .position =
+            {
+                .x = body->position.x,
+                .y = body->position.y + 1,
+            },
+        .size = body->size,
+    };
+
+    // FIXME(tnegri): we don't need top, but we still need left
+    size_t tile_left, tile_top, tile_right, tile_bottom;
+    ct_game_pos(&new_body.position, GEN_TILE_ATLAS_TILE_SIZE,
+                GEN_TILE_ATLAS_TILE_SIZE, &tile_left, &tile_top);
+    ct_game_pos(
+        &(struct eu_ivec2){
+            .x = new_body.position.x + body->size.w,
+            .y = new_body.position.y + body->size.h,
+        },
+        GEN_TILE_ATLAS_TILE_SIZE, GEN_TILE_ATLAS_TILE_SIZE, &tile_right,
+        &tile_bottom);
+    for (size_t x = tile_left; x <= tile_right; x++) {
+        if (tilemap->tilemap[tile_bottom][x].type != CT_TILE_TYPE_EMPTY) {
+            return true;
+        }
+    }
+
+    for (size_t i = 0; i < bodymap->body_count; i++) {
+        if (i == id) {
+            continue;
+        }
+        struct cb_body *other = &bodymap->bodies[i];
+        if (cb_collision(&new_body, other)) {
+            return true;
+        }
+    }
+
+    return false;
+}

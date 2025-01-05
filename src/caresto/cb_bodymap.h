@@ -24,7 +24,9 @@ struct cb_bodymap {
 cb_body_id cb_add(struct cb_bodymap *bodymap, struct cb_body *body);
 struct cb_body *cb_get(struct cb_bodymap *bodymap, cb_body_id id);
 void cb_remove(struct cb_bodymap *bodymap, cb_body_id id);
-bool cb_move(struct cb_bodymap *bodymap, struct ct_tilemap *tilemap, cb_body_id id,
-             struct eu_ivec2 *movement);
+bool cb_move(struct cb_bodymap *bodymap, struct ct_tilemap *tilemap,
+             cb_body_id id, struct eu_ivec2 *movement);
+bool cb_grounded(struct cb_bodymap *bodymap, struct ct_tilemap *tilemap,
+                 cb_body_id id);
 
 #endif // CB_BODYMAP_H

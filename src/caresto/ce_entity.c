@@ -3,8 +3,16 @@
 #include <caresto/cs_spritemap.h>
 #include <caresto/ct_tilemap.h>
 
+#define GRAVITY_MAX_VELOCITY 5.0f
+#define GRAVITY_ACCELERATION_PER_TICK 0.05f
+
 void ce_tick(struct ce_entity *entity, struct cb_bodymap *bodymap,
              struct ct_tilemap *tilemap) {
+    entity->velocity.y += GRAVITY_ACCELERATION_PER_TICK;
+    if (entity->velocity.y > GRAVITY_MAX_VELOCITY) {
+        entity->velocity.y = GRAVITY_MAX_VELOCITY;
+    }
+
     entity->movement_remaining.x += entity->velocity.x;
     entity->movement_remaining.y += entity->velocity.y;
 
@@ -14,6 +22,9 @@ void ce_tick(struct ce_entity *entity, struct cb_bodymap *bodymap,
     };
 
     if (movement.x != 0 || movement.y != 0) {
+        // FIXME(tnegri): Make move still apply X even if Y is blocked for
+        // example, and also apply per pixel, even if the attempted movement
+        // is bigger and 1px
         bool moved = cb_move(bodymap, tilemap, entity->body, &movement);
         if (moved) {
             entity->position.x += movement.x;
@@ -23,6 +34,11 @@ void ce_tick(struct ce_entity *entity, struct cb_bodymap *bodymap,
 
     entity->movement_remaining.x -= movement.x;
     entity->movement_remaining.y -= movement.y;
+
+    // FIXME(tnegri): Combine move and grounded into a single pass
+    if (entity->velocity.y > 0 && cb_grounded(bodymap, tilemap, entity->body)) {
+        entity->velocity.y = 0;
+    }
 }
 
 void ce_frame(struct ce_entity *entity, struct cs_spritemap *spritemap) {
