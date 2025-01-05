@@ -2,7 +2,7 @@
 #include <engine/el_log.h>
 #include <engine/eu_utils.h>
 
-#include <caresto/cs_shaders.h>
+#include <caresto/cgl_opengl.h>
 
 #include <gen/glsl_sprite_fragment.h>
 #include <gen/glsl_sprite_geometry.h>
@@ -11,8 +11,8 @@
 #include <gen/glsl_tile_geometry.h>
 #include <gen/glsl_tile_vertex.h>
 
-int cs_sprite_shader_load(struct cs_sprite_shader *shader,
-                          struct em_arena *arena) {
+int cgl_sprite_shader_load(struct cgl_sprite_shader *shader,
+                           struct em_arena *arena) {
     int rc = 0;
 
 #ifdef SHARED
@@ -104,7 +104,7 @@ _done:
     return rc;
 }
 
-void cs_sprite_shader_destroy(struct cs_sprite_shader *shader) {
+void cgl_sprite_shader_destroy(struct cgl_sprite_shader *shader) {
     if (shader->program_id != 0) {
         glDeleteProgram(shader->program_id);
         shader->program_id = 0;
@@ -115,10 +115,10 @@ void cs_sprite_shader_destroy(struct cs_sprite_shader *shader) {
     }
 }
 
-void cs_sprite_shader_render(struct cs_sprite_shader *shader,
-                             struct egl_mat4 *transform_mat,
-                             struct egl_texture *texture, size_t sprite_count,
-                             struct egl_sprite_buffer *sprite_buffer) {
+void cgl_sprite_shader_render(struct cgl_sprite_shader *shader,
+                              struct egl_mat4 *transform_mat,
+                              struct egl_texture *texture, size_t sprite_count,
+                              struct egl_sprite_buffer *sprite_buffer) {
     // Bind GL objects
     glUseProgram(shader->program_id);
     glActiveTexture(GL_TEXTURE0);
@@ -136,7 +136,8 @@ void cs_sprite_shader_render(struct cs_sprite_shader *shader,
     glUseProgram(0);
 }
 
-int cs_tile_shader_load(struct cs_tile_shader *shader, struct em_arena *arena) {
+int cgl_tile_shader_load(struct cgl_tile_shader *shader,
+                         struct em_arena *arena) {
     int rc = 0;
 
 #ifdef SHARED
@@ -236,7 +237,7 @@ _done:
     return rc;
 }
 
-void cs_tile_shader_destroy(struct cs_tile_shader *shader) {
+void cgl_tile_shader_destroy(struct cgl_tile_shader *shader) {
     if (shader->program_id != 0) {
         glDeleteProgram(shader->program_id);
         shader->program_id = 0;
@@ -247,11 +248,11 @@ void cs_tile_shader_destroy(struct cs_tile_shader *shader) {
     }
 }
 
-void cs_tile_shader_render(struct cs_tile_shader *shader,
-                           struct egl_ivec2 *tile_size,
-                           struct egl_mat4 *transform_mat,
-                           struct egl_texture *texture, size_t tile_count,
-                           struct egl_tile_buffer *tile_buffer) {
+void cgl_tile_shader_render(struct cgl_tile_shader *shader,
+                            struct egl_ivec2 *tile_size,
+                            struct egl_mat4 *transform_mat,
+                            struct egl_texture *texture, size_t tile_count,
+                            struct egl_tile_buffer *tile_buffer) {
     // Bind GL objects
     glUseProgram(shader->program_id);
     glActiveTexture(GL_TEXTURE0);

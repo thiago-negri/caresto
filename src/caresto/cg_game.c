@@ -5,7 +5,7 @@
 #include <engine/et_test.h>
 
 #include <caresto/cg_game.h>
-#include <caresto/cs_shaders.h>
+#include <caresto/cgl_opengl.h>
 #include <caresto/ct_tilemap.h>
 
 #include <gen/sprite_atlas.h>
@@ -21,12 +21,12 @@ struct cg_state {
     struct egl_vec2 camera_position;
 
     // Sprite shader
-    struct cs_sprite_shader sprite_shader;
+    struct cgl_sprite_shader sprite_shader;
     struct egl_sprite_buffer sprite_buffer;
     struct egl_texture sprite_atlas;
 
     // Tile shader
-    struct cs_tile_shader tile_shader;
+    struct cgl_tile_shader tile_shader;
     struct egl_tile_buffer tile_buffer;
     struct egl_texture tile_atlas;
 
@@ -57,12 +57,12 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
 
     memset(state, 0, sizeof(struct cg_state));
 
-    rc = cs_sprite_shader_load(&state->sprite_shader, transient_storage);
+    rc = cgl_sprite_shader_load(&state->sprite_shader, transient_storage);
     if (rc != 0) {
         goto _err;
     }
 
-    rc = cs_tile_shader_load(&state->tile_shader, transient_storage);
+    rc = cgl_tile_shader_load(&state->tile_shader, transient_storage);
     if (rc != 0) {
         goto _err;
     }
@@ -169,8 +169,8 @@ _done:
 
 void cg_reload(void *data, struct em_arena *transient_storage) {
     struct cg_state *state = (struct cg_state *)data;
-    cs_sprite_shader_load(&state->sprite_shader, transient_storage);
-    cs_tile_shader_load(&state->tile_shader, transient_storage);
+    cgl_sprite_shader_load(&state->sprite_shader, transient_storage);
+    cgl_tile_shader_load(&state->tile_shader, transient_storage);
     egl_texture_load(GEN_SPRITE_ATLAS_PATH, &state->sprite_atlas);
     egl_texture_load(GEN_TILE_ATLAS_PATH, &state->tile_atlas);
 }
@@ -263,12 +263,12 @@ bool cg_frame(void *data, struct egl_frame *frame) {
                                       GEN_TILE_ATLAS_TILE_SIZE,
                                       GEN_TILE_ATLAS_TILE_SIZE,
                                   }};
-    cs_tile_shader_render(&state->tile_shader, &tile_size, &camera_transform,
+    cgl_tile_shader_render(&state->tile_shader, &tile_size, &camera_transform,
                           &state->tile_atlas, state->tilemap.tile_count,
                           &state->tile_buffer);
 
     // Render sprites
-    cs_sprite_shader_render(&state->sprite_shader, &camera_transform,
+    cgl_sprite_shader_render(&state->sprite_shader, &camera_transform,
                             &state->sprite_atlas, state->sprite_count,
                             &state->sprite_buffer);
 
@@ -277,8 +277,8 @@ bool cg_frame(void *data, struct egl_frame *frame) {
 
 void cg_destroy(void *data) {
     struct cg_state *state = (struct cg_state *)data;
-    cs_sprite_shader_destroy(&state->sprite_shader);
-    cs_tile_shader_destroy(&state->tile_shader);
+    cgl_sprite_shader_destroy(&state->sprite_shader);
+    cgl_tile_shader_destroy(&state->tile_shader);
     egl_sprite_buffer_destroy(&state->sprite_buffer);
     egl_tile_buffer_destroy(&state->tile_buffer);
     egl_texture_destroy(&state->sprite_atlas);
