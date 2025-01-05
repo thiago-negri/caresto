@@ -6,6 +6,7 @@
 
 #include <caresto/cg_game.h>
 #include <caresto/cgl_opengl.h>
+#include <caresto/cs_sprite.h>
 #include <caresto/ct_tilemap.h>
 
 #include <gen/sprite_atlas.h>
@@ -13,8 +14,16 @@
 
 #define GAME_CAMERA_HEIGHT 360.0f
 #define GAME_CAMERA_WIDTH 640.0f
+#define TICKS_PER_SECOND 60
+#define ELAPSED_TIME_PER_TICK (1000.0f / TICKS_PER_SECOND)
 
-#define CG_SPRITES_MAX 1024
+#define BEETLE_SPEED 0.5f
+struct beetle {
+    sprite_id sprite;
+    struct egl_ivec2 position;
+    struct egl_vec2 position_remaining;
+    struct egl_vec2 velocity;
+};
 
 struct cg_state {
     // Game camera
@@ -30,9 +39,12 @@ struct cg_state {
     struct egl_tile_buffer tile_buffer;
     struct egl_texture tile_atlas;
 
-    // Sprites
-    size_t sprite_count;
-    struct egl_sprite sprites[CG_SPRITES_MAX];
+    uint64_t delta_time_remaining;
+
+    // Beetle
+    struct beetle beetle;
+
+    struct cs_sprite sprite;
 
     struct ct_tilemap tilemap;
 };
@@ -67,8 +79,8 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
         goto _err;
     }
 
-    egl_sprite_buffer_create(CG_SPRITES_MAX, &state->sprite_buffer);
-    egl_tile_buffer_create(TILES_MAX, &state->tile_buffer);
+    egl_sprite_buffer_create(CS_SPRITES_MAX, &state->sprite_buffer);
+    egl_tile_buffer_create(CT_TILES_MAX, &state->tile_buffer);
 
     state->camera_position = (struct egl_vec2){
         .x = (GLfloat)GAME_CAMERA_WIDTH * 0.5f,
@@ -87,15 +99,15 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
     }
 
     // Initial state
-    state->sprite_count = 1;
-    state->sprites[0] = (struct egl_sprite){
-        .x = 100.0f,
-        .y = 100.0f,
-        .w = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_W,
-        .h = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_H,
-        .u = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_U,
-        .v = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_V,
-    };
+    state->beetle.sprite =
+        cs_add(&state->sprite, &(struct egl_sprite){
+                                   .x = 100.0f,
+                                   .y = 100.0f,
+                                   .w = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_W,
+                                   .h = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_H,
+                                   .u = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_U,
+                                   .v = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_V,
+                               });
 
     // Set some tiles
     ct_set(&state->tilemap, 0, 40, CT_TILE_TYPE_GRASS);
@@ -152,8 +164,8 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
     ct_set(&state->tilemap, 51, 40, CT_TILE_TYPE_GRASS);
 
     // Load the VBOs
-    egl_sprite_buffer_data(&state->sprite_buffer, state->sprite_count,
-                           state->sprites);
+    egl_sprite_buffer_data(&state->sprite_buffer, state->sprite.sprite_count,
+                           state->sprite.sprites);
     egl_tile_buffer_data(&state->tile_buffer, state->tilemap.tile_count,
                          state->tilemap.tiles);
 
@@ -175,6 +187,19 @@ void cg_reload(void *data, struct em_arena *transient_storage) {
     egl_texture_load(GEN_TILE_ATLAS_PATH, &state->tile_atlas);
 }
 
+void cg_tick(struct cg_state *state, struct egl_frame *frame) {
+    state->beetle.position_remaining.x += state->beetle.velocity.x;
+    state->beetle.position_remaining.y += state->beetle.velocity.y;
+
+    state->beetle.position.x += state->beetle.position_remaining.x;
+    state->beetle.position.y += state->beetle.position_remaining.y;
+
+    state->beetle.position_remaining.x -=
+        (int)state->beetle.position_remaining.x;
+    state->beetle.position_remaining.y -=
+        (int)state->beetle.position_remaining.y;
+}
+
 bool cg_frame(void *data, struct egl_frame *frame) {
     struct cg_state *state = (struct cg_state *)data;
 
@@ -191,6 +216,8 @@ bool cg_frame(void *data, struct egl_frame *frame) {
     egl_ortho(&camera_transform, screen_left, screen_right, screen_top,
               screen_bottom, 0.0f, 1.0f);
 
+    bool tilemap_dirty = false;
+
     // Handle input
     SDL_Event sdl_event = {0};
     while (SDL_PollEvent(&sdl_event)) {
@@ -199,56 +226,90 @@ bool cg_frame(void *data, struct egl_frame *frame) {
             return false;
 
         case SDL_EVENT_KEY_DOWN:
-            if (sdl_event.key.key == SDLK_Q) {
+            switch (sdl_event.key.key) {
+            case SDLK_Q:
                 return false;
+
+            case SDLK_W:
+                state->beetle.velocity.y = -BEETLE_SPEED;
+                break;
+            case SDLK_S:
+                state->beetle.velocity.y = BEETLE_SPEED;
+                break;
+            case SDLK_A:
+                state->beetle.velocity.x = -BEETLE_SPEED;
+                break;
+            case SDLK_D:
+                state->beetle.velocity.x = BEETLE_SPEED;
+                break;
+            }
+            break;
+
+        case SDL_EVENT_KEY_UP:
+            switch (sdl_event.key.key) {
+            case SDLK_W:
+            case SDLK_S:
+                state->beetle.velocity.y = 0;
+                break;
+            case SDLK_A:
+            case SDLK_D:
+                state->beetle.velocity.x = 0;
+                break;
+            }
+            break;
+
+        case SDL_EVENT_MOUSE_BUTTON_DOWN:
+            // Place tiles
+            float mouse_x, mouse_y;
+            SDL_MouseButtonFlags mouse_flags =
+                SDL_GetMouseState(&mouse_x, &mouse_y);
+            if ((mouse_flags & SDL_BUTTON_MASK(SDL_BUTTON_LEFT)) != 0) {
+                size_t tile_x, tile_y;
+                int window_w, window_h;
+                SDL_GetWindowSize(frame->sdl_window, &window_w, &window_h);
+                ct_tile_pos(screen_left, screen_right, screen_top,
+                            screen_bottom, window_w, window_h, mouse_x, mouse_y,
+                            GEN_TILE_ATLAS_TILE_SIZE, GEN_TILE_ATLAS_TILE_SIZE,
+                            &tile_x, &tile_y);
+                ct_set(&state->tilemap, tile_x, tile_y, CT_TILE_TYPE_GRASS);
+                tilemap_dirty = true;
+            }
+
+            // Remove tiles
+            if ((mouse_flags & SDL_BUTTON_MASK(SDL_BUTTON_RIGHT)) != 0) {
+                size_t tile_x, tile_y;
+                int window_w, window_h;
+                SDL_GetWindowSize(frame->sdl_window, &window_w, &window_h);
+                ct_tile_pos(screen_left, screen_right, screen_top,
+                            screen_bottom, window_w, window_h, mouse_x, mouse_y,
+                            GEN_TILE_ATLAS_TILE_SIZE, GEN_TILE_ATLAS_TILE_SIZE,
+                            &tile_x, &tile_y);
+                ct_set(&state->tilemap, tile_x, tile_y, CT_TILE_TYPE_EMPTY);
+                tilemap_dirty = true;
             }
             break;
         }
     }
 
-    // Place tiles
-    bool tilemap_dirty = false;
-    float mouse_x, mouse_y;
-    SDL_MouseButtonFlags mouse_flags = SDL_GetMouseState(&mouse_x, &mouse_y);
-    if ((mouse_flags & SDL_BUTTON_MASK(SDL_BUTTON_LEFT)) != 0) {
-        size_t tile_x, tile_y;
-        int window_w, window_h;
-        SDL_GetWindowSize(frame->sdl_window, &window_w, &window_h);
-        ct_tile_pos(screen_left, screen_right, screen_top, screen_bottom,
-                    window_w, window_h, mouse_x, mouse_y,
-                    GEN_TILE_ATLAS_TILE_SIZE, GEN_TILE_ATLAS_TILE_SIZE, &tile_x,
-                    &tile_y);
-        ct_set(&state->tilemap, tile_x, tile_y, CT_TILE_TYPE_GRASS);
-        tilemap_dirty = true;
-    }
-
-    // Remove tiles
-    if ((mouse_flags & SDL_BUTTON_MASK(SDL_BUTTON_RIGHT)) != 0) {
-        size_t tile_x, tile_y;
-        int window_w, window_h;
-        SDL_GetWindowSize(frame->sdl_window, &window_w, &window_h);
-        ct_tile_pos(screen_left, screen_right, screen_top, screen_bottom,
-                    window_w, window_h, mouse_x, mouse_y,
-                    GEN_TILE_ATLAS_TILE_SIZE, GEN_TILE_ATLAS_TILE_SIZE, &tile_x,
-                    &tile_y);
-        ct_set(&state->tilemap, tile_x, tile_y, CT_TILE_TYPE_EMPTY);
-        tilemap_dirty = true;
+    // Fixed time ticks
+    state->delta_time_remaining += frame->delta_time;
+    while (state->delta_time_remaining > ELAPSED_TIME_PER_TICK) {
+        state->delta_time_remaining -= ELAPSED_TIME_PER_TICK;
+        struct egl_frame tick_frame = {
+            .delta_time = ELAPSED_TIME_PER_TICK,
+            .sdl_window = frame->sdl_window,
+        };
+        cg_tick(state, &tick_frame);
     }
 
     // Move sprite
-    state->sprites[0].x += frame->delta_time / 50.0f;
-    state->sprites[0].y += frame->delta_time / 40.0f;
-    if (state->sprites[0].x >= 200.0f) {
-        state->sprites[0].x = 0.0f;
-    }
-    if (state->sprites[0].y >= 200.0f) {
-        state->sprites[0].y = 0.0f;
-    }
-    state->sprite_count = 1;
+    struct egl_sprite *sprite = cs_get(&state->sprite, state->beetle.sprite);
+    sprite->x = state->beetle.position.x;
+    sprite->y = state->beetle.position.y;
 
     // Update the VBOs
-    egl_sprite_buffer_data(&state->sprite_buffer, state->sprite_count,
-                           state->sprites);
+    egl_sprite_buffer_data(&state->sprite_buffer, state->sprite.sprite_count,
+                           state->sprite.sprites);
     if (tilemap_dirty) {
         egl_tile_buffer_data(&state->tile_buffer, state->tilemap.tile_count,
                              state->tilemap.tiles);
@@ -264,13 +325,13 @@ bool cg_frame(void *data, struct egl_frame *frame) {
                                       GEN_TILE_ATLAS_TILE_SIZE,
                                   }};
     cgl_tile_shader_render(&state->tile_shader, &tile_size, &camera_transform,
-                          &state->tile_atlas, state->tilemap.tile_count,
-                          &state->tile_buffer);
+                           &state->tile_atlas, state->tilemap.tile_count,
+                           &state->tile_buffer);
 
     // Render sprites
     cgl_sprite_shader_render(&state->sprite_shader, &camera_transform,
-                            &state->sprite_atlas, state->sprite_count,
-                            &state->sprite_buffer);
+                             &state->sprite_atlas, state->sprite.sprite_count,
+                             &state->sprite_buffer);
 
     return true;
 }

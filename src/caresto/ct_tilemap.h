@@ -3,9 +3,9 @@
 
 #include <engine/egl_opengl.h>
 
-#define TILEMAP_MAX_WIDTH 100
-#define TILEMAP_MAX_HEIGHT 100
-#define TILES_MAX 1024
+#define CT_TILEMAP_MAX_WIDTH 100
+#define CT_TILEMAP_MAX_HEIGHT 100
+#define CT_TILES_MAX 1024
 
 enum ct_tile_type {
     CT_TILE_TYPE_EMPTY = 0,
@@ -21,8 +21,8 @@ struct ct_tile {
 
 struct ct_tilemap {
     size_t tile_count;
-    struct egl_tile tiles[TILES_MAX];
-    struct ct_tile tilemap[TILEMAP_MAX_HEIGHT][TILEMAP_MAX_WIDTH];
+    struct egl_tile tiles[CT_TILES_MAX];
+    struct ct_tile tilemap[CT_TILEMAP_MAX_HEIGHT][CT_TILEMAP_MAX_WIDTH];
 };
 
 void ct_set(struct ct_tilemap *tilemap, size_t x, size_t y,
