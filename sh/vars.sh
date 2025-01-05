@@ -96,8 +96,9 @@ TILE_ATLAS_JSON="assets/tiles.json"
 TILE_ATLAS_PNG="assets/tile_atlas.png"
 TILE_ATLAS_H="$GEN_PATH/gen/tile_atlas.h"
 
-SPRITE_ATLAS_ASEPRITE="assets/sprites/*.aseprite"
+SPRITE_ATLAS_PATH="assets/sprites"
 SPRITE_ATLAS_JSON="assets/sprites.json"
+SPRITE_ATLAS_BOUNDING_BOX_JSON="assets/sprites_bounding_box.json"
 SPRITE_ATLAS_PNG="assets/sprite_atlas.png"
 SPRITE_ATLAS_H="$GEN_PATH/gen/sprite_atlas.h"
 
