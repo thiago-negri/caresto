@@ -6,6 +6,7 @@
 #include <engine/et_test.h>
 #include <engine/eu_utils.h>
 
+#include <caresto/ca_animation.h>
 #include <caresto/cb_bodymap.h>
 #include <caresto/ce_entity.h>
 #include <caresto/cg_game.h>
@@ -41,12 +42,16 @@ struct cg_state {
     uint64_t delta_time_remaining;
 
     // Beetle
+    ca_animation_id beetle_animation_walk;
+    ca_animation_id beetle_animation_idle;
+
     struct ce_entity beetle_a;
     struct ce_entity beetle_b;
 
     struct cs_spritemap spritemap;
     struct ct_tilemap tilemap;
     struct cb_bodymap bodymap;
+    struct ca_animationmap animationmap;
 };
 
 ET_TEST(cg_state) {
@@ -98,7 +103,65 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
         goto _err;
     }
 
+    // FIXME(tnegri): Generate those frames / animation data from .aseprite
+    // TODO(tnegri): How entities change their animations without access to the
+    // entire game state?
+    struct ca_frame frames_walk[] = {
+        {
+            .texture_offset = {.u = GEN_SPRITE_ATLAS_BEETLE_WALK_0_U,
+                               .v = GEN_SPRITE_ATLAS_BEETLE_WALK_0_V},
+        },
+        {
+            .texture_offset = {.u = GEN_SPRITE_ATLAS_BEETLE_WALK_1_U,
+                               .v = GEN_SPRITE_ATLAS_BEETLE_WALK_1_V},
+        },
+        {
+            .texture_offset = {.u = GEN_SPRITE_ATLAS_BEETLE_WALK_2_U,
+                               .v = GEN_SPRITE_ATLAS_BEETLE_WALK_2_V},
+        },
+        {
+            .texture_offset = {.u = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_U,
+                               .v = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_V},
+        },
+        {
+            .texture_offset = {.u = GEN_SPRITE_ATLAS_BEETLE_WALK_4_U,
+                               .v = GEN_SPRITE_ATLAS_BEETLE_WALK_4_V},
+        },
+        {
+            .texture_offset = {.u = GEN_SPRITE_ATLAS_BEETLE_WALK_5_U,
+                               .v = GEN_SPRITE_ATLAS_BEETLE_WALK_5_V},
+        },
+        {
+            .texture_offset = {.u = GEN_SPRITE_ATLAS_BEETLE_WALK_6_U,
+                               .v = GEN_SPRITE_ATLAS_BEETLE_WALK_6_V},
+        },
+        {
+            .texture_offset = {.u = GEN_SPRITE_ATLAS_BEETLE_WALK_7_U,
+                               .v = GEN_SPRITE_ATLAS_BEETLE_WALK_7_V},
+        },
+    };
+    state->beetle_animation_walk =
+        ca_add(&state->animationmap, 100,
+               &(struct eu_ivec2){.w = GEN_SPRITE_ATLAS_BEETLE_WALK_0_W,
+                                  .h = GEN_SPRITE_ATLAS_BEETLE_WALK_0_W},
+               8, frames_walk);
+    struct ca_frame frames_idle[] = {
+        {
+            .texture_offset = {.u = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_U,
+                               .v = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_V},
+        },
+    };
+    state->beetle_animation_idle =
+        ca_add(&state->animationmap, 100,
+               &(struct eu_ivec2){.w = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_W,
+                                  .h = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_W},
+               1, frames_idle);
+
     // Initial state
+    state->beetle_a.animation =
+        ca_play(&state->animationmap, state->beetle_animation_walk);
+    state->beetle_a.animation_walk = state->beetle_animation_walk;
+    state->beetle_a.animation_idle = state->beetle_animation_idle;
     state->beetle_a.position.x = 100.0f;
     state->beetle_a.position.y = 100.0f;
     state->beetle_a.body =
@@ -136,6 +199,10 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
                                    },
                            });
 
+    state->beetle_b.animation =
+        ca_play(&state->animationmap, state->beetle_animation_walk);
+    state->beetle_b.animation_walk = state->beetle_animation_walk;
+    state->beetle_b.animation_idle = state->beetle_animation_idle;
     state->beetle_b.position.x = 200.0f;
     state->beetle_b.position.y = 200.0f;
     state->beetle_b.body =
@@ -252,8 +319,10 @@ void cg_reload(void *data, struct em_arena *transient_storage) {
 }
 
 void cg_tick(struct cg_state *state, struct egl_frame *frame) {
-    ce_tick(&state->beetle_a, &state->bodymap, &state->tilemap);
-    ce_tick(&state->beetle_b, &state->bodymap, &state->tilemap);
+    ce_tick(&state->beetle_a, &state->animationmap, &state->bodymap,
+            &state->tilemap);
+    ce_tick(&state->beetle_b, &state->animationmap, &state->bodymap,
+            &state->tilemap);
 }
 
 bool cg_frame(void *data, struct egl_frame *frame) {
@@ -354,8 +423,10 @@ bool cg_frame(void *data, struct egl_frame *frame) {
     }
 
     // Move sprite
-    ce_frame(&state->beetle_a, &state->spritemap);
-    ce_frame(&state->beetle_b, &state->spritemap);
+    ce_frame(&state->beetle_a, &state->animationmap, &state->spritemap,
+             frame->delta_time);
+    ce_frame(&state->beetle_b, &state->animationmap, &state->spritemap,
+             frame->delta_time);
 
     // Update the VBOs
     egl_sprite_buffer_data(&state->sprite_buffer, state->spritemap.sprite_count,
