@@ -116,7 +116,7 @@ void cgl_sprite_shader_destroy(struct cgl_sprite_shader *shader) {
 }
 
 void cgl_sprite_shader_render(struct cgl_sprite_shader *shader,
-                              struct egl_mat4 *transform_mat,
+                              struct eu_mat4 *transform_mat,
                               struct egl_texture *texture, size_t sprite_count,
                               struct egl_sprite_buffer *sprite_buffer) {
     // Bind GL objects
@@ -249,8 +249,8 @@ void cgl_tile_shader_destroy(struct cgl_tile_shader *shader) {
 }
 
 void cgl_tile_shader_render(struct cgl_tile_shader *shader,
-                            struct egl_ivec2 *tile_size,
-                            struct egl_mat4 *transform_mat,
+                            struct eu_ivec2 *tile_size,
+                            struct eu_mat4 *transform_mat,
                             struct egl_texture *texture, size_t tile_count,
                             struct egl_tile_buffer *tile_buffer) {
     // Bind GL objects

@@ -3,6 +3,7 @@
 
 #include <engine/egl_opengl.h>
 #include <engine/em_memory.h>
+#include <engine/eu_utils.h>
 
 struct cgl_sprite_shader {
     GLuint program_id;
@@ -27,7 +28,7 @@ int cgl_sprite_shader_load(struct cgl_sprite_shader *out_shader,
 void cgl_sprite_shader_destroy(struct cgl_sprite_shader *shader);
 
 void cgl_sprite_shader_render(struct cgl_sprite_shader *shader,
-                              struct egl_mat4 *g_transform_mat,
+                              struct eu_mat4 *g_transform_mat,
                               struct egl_texture *texture, size_t sprite_count,
                               struct egl_sprite_buffer *sprite_buffer);
 
@@ -37,8 +38,8 @@ int cgl_tile_shader_load(struct cgl_tile_shader *out_shader,
 void cgl_tile_shader_destroy(struct cgl_tile_shader *shader);
 
 void cgl_tile_shader_render(struct cgl_tile_shader *shader,
-                            struct egl_ivec2 *g_tile_size,
-                            struct egl_mat4 *g_transform_mat,
+                            struct eu_ivec2 *g_tile_size,
+                            struct eu_mat4 *g_transform_mat,
                             struct egl_texture *texture, size_t sprite_count,
                             struct egl_tile_buffer *tile_buffer);
 

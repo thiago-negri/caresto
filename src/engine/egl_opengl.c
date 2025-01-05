@@ -9,67 +9,6 @@
 #include <engine/et_test.h>
 #include <engine/eu_utils.h>
 
-void egl_identity(struct egl_mat4 *out) {
-    out->ax = 1.0f;
-    out->ay = 0.0f;
-    out->az = 0.0f;
-    out->aw = 0.0f;
-    out->bx = 0.0f;
-    out->by = 1.0f;
-    out->bz = 0.0f;
-    out->bw = 0.0f;
-    out->cx = 0.0f;
-    out->cy = 0.0f;
-    out->cz = 1.0f;
-    out->cw = 0.0f;
-    out->dx = 0.0f;
-    out->dy = 0.0f;
-    out->dz = 0.0f;
-    out->dw = 1.0f;
-}
-
-void egl_ortho(struct egl_mat4 *out, GLfloat left, GLfloat right, GLfloat top,
-               GLfloat bottom, GLfloat near, GLfloat far) {
-    out->ax = 2.0f / (right - left);
-    out->ay = 0.0f;
-    out->az = 0.0f;
-    out->aw = -1.0f * (right + left) / (right - left);
-    out->bx = 0.0f;
-    out->by = -2.0f / (bottom - top);
-    out->bz = 0.0f;
-    out->bw = (bottom + top) / (bottom - top);
-    out->cx = 0.0f;
-    out->cy = 0.0f;
-    out->cz = -2.0f / (far - near);
-    out->cw = -1.0f * (far + near) / (far - near);
-    out->dx = 0.0f;
-    out->dy = 0.0f;
-    out->dz = 0.0f;
-    out->dw = 1.0f;
-}
-
-ET_TEST(ortho) {
-    struct egl_mat4 a = {.values = {0.0f}};
-    egl_ortho(&a, 0.0f, 360.0f, 0.0f, 640.0f, 0.0f, 1.0f);
-    ET_ASSERT(a.ax >= 0.005555f && a.ax <= 0.005557f);
-    ET_ASSERT(a.ay == 0.0f);
-    ET_ASSERT(a.az == 0.0f);
-    ET_ASSERT(a.aw == -1.0f);
-    ET_ASSERT(a.bx == 0.0f);
-    ET_ASSERT(a.by >= -0.003126f && a.by <= -0.003124f);
-    ET_ASSERT(a.bz == 0.0f);
-    ET_ASSERT(a.bw == 1.0f);
-    ET_ASSERT(a.cx == 0.0f);
-    ET_ASSERT(a.cy == 0.0f);
-    ET_ASSERT(a.cz == -2.0f);
-    ET_ASSERT(a.cw == -1.0f);
-    ET_ASSERT(a.dx == 0.0f);
-    ET_ASSERT(a.dy == 0.0f);
-    ET_ASSERT(a.dz == 0.0f);
-    ET_ASSERT(a.dw == 1.0f);
-    ET_DONE;
-}
-
 static const char *egl_shader_type_name(GLenum type) {
     switch (type) {
     case GL_VERTEX_SHADER:
@@ -197,13 +136,14 @@ void egl_sprite_buffer_create(GLsizei count,
     glGenVertexArrays(1, &vertex_array_id);
     glBindVertexArray(vertex_array_id);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(struct egl_sprite),
-                          (void *)offsetof(struct egl_sprite, x));
+                          (void *)offsetof(struct egl_sprite, position.x));
     glEnableVertexAttribArray(0);
     glVertexAttribIPointer(1, 2, GL_INT, sizeof(struct egl_sprite),
-                           (void *)offsetof(struct egl_sprite, w));
+                           (void *)offsetof(struct egl_sprite, size.w));
     glEnableVertexAttribArray(1);
-    glVertexAttribIPointer(2, 2, GL_INT, sizeof(struct egl_sprite),
-                           (void *)offsetof(struct egl_sprite, u));
+    glVertexAttribIPointer(
+        2, 2, GL_INT, sizeof(struct egl_sprite),
+        (void *)offsetof(struct egl_sprite, texture_offset.u));
     glEnableVertexAttribArray(2);
 
     // Reset GL objects

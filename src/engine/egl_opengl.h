@@ -7,18 +7,12 @@
 #include <SDL3/SDL.h>
 
 #include <engine/em_memory.h>
+#include <engine/eu_utils.h>
 
-// FIXME(tnegri): Use egl_vec2
-// FIXME(tnegri): Move vec and mat out of egl
 struct egl_sprite {
-    // World position (top left)
-    GLfloat x, y;
-
-    // Size
-    GLint w, h;
-
-    // Texture position (top left)
-    GLint u, v;
+    struct eu_ivec2 position;
+    struct eu_ivec2 size;
+    struct eu_ivec2 texture_offset;
 };
 
 struct egl_sprite_buffer {
@@ -46,51 +40,6 @@ struct egl_texture {
 #endif
 };
 
-struct egl_vec2 {
-    union {
-        GLfloat values[2];
-        struct {
-            GLfloat x, y;
-        };
-        struct {
-            GLfloat u, v;
-        };
-    };
-};
-
-struct egl_ivec2 {
-    union {
-        GLint values[2];
-        struct {
-            GLint x, y;
-        };
-        struct {
-            GLint u, v;
-        };
-    };
-};
-
-struct egl_vec4 {
-    union {
-        GLfloat values[4];
-        struct {
-            GLfloat x, y, z, w;
-        };
-    };
-};
-
-struct egl_mat4 {
-    union {
-        GLfloat values[16];
-        struct {
-            GLfloat ax, bx, cx, dx;
-            GLfloat ay, by, cy, dy;
-            GLfloat az, bz, cz, dz;
-            GLfloat aw, bw, cw, dw;
-        };
-    };
-};
-
 struct egl_frame {
     uint64_t delta_time;
     SDL_Window *sdl_window;
@@ -116,10 +65,6 @@ void egl_tile_buffer_data(struct egl_tile_buffer *buffer, size_t count,
 
 int egl_texture_load(const char *file_path, struct egl_texture *out_texture);
 void egl_texture_destroy(struct egl_texture *texture);
-
-void egl_ortho(struct egl_mat4 *out, GLfloat left, GLfloat right, GLfloat top,
-               GLfloat bottom, GLfloat near, GLfloat far);
-void egl_identity(struct egl_mat4 *out);
 
 void egl_debug_message_callback(GLenum source, GLenum type, GLuint id,
                                 GLenum severity, GLsizei length,

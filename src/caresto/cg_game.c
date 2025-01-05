@@ -3,7 +3,9 @@
 #include <engine/egl_opengl.h>
 #include <engine/el_log.h>
 #include <engine/et_test.h>
+#include <engine/eu_utils.h>
 
+#include <caresto/cb_bodymap.h>
 #include <caresto/cg_game.h>
 #include <caresto/cgl_opengl.h>
 #include <caresto/cs_spritemap.h>
@@ -20,14 +22,15 @@
 #define BEETLE_SPEED 0.5f
 struct beetle {
     sprite_id sprite;
-    struct egl_ivec2 position;
-    struct egl_vec2 position_remaining;
-    struct egl_vec2 velocity;
+    body_id body;
+    struct eu_ivec2 position;
+    struct eu_vec2 movement_remaining;
+    struct eu_vec2 velocity;
 };
 
 struct cg_state {
     // Game camera
-    struct egl_vec2 camera_position;
+    struct eu_vec2 camera_position;
 
     // Sprite shader
     struct cgl_sprite_shader sprite_shader;
@@ -42,11 +45,12 @@ struct cg_state {
     uint64_t delta_time_remaining;
 
     // Beetle
-    struct beetle beetle;
+    struct beetle beetle_a;
+    struct beetle beetle_b;
 
     struct cs_spritemap spritemap;
-
     struct ct_tilemap tilemap;
+    struct cb_bodymap bodymap;
 };
 
 ET_TEST(cg_state) {
@@ -82,7 +86,7 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
     egl_sprite_buffer_create(CS_SPRITES_MAX, &state->sprite_buffer);
     egl_tile_buffer_create(CT_TILES_MAX, &state->tile_buffer);
 
-    state->camera_position = (struct egl_vec2){
+    state->camera_position = (struct eu_vec2){
         .x = (GLfloat)GAME_CAMERA_WIDTH * 0.5f,
         .y = (GLfloat)GAME_CAMERA_HEIGHT * 0.5f,
     };
@@ -99,15 +103,79 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
     }
 
     // Initial state
-    state->beetle.sprite =
-        cs_add(&state->spritemap, &(struct egl_sprite){
-                                      .x = 100.0f,
-                                      .y = 100.0f,
-                                      .w = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_W,
-                                      .h = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_H,
-                                      .u = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_U,
-                                      .v = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_V,
-                                  });
+    state->beetle_a.position.x = 100.0f;
+    state->beetle_a.position.y = 100.0f;
+    state->beetle_a.body =
+        cb_add(&state->bodymap,
+               &(struct cb_body){
+                   .position =
+                       {
+                           .x = state->beetle_a.position.x +
+                                GEN_SPRITE_ATLAS_BEETLE_BOUNDING_BOX_X,
+                           .y = state->beetle_a.position.y +
+                                GEN_SPRITE_ATLAS_BEETLE_BOUNDING_BOX_Y,
+                       },
+                   .size =
+                       {
+                           .w = GEN_SPRITE_ATLAS_BEETLE_BOUNDING_BOX_W,
+                           .h = GEN_SPRITE_ATLAS_BEETLE_BOUNDING_BOX_H,
+                       },
+               });
+    state->beetle_a.sprite = cs_add(
+        &state->spritemap, &(struct egl_sprite){
+                               .position =
+                                   {
+                                       .x = 100,
+                                       .y = 100,
+                                   },
+                               .size =
+                                   {
+                                       .w = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_W,
+                                       .h = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_H,
+                                   },
+                               .texture_offset =
+                                   {
+                                       .u = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_U,
+                                       .v = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_V,
+                                   },
+                           });
+
+    state->beetle_b.position.x = 200.0f;
+    state->beetle_b.position.y = 200.0f;
+    state->beetle_b.body =
+        cb_add(&state->bodymap,
+               &(struct cb_body){
+                   .position =
+                       {
+                           .x = state->beetle_b.position.x +
+                                GEN_SPRITE_ATLAS_BEETLE_BOUNDING_BOX_X,
+                           .y = state->beetle_b.position.y +
+                                GEN_SPRITE_ATLAS_BEETLE_BOUNDING_BOX_Y,
+                       },
+                   .size =
+                       {
+                           .w = GEN_SPRITE_ATLAS_BEETLE_BOUNDING_BOX_W,
+                           .h = GEN_SPRITE_ATLAS_BEETLE_BOUNDING_BOX_H,
+                       },
+               });
+    state->beetle_b.sprite = cs_add(
+        &state->spritemap, &(struct egl_sprite){
+                               .position =
+                                   {
+                                       .x = 200,
+                                       .y = 200,
+                                   },
+                               .size =
+                                   {
+                                       .w = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_W,
+                                       .h = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_H,
+                                   },
+                               .texture_offset =
+                                   {
+                                       .u = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_U,
+                                       .v = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_V,
+                                   },
+                           });
 
     // Set some tiles
     ct_set(&state->tilemap, 0, 40, CT_TILE_TYPE_GRASS);
@@ -188,16 +256,24 @@ void cg_reload(void *data, struct em_arena *transient_storage) {
 }
 
 void cg_tick(struct cg_state *state, struct egl_frame *frame) {
-    state->beetle.position_remaining.x += state->beetle.velocity.x;
-    state->beetle.position_remaining.y += state->beetle.velocity.y;
+    state->beetle_a.movement_remaining.x += state->beetle_a.velocity.x;
+    state->beetle_a.movement_remaining.y += state->beetle_a.velocity.y;
 
-    state->beetle.position.x += state->beetle.position_remaining.x;
-    state->beetle.position.y += state->beetle.position_remaining.y;
+    struct eu_ivec2 movement = {
+        .x = (int)state->beetle_a.movement_remaining.x,
+        .y = (int)state->beetle_a.movement_remaining.y,
+    };
 
-    state->beetle.position_remaining.x -=
-        (int)state->beetle.position_remaining.x;
-    state->beetle.position_remaining.y -=
-        (int)state->beetle.position_remaining.y;
+    if (movement.x != 0 || movement.y != 0) {
+        bool moved = cb_move(&state->bodymap, state->beetle_a.body, &movement);
+        if (moved) {
+            state->beetle_a.position.x += movement.x;
+            state->beetle_a.position.y += movement.y;
+        }
+    }
+
+    state->beetle_a.movement_remaining.x -= movement.x;
+    state->beetle_a.movement_remaining.y -= movement.y;
 }
 
 bool cg_frame(void *data, struct egl_frame *frame) {
@@ -212,11 +288,9 @@ bool cg_frame(void *data, struct egl_frame *frame) {
     GLfloat screen_left = camera_x - half_width;
     GLfloat screen_right = camera_x + half_width;
     GLfloat screen_bottom = camera_y + half_height;
-    struct egl_mat4 camera_transform = {.values = {0.0f}};
-    egl_ortho(&camera_transform, screen_left, screen_right, screen_top,
-              screen_bottom, 0.0f, 1.0f);
-
-    bool tilemap_dirty = false;
+    struct eu_mat4 camera_transform = {.values = {0.0f}};
+    eu_mat4_ortho(&camera_transform, screen_left, screen_right, screen_top,
+                  screen_bottom, 0.0f, 1.0f);
 
     // Handle input
     SDL_Event sdl_event = {0};
@@ -231,16 +305,16 @@ bool cg_frame(void *data, struct egl_frame *frame) {
                 return false;
 
             case SDLK_W:
-                state->beetle.velocity.y = -BEETLE_SPEED;
+                state->beetle_a.velocity.y = -BEETLE_SPEED;
                 break;
             case SDLK_S:
-                state->beetle.velocity.y = BEETLE_SPEED;
+                state->beetle_a.velocity.y = BEETLE_SPEED;
                 break;
             case SDLK_A:
-                state->beetle.velocity.x = -BEETLE_SPEED;
+                state->beetle_a.velocity.x = -BEETLE_SPEED;
                 break;
             case SDLK_D:
-                state->beetle.velocity.x = BEETLE_SPEED;
+                state->beetle_a.velocity.x = BEETLE_SPEED;
                 break;
             }
             break;
@@ -249,46 +323,45 @@ bool cg_frame(void *data, struct egl_frame *frame) {
             switch (sdl_event.key.key) {
             case SDLK_W:
             case SDLK_S:
-                state->beetle.velocity.y = 0;
+                state->beetle_a.velocity.y = 0;
                 break;
             case SDLK_A:
             case SDLK_D:
-                state->beetle.velocity.x = 0;
+                state->beetle_a.velocity.x = 0;
                 break;
             }
             break;
-
-        case SDL_EVENT_MOUSE_BUTTON_DOWN:
-            // Place tiles
-            float mouse_x, mouse_y;
-            SDL_MouseButtonFlags mouse_flags =
-                SDL_GetMouseState(&mouse_x, &mouse_y);
-            if ((mouse_flags & SDL_BUTTON_MASK(SDL_BUTTON_LEFT)) != 0) {
-                size_t tile_x, tile_y;
-                int window_w, window_h;
-                SDL_GetWindowSize(frame->sdl_window, &window_w, &window_h);
-                ct_tile_pos(screen_left, screen_right, screen_top,
-                            screen_bottom, window_w, window_h, mouse_x, mouse_y,
-                            GEN_TILE_ATLAS_TILE_SIZE, GEN_TILE_ATLAS_TILE_SIZE,
-                            &tile_x, &tile_y);
-                ct_set(&state->tilemap, tile_x, tile_y, CT_TILE_TYPE_GRASS);
-                tilemap_dirty = true;
-            }
-
-            // Remove tiles
-            if ((mouse_flags & SDL_BUTTON_MASK(SDL_BUTTON_RIGHT)) != 0) {
-                size_t tile_x, tile_y;
-                int window_w, window_h;
-                SDL_GetWindowSize(frame->sdl_window, &window_w, &window_h);
-                ct_tile_pos(screen_left, screen_right, screen_top,
-                            screen_bottom, window_w, window_h, mouse_x, mouse_y,
-                            GEN_TILE_ATLAS_TILE_SIZE, GEN_TILE_ATLAS_TILE_SIZE,
-                            &tile_x, &tile_y);
-                ct_set(&state->tilemap, tile_x, tile_y, CT_TILE_TYPE_EMPTY);
-                tilemap_dirty = true;
-            }
-            break;
         }
+    }
+
+    bool tilemap_dirty = false;
+
+    // Place tiles
+    float mouse_x, mouse_y;
+    SDL_MouseButtonFlags mouse_flags = SDL_GetMouseState(&mouse_x, &mouse_y);
+    if ((mouse_flags & SDL_BUTTON_MASK(SDL_BUTTON_LEFT)) != 0) {
+        size_t tile_x, tile_y;
+        int window_w, window_h;
+        SDL_GetWindowSize(frame->sdl_window, &window_w, &window_h);
+        ct_tile_pos(screen_left, screen_right, screen_top, screen_bottom,
+                    window_w, window_h, mouse_x, mouse_y,
+                    GEN_TILE_ATLAS_TILE_SIZE, GEN_TILE_ATLAS_TILE_SIZE, &tile_x,
+                    &tile_y);
+        ct_set(&state->tilemap, tile_x, tile_y, CT_TILE_TYPE_GRASS);
+        tilemap_dirty = true;
+    }
+
+    // Remove tiles
+    if ((mouse_flags & SDL_BUTTON_MASK(SDL_BUTTON_RIGHT)) != 0) {
+        size_t tile_x, tile_y;
+        int window_w, window_h;
+        SDL_GetWindowSize(frame->sdl_window, &window_w, &window_h);
+        ct_tile_pos(screen_left, screen_right, screen_top, screen_bottom,
+                    window_w, window_h, mouse_x, mouse_y,
+                    GEN_TILE_ATLAS_TILE_SIZE, GEN_TILE_ATLAS_TILE_SIZE, &tile_x,
+                    &tile_y);
+        ct_set(&state->tilemap, tile_x, tile_y, CT_TILE_TYPE_EMPTY);
+        tilemap_dirty = true;
     }
 
     // Fixed time ticks
@@ -303,9 +376,10 @@ bool cg_frame(void *data, struct egl_frame *frame) {
     }
 
     // Move sprite
-    struct egl_sprite *sprite = cs_get(&state->spritemap, state->beetle.sprite);
-    sprite->x = state->beetle.position.x;
-    sprite->y = state->beetle.position.y;
+    struct egl_sprite *sprite =
+        cs_get(&state->spritemap, state->beetle_a.sprite);
+    sprite->position.x = (int)state->beetle_a.position.x;
+    sprite->position.y = (int)state->beetle_a.position.y;
 
     // Update the VBOs
     egl_sprite_buffer_data(&state->sprite_buffer, state->spritemap.sprite_count,
@@ -320,10 +394,10 @@ bool cg_frame(void *data, struct egl_frame *frame) {
     glClear(GL_COLOR_BUFFER_BIT);
 
     // Render tiles
-    struct egl_ivec2 tile_size = {.values = {
-                                      GEN_TILE_ATLAS_TILE_SIZE,
-                                      GEN_TILE_ATLAS_TILE_SIZE,
-                                  }};
+    struct eu_ivec2 tile_size = {.values = {
+                                     GEN_TILE_ATLAS_TILE_SIZE,
+                                     GEN_TILE_ATLAS_TILE_SIZE,
+                                 }};
     cgl_tile_shader_render(&state->tile_shader, &tile_size, &camera_transform,
                            &state->tile_atlas, state->tilemap.tile_count,
                            &state->tile_buffer);

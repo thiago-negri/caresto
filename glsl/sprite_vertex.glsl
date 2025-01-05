@@ -1,6 +1,6 @@
 #version 430 core
 
-layout (location = 0) in vec2 position;
+layout (location = 0) in ivec2 position;
 layout (location = 1) in ivec2 size;
 layout (location = 2) in ivec2 texture;
 
