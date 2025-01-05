@@ -86,3 +86,7 @@ ET_TEST(eu_max) {
     ET_ASSERT(eu_max(3, 2, 1) == 3);
     ET_DONE;
 }
+
+float eu_lerp(float start, float end, float d) {
+    return start + (end - start) * d;
+}

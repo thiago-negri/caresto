@@ -56,7 +56,7 @@ ET_TEST(ortho) {
     ET_ASSERT(a.az == 0.0f);
     ET_ASSERT(a.aw == -1.0f);
     ET_ASSERT(a.bx == 0.0f);
-    ET_ASSERT(a.by >= 0.003124f && a.by <= 0.003126f);
+    ET_ASSERT(a.by >= -0.003126f && a.by <= -0.003124f);
     ET_ASSERT(a.bz == 0.0f);
     ET_ASSERT(a.bw == 1.0f);
     ET_ASSERT(a.cx == 0.0f);
@@ -226,6 +226,53 @@ void egl_sprite_buffer_data(struct egl_sprite_buffer *buffer, size_t count,
     glBindBuffer(GL_ARRAY_BUFFER, buffer->buffer_id);
     glBufferSubData(GL_ARRAY_BUFFER, 0, count * sizeof(struct egl_sprite),
                     data);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void egl_tile_buffer_create(GLsizei count,
+                            struct egl_tile_buffer *out_tile_buffer) {
+    GLuint buffer_id = 0;
+    GLuint vertex_array_id = 0;
+
+    // Generate the VBO to be used
+    glGenBuffers(1, &buffer_id);
+    glBindBuffer(GL_ARRAY_BUFFER, buffer_id);
+    glBufferData(GL_ARRAY_BUFFER, count * sizeof(struct egl_tile), NULL,
+                 GL_DYNAMIC_DRAW);
+
+    // Generate the VAO to be used
+    glGenVertexArrays(1, &vertex_array_id);
+    glBindVertexArray(vertex_array_id);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(struct egl_tile),
+                          (void *)offsetof(struct egl_tile, x));
+    glEnableVertexAttribArray(0);
+    glVertexAttribIPointer(1, 2, GL_INT, sizeof(struct egl_tile),
+                           (void *)offsetof(struct egl_tile, u));
+    glEnableVertexAttribArray(1);
+
+    // Reset GL objects
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    out_tile_buffer->buffer_id = buffer_id;
+    out_tile_buffer->vertex_array_id = vertex_array_id;
+}
+
+void egl_tile_buffer_destroy(struct egl_tile_buffer *tile_buffer) {
+    if (tile_buffer->vertex_array_id != 0) {
+        glDeleteVertexArrays(1, &tile_buffer->vertex_array_id);
+        tile_buffer->vertex_array_id = 0;
+    }
+    if (tile_buffer->buffer_id != 0) {
+        glDeleteBuffers(1, &tile_buffer->buffer_id);
+        tile_buffer->buffer_id = 0;
+    }
+}
+
+void egl_tile_buffer_data(struct egl_tile_buffer *buffer, size_t count,
+                          struct egl_tile *data) {
+    glBindBuffer(GL_ARRAY_BUFFER, buffer->buffer_id);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, count * sizeof(struct egl_tile), data);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 

@@ -91,6 +91,11 @@ LINK_FLAGS="${LINK_FLAGS_ARR[*]}"
 OBJ_FILES_TO_LINK="${OBJ_FILES_TO_LINK_ARR[*]}"
 COMPILE_FLAGS="${COMPILE_FLAGS_ARR[*]}"
 
+TILE_ATLAS_ASEPRITE="assets/tiles.aseprite"
+TILE_ATLAS_JSON="assets/tiles.json"
+TILE_ATLAS_PNG="assets/tile_atlas.png"
+TILE_ATLAS_H="$GEN_PATH/gen/tile_atlas.h"
+
 
 #
 # UTILS
@@ -103,6 +108,22 @@ run() {
 extract_headers() {
     local file=$1
     grep -oE '^\s*#\s*include\s*["<]([^">]+)[">]' "$file" | sed -E 's/\s*#\s*include\s*[<"]([^">]+)[">]/\1/'
+}
+
+need_tile_atlas() {
+    if [ ! -e "$TILE_ATLAS_PNG" ]; then
+        return 0
+    fi
+    if [ ! -e "$TILE_ATLAS_H" ]; then
+        return 0
+    fi
+    if [[ "$TILE_ATLAS_PNG" -ot "$TILE_ATLAS_ASEPRITE" ]]; then
+        return 0
+    fi
+    if [[ "$TILE_ATLAS_H" -ot "$TILE_ATLAS_ASEPRITE" ]]; then
+        return 0
+    fi
+    return 1
 }
 
 need_compile() {
@@ -145,13 +166,13 @@ need_shared() {
     fi
 
     for obj_file in ./$OBJ_ENGINE_PATH/*.o; do
-        if [[ "$TARGET" -ot "$obj_file" ]]; then
+        if [[ "$TARGET_SHARED" -ot "$obj_file" ]]; then
             return 0
         fi
     done
 
     for obj_file in ./$OBJ_CARESTO_PATH/*.o; do
-        if [[ "$TARGET" -ot "$obj_file" ]]; then
+        if [[ "$TARGET_SHARED" -ot "$obj_file" ]]; then
             return 0
         fi
     done
@@ -216,17 +237,50 @@ if [ $arg_build -eq 0 ]; then
         if [[ ! -e "$gen_file" || "$gen_file" -ot "$glsl_source" ]]; then
             echo "# convert $glsl_source to $gen_file"
             echo "// This file is generated. Do not change it." > $gen_file
-            echo "#ifndef _GLSL_${module}_H" >> $gen_file
-            echo "#define _GLSL_${module}_H" >> $gen_file
+            echo "#ifndef GLSL_${module^^}_H" >> $gen_file
+            echo "#define GLSL_${module^^}_H" >> $gen_file
+            echo "#ifdef SHARED" >> $gen_file
             echo "const long long glsl_${module}_timestamp =" >> $gen_file
             date +%s >> $gen_file
             echo ";" >> $gen_file
+            echo "#endif // SHARED" >> $gen_file
             echo "const char *glsl_${module}_source =" >> $gen_file
             sed -E 's/(.*)/"\1\\n"/' $glsl_source >> $gen_file
             echo ";" >> $gen_file
-            echo "#endif // _GLSL_${module}_H" >> $gen_file
+            echo "#endif // GLSL_${module^^}_H" >> $gen_file
         fi
     done
+
+    # GENERATE TILE ATLAS
+    if need_tile_atlas; then
+        echo "# convert $TILE_ATLAS_ASEPRITE ..."
+        aseprite -b "$TILE_ATLAS_ASEPRITE" \
+            --data "$TILE_ATLAS_JSON" \
+            --sheet "$TILE_ATLAS_PNG" \
+            --sheet-type packed \
+            --filename-format '{tag}'
+        gen_file=$TILE_ATLAS_H
+        module=$(basename $gen_file .h)
+        echo "// This file is generated. Do not change it." > $gen_file
+        echo "#ifndef ${module^^}_H" >> $gen_file
+        echo "#define ${module^^}_H" >> $gen_file
+        first_sprite=$(jq '.frames | keys | first' "$TILE_ATLAS_JSON" | \
+            grep '"' | sed -E 's/.*("[^"]*").*/\1/')
+        tile_size=$(jq ".frames.${first_sprite}.sourceSize.w" "$TILE_ATLAS_JSON" | \
+                sed -E 's/(.*)/(\1)/')
+        echo "#define GEN_TILE_ATLAS_TILE_SIZE $tile_size" >> $gen_file
+        sprite_names=$(jq '.frames | keys' "$TILE_ATLAS_JSON" | \
+            grep '"' | sed -E 's/.*"([^"]*)".*/\1/')
+        for sprite_name in $sprite_names; do
+            u=$(jq ".frames.\"${sprite_name}\".frame.x" "$TILE_ATLAS_JSON" | \
+                sed -E 's/(.*)/(\1)/')
+            v=$(jq ".frames.\"${sprite_name}\".frame.y" "$TILE_ATLAS_JSON" | \
+                sed -E 's/(.*)/(\1)/')
+            echo "#define GEN_TILE_ATLAS_${sprite_name^^}_U $u" >> $gen_file
+            echo "#define GEN_TILE_ATLAS_${sprite_name^^}_V $v" >> $gen_file
+        done
+        echo "#endif // ${module^^}_H" >> $gen_file
+    fi
 
     # COMPILE
     for source_file in ./$SRC_ENGINE_PATH/*.c; do

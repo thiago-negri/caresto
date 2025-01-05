@@ -1,9 +1,10 @@
+/assets/tiles.json
 /build
 /include
 /lib
 /licenses/LICENSE-glew.txt
 /licenses/README-SDL.txt
 /src-gen
-/tmp-dependencies
 /test
+/tmp-dependencies
 

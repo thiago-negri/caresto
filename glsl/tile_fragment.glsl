@@ -4,10 +4,10 @@ in vec2 f_texture;
 
 out vec4 FragColor;
 
-layout (binding = 0) uniform sampler2D g_sprite_atlas;
+layout (binding = 0) uniform sampler2D g_tile_atlas;
 
 void main() {
-    FragColor = texelFetch(g_sprite_atlas, ivec2(f_texture), 0);
+    FragColor = texelFetch(g_tile_atlas, ivec2(f_texture), 0);
     if (FragColor.a == 0.0f) {
         discard;
     }
