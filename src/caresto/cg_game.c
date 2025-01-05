@@ -98,11 +98,58 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
     };
 
     // Set some tiles
-    ct_set(&state->tilemap, 0, 0, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 0, 1, CT_TILE_TYPE_SAND);
-    ct_set(&state->tilemap, 0, 2, CT_TILE_TYPE_WATER);
-    ct_set(&state->tilemap, 0, 3, CT_TILE_TYPE_WATER);
-    ct_set(&state->tilemap, 0, 4, CT_TILE_TYPE_WATER);
+    ct_set(&state->tilemap, 0, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 1, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 2, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 3, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 4, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 5, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 6, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 7, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 8, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 9, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 10, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 11, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 12, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 13, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 14, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 15, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 16, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 17, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 18, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 19, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 20, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 21, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 22, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 23, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 24, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 25, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 26, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 27, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 28, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 29, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 30, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 31, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 32, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 33, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 34, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 35, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 36, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 37, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 38, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 39, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 40, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 41, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 42, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 43, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 44, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 45, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 46, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 47, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 48, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 49, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 50, 40, CT_TILE_TYPE_GRASS);
+    ct_set(&state->tilemap, 51, 40, CT_TILE_TYPE_GRASS);
 
     // Load the VBOs
     egl_sprite_buffer_data(&state->sprite_buffer, state->sprite_count,
