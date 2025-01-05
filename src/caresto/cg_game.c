@@ -17,8 +17,10 @@
 #include <gen/sprite_atlas.h>
 #include <gen/tile_atlas.h>
 
-#define GAME_CAMERA_HEIGHT 360.0f
-#define GAME_CAMERA_WIDTH 640.0f
+/*#define GAME_CAMERA_HEIGHT 360.0f*/
+#define GAME_CAMERA_HEIGHT 180.0f
+/*#define GAME_CAMERA_WIDTH 640.0f*/
+#define GAME_CAMERA_WIDTH 320.0f
 #define TICKS_PER_SECOND 60
 #define ELAPSED_TIME_PER_TICK (1000.0f / TICKS_PER_SECOND)
 
@@ -89,7 +91,7 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
 
     state->camera_position = (struct eu_vec2){
         .x = (GLfloat)GAME_CAMERA_WIDTH * 0.5f,
-        .y = (GLfloat)GAME_CAMERA_HEIGHT * 0.5f,
+        .y = (GLfloat)GAME_CAMERA_HEIGHT * 1.5f,
     };
 
     // TODO(tnegri): Bake atlas in
