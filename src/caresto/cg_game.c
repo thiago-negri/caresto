@@ -13,7 +13,6 @@
 
 #define GAME_CAMERA_HEIGHT 360.0f
 #define GAME_CAMERA_WIDTH 640.0f
-#define TILE_SIZE 8
 
 #define CG_SPRITES_MAX 1024
 
