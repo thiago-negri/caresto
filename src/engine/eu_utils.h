@@ -70,7 +70,6 @@ void eu_mat4_identity(struct eu_mat4 *out);
 void eu_ivec2_diff(struct eu_vec2 *value, struct eu_vec2 *subtract,
                    struct eu_ivec2 *out);
 
-// TODO(tnegri): Create assertions
 #define eu_assert(X)                                                           \
     if (X) {                                                                   \
     }

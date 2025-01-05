@@ -72,7 +72,7 @@ void ca_change(struct ca_animationmap *animationmap,
         &animationmap->animation_instances[instance_id];
     struct ca_animation *animation = &animationmap->animations[id];
 
-    // FIXME(tnegri): What if we want to reset the current animation?
+    // FIXME(tnegri): #35 What if we want to reset the current animation?
     if (instance->animation != animation) {
         instance->current_frame = 0;
         instance->duration_remaining = animation->frame_duration;

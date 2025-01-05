@@ -94,7 +94,6 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
         .y = (GLfloat)GAME_CAMERA_HEIGHT * 1.5f,
     };
 
-    // TODO(tnegri): Bake atlas in
     rc = egl_texture_load(GEN_SPRITE_ATLAS_PATH, &state->sprite_atlas);
     if (rc != 0) {
         goto _err;
@@ -105,9 +104,6 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
         goto _err;
     }
 
-    // FIXME(tnegri): Generate those frames / animation data from .aseprite
-    // TODO(tnegri): How entities change their animations without access to the
-    // entire game state?
     struct ca_frame frames_walk[] = {
         {
             .texture_offset = {.u = GEN_SPRITE_ATLAS_BEETLE_WALK_0_U,

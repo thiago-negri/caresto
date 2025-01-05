@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# FIXME(tnegri): Clean this up
-
 TEST_C=test/test.c
 
 rm -rf test

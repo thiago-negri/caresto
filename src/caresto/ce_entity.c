@@ -9,7 +9,6 @@
 
 void ce_tick(struct ce_entity *entity, struct ca_animationmap *animationmap,
              struct cb_bodymap *bodymap, struct ct_tilemap *tilemap) {
-    // FIXME(tnegri): Combine move and grounded into a single pass
     if (entity->velocity.y >= 0 &&
         cb_grounded(bodymap, tilemap, entity->body)) {
         entity->velocity.y = 0;
@@ -29,16 +28,11 @@ void ce_tick(struct ce_entity *entity, struct ca_animationmap *animationmap,
     };
 
     if (movement.x != 0 || movement.y != 0) {
-        // FIXME(tnegri): Make move still apply X even if Y is blocked for
-        // example, and also apply per pixel, even if the attempted movement
-        // is bigger and 1px
         bool moved = cb_move(bodymap, tilemap, entity->body, &movement);
         if (moved) {
             entity->position.x += movement.x;
             entity->position.y += movement.y;
         } else {
-            // FIXME(tnegri): Until we fix the previous comment this makes sure
-            // we can still move
             entity->velocity.y = 0.0f;
         }
     }

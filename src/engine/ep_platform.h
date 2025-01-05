@@ -15,7 +15,6 @@ typedef HMODULE ep_shared;
 
 #endif // _WIN32
 
-// FIXME(tnegri): Fix prefix, these should not be cg_
 typedef int (*cg_init_fn)(void **, struct em_arena *, struct em_arena *);
 typedef void (*cg_reload_fn)(void *, struct em_arena *);
 typedef bool (*cg_frame_fn)(void *, struct egl_frame *);

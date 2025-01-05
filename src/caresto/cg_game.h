@@ -7,8 +7,6 @@
 #include <engine/egl_opengl.h>
 #include <engine/em_memory.h>
 
-// FIXME(tnegri): How to avoid having to declare those twice?
-
 #if defined(SHARED) && defined(CARESTO_MAIN)
 
 int (*cg_init_ptr)(void **, struct em_arena *, struct em_arena *);

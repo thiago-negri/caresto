@@ -44,9 +44,6 @@ void em_arena_destroy(struct em_arena *a) {
 
 size_t em_arena_save_offset(struct em_arena *a) { return a->offset; }
 
-/// FIXME(tnegri): arena restore
-/// This is a bit dangerous when the arena is passed around.  Probably not worth
-/// it.  Remove?
 void em_arena_restore_offset(struct em_arena *a, size_t offset) {
     a->offset = offset;
 }
