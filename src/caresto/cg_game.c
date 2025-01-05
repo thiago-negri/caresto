@@ -6,7 +6,7 @@
 
 #include <caresto/cg_game.h>
 #include <caresto/cgl_opengl.h>
-#include <caresto/cs_sprite.h>
+#include <caresto/cs_spritemap.h>
 #include <caresto/ct_tilemap.h>
 
 #include <gen/sprite_atlas.h>
@@ -44,7 +44,7 @@ struct cg_state {
     // Beetle
     struct beetle beetle;
 
-    struct cs_sprite sprite;
+    struct cs_spritemap spritemap;
 
     struct ct_tilemap tilemap;
 };
@@ -100,14 +100,14 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
 
     // Initial state
     state->beetle.sprite =
-        cs_add(&state->sprite, &(struct egl_sprite){
-                                   .x = 100.0f,
-                                   .y = 100.0f,
-                                   .w = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_W,
-                                   .h = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_H,
-                                   .u = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_U,
-                                   .v = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_V,
-                               });
+        cs_add(&state->spritemap, &(struct egl_sprite){
+                                      .x = 100.0f,
+                                      .y = 100.0f,
+                                      .w = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_W,
+                                      .h = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_H,
+                                      .u = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_U,
+                                      .v = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_V,
+                                  });
 
     // Set some tiles
     ct_set(&state->tilemap, 0, 40, CT_TILE_TYPE_GRASS);
@@ -164,8 +164,8 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
     ct_set(&state->tilemap, 51, 40, CT_TILE_TYPE_GRASS);
 
     // Load the VBOs
-    egl_sprite_buffer_data(&state->sprite_buffer, state->sprite.sprite_count,
-                           state->sprite.sprites);
+    egl_sprite_buffer_data(&state->sprite_buffer, state->spritemap.sprite_count,
+                           state->spritemap.sprites);
     egl_tile_buffer_data(&state->tile_buffer, state->tilemap.tile_count,
                          state->tilemap.tiles);
 
@@ -303,13 +303,13 @@ bool cg_frame(void *data, struct egl_frame *frame) {
     }
 
     // Move sprite
-    struct egl_sprite *sprite = cs_get(&state->sprite, state->beetle.sprite);
+    struct egl_sprite *sprite = cs_get(&state->spritemap, state->beetle.sprite);
     sprite->x = state->beetle.position.x;
     sprite->y = state->beetle.position.y;
 
     // Update the VBOs
-    egl_sprite_buffer_data(&state->sprite_buffer, state->sprite.sprite_count,
-                           state->sprite.sprites);
+    egl_sprite_buffer_data(&state->sprite_buffer, state->spritemap.sprite_count,
+                           state->spritemap.sprites);
     if (tilemap_dirty) {
         egl_tile_buffer_data(&state->tile_buffer, state->tilemap.tile_count,
                              state->tilemap.tiles);
@@ -329,9 +329,9 @@ bool cg_frame(void *data, struct egl_frame *frame) {
                            &state->tile_buffer);
 
     // Render sprites
-    cgl_sprite_shader_render(&state->sprite_shader, &camera_transform,
-                             &state->sprite_atlas, state->sprite.sprite_count,
-                             &state->sprite_buffer);
+    cgl_sprite_shader_render(
+        &state->sprite_shader, &camera_transform, &state->sprite_atlas,
+        state->spritemap.sprite_count, &state->sprite_buffer);
 
     return true;
 }

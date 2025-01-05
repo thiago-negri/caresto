@@ -17,7 +17,7 @@ static void ct_remove_tile(struct ct_tilemap *tilemap, size_t index) {
 
 static void ct_set_tile(struct ct_tilemap *tilemap, size_t index,
                         struct egl_ivec2 position, enum ct_tile_type type) {
-    eu_assert(index < TILES_MAX);
+    eu_assert(index < CT_TILES_MAX);
 
     tilemap->tiles[index].x = position.x;
     tilemap->tiles[index].y = position.y;
@@ -41,8 +41,8 @@ static void ct_set_tile(struct ct_tilemap *tilemap, size_t index,
 
 void ct_set(struct ct_tilemap *tilemap, size_t x, size_t y,
             enum ct_tile_type new_tile_type) {
-    eu_assert(x < TILEMAP_MAX_WIDTH);
-    eu_assert(y < TILEMAP_MAX_HEIGHT);
+    eu_assert(x < CT_TILEMAP_MAX_WIDTH);
+    eu_assert(y < CT_TILEMAP_MAX_HEIGHT);
 
     struct ct_tile *tile = &tilemap->tilemap[y][x];
     if (tile->type != CT_TILE_TYPE_EMPTY) {

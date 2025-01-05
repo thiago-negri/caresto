@@ -9,6 +9,6 @@ long long eu_max(long long a, long long b, long long c);
 float eu_lerp(float start, float end, float d);
 
 // TODO(tnegri): Create assertions
-#define eu_assert(X)
+#define eu_assert(X) if (X) {}
 
 #endif // EU_UTILS_H
