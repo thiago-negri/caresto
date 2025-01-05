@@ -1,8 +1,11 @@
+#include "caresto/ct_tilemap.h"
 #include <string.h>
 
 #include <engine/eu_utils.h>
 
 #include <caresto/cb_bodymap.h>
+
+#include <gen/tile_atlas.h>
 
 static bool cb_collision(struct cb_body *a, struct cb_body *b) {
     int a_left = a->position.x;
@@ -44,7 +47,7 @@ void cb_remove(struct cb_bodymap *bodymap, body_id id) {
     }
 }
 
-bool cb_move(struct cb_bodymap *bodymap, body_id id,
+bool cb_move(struct cb_bodymap *bodymap, struct ct_tilemap *tilemap, body_id id,
              struct eu_ivec2 *movement) {
     eu_assert(id < bodymap->body_count);
 
@@ -57,6 +60,24 @@ bool cb_move(struct cb_bodymap *bodymap, body_id id,
             },
         .size = body->size,
     };
+
+    size_t tile_left, tile_top, tile_right, tile_bottom;
+    ct_game_pos(&new_body.position, GEN_TILE_ATLAS_TILE_SIZE,
+                GEN_TILE_ATLAS_TILE_SIZE, &tile_left, &tile_top);
+    ct_game_pos(
+        &(struct eu_ivec2){
+            .x = new_body.position.x + body->size.w,
+            .y = new_body.position.y + body->size.h,
+        },
+        GEN_TILE_ATLAS_TILE_SIZE, GEN_TILE_ATLAS_TILE_SIZE, &tile_right,
+        &tile_bottom);
+    for (size_t y = tile_top; y <= tile_bottom; y++) {
+        for (size_t x = tile_left; x <= tile_right; x++) {
+            if (tilemap->tilemap[y][x].type != CT_TILE_TYPE_EMPTY) {
+                return false;
+            }
+        }
+    }
 
     for (size_t i = 0; i < bodymap->body_count; i++) {
         if (i == id) {

@@ -265,7 +265,8 @@ void cg_tick(struct cg_state *state, struct egl_frame *frame) {
     };
 
     if (movement.x != 0 || movement.y != 0) {
-        bool moved = cb_move(&state->bodymap, state->beetle_a.body, &movement);
+        bool moved = cb_move(&state->bodymap, &state->tilemap,
+                             state->beetle_a.body, &movement);
         if (moved) {
             state->beetle_a.position.x += movement.x;
             state->beetle_a.position.y += movement.y;
@@ -343,10 +344,10 @@ bool cg_frame(void *data, struct egl_frame *frame) {
         size_t tile_x, tile_y;
         int window_w, window_h;
         SDL_GetWindowSize(frame->sdl_window, &window_w, &window_h);
-        ct_tile_pos(screen_left, screen_right, screen_top, screen_bottom,
-                    window_w, window_h, mouse_x, mouse_y,
-                    GEN_TILE_ATLAS_TILE_SIZE, GEN_TILE_ATLAS_TILE_SIZE, &tile_x,
-                    &tile_y);
+        ct_screen_pos(screen_left, screen_right, screen_top, screen_bottom,
+                      window_w, window_h, mouse_x, mouse_y,
+                      GEN_TILE_ATLAS_TILE_SIZE, GEN_TILE_ATLAS_TILE_SIZE,
+                      &tile_x, &tile_y);
         ct_set(&state->tilemap, tile_x, tile_y, CT_TILE_TYPE_GRASS);
         tilemap_dirty = true;
     }
@@ -356,10 +357,10 @@ bool cg_frame(void *data, struct egl_frame *frame) {
         size_t tile_x, tile_y;
         int window_w, window_h;
         SDL_GetWindowSize(frame->sdl_window, &window_w, &window_h);
-        ct_tile_pos(screen_left, screen_right, screen_top, screen_bottom,
-                    window_w, window_h, mouse_x, mouse_y,
-                    GEN_TILE_ATLAS_TILE_SIZE, GEN_TILE_ATLAS_TILE_SIZE, &tile_x,
-                    &tile_y);
+        ct_screen_pos(screen_left, screen_right, screen_top, screen_bottom,
+                      window_w, window_h, mouse_x, mouse_y,
+                      GEN_TILE_ATLAS_TILE_SIZE, GEN_TILE_ATLAS_TILE_SIZE,
+                      &tile_x, &tile_y);
         ct_set(&state->tilemap, tile_x, tile_y, CT_TILE_TYPE_EMPTY);
         tilemap_dirty = true;
     }

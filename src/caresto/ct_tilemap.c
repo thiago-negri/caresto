@@ -62,12 +62,19 @@ void ct_set(struct ct_tilemap *tilemap, size_t x, size_t y,
     tile->type = new_tile_type;
 }
 
-void ct_tile_pos(GLfloat screen_left, GLfloat screen_right, GLfloat screen_top,
-                 GLfloat screen_bottom, GLfloat screen_w, GLfloat screen_h,
-                 GLfloat screen_x, GLfloat screen_y, int tile_size_w,
-                 int tile_size_h, size_t *out_tile_x, size_t *out_tile_y) {
+void ct_screen_pos(GLfloat screen_left, GLfloat screen_right,
+                   GLfloat screen_top, GLfloat screen_bottom, GLfloat screen_w,
+                   GLfloat screen_h, GLfloat screen_x, GLfloat screen_y,
+                   int tile_size_w, int tile_size_h, size_t *out_tile_x,
+                   size_t *out_tile_y) {
     float world_x = eu_lerp(screen_left, screen_right, screen_x / screen_w);
     float world_y = eu_lerp(screen_top, screen_bottom, screen_y / screen_h);
     *out_tile_x = world_x / tile_size_w;
     *out_tile_y = world_y / tile_size_h;
+}
+
+void ct_game_pos(struct eu_ivec2 *pos, int tile_size_w, int tile_size_h,
+                 size_t *out_tile_x, size_t *out_tile_y) {
+    *out_tile_x = pos->x / tile_size_w;
+    *out_tile_y = pos->y / tile_size_h;
 }

@@ -28,9 +28,13 @@ struct ct_tilemap {
 void ct_set(struct ct_tilemap *tilemap, size_t x, size_t y,
             enum ct_tile_type tile_type);
 
-void ct_tile_pos(GLfloat screen_left, GLfloat screen_right, GLfloat screen_top,
-                 GLfloat screen_bottom, GLfloat screen_w, GLfloat screen_h,
-                 GLfloat screen_x, GLfloat screen_y, int tile_size_w,
-                 int tile_size_h, size_t *out_tile_x, size_t *out_tile_y);
+void ct_screen_pos(GLfloat screen_left, GLfloat screen_right,
+                   GLfloat screen_top, GLfloat screen_bottom, GLfloat screen_w,
+                   GLfloat screen_h, GLfloat screen_x, GLfloat screen_y,
+                   int tile_size_w, int tile_size_h, size_t *out_tile_x,
+                   size_t *out_tile_y);
+
+void ct_game_pos(struct eu_ivec2 *pos, int tile_size_w, int tile_size_h,
+                 size_t *out_tile_x, size_t *out_tile_y);
 
 #endif // CT_TILEMAP_H
