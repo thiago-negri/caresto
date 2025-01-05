@@ -1,3 +1,4 @@
+#include "SDL3/SDL_events.h"
 #include <SDL3/SDL.h>
 
 #include <engine/egl_opengl.h>
@@ -21,6 +22,7 @@
 #define ELAPSED_TIME_PER_TICK (1000.0f / TICKS_PER_SECOND)
 
 #define BEETLE_SPEED 0.5f
+#define BEETLE_JUMP_SPEED 2.0f
 
 struct cg_state {
     // Game camera
@@ -278,37 +280,35 @@ bool cg_frame(void *data, struct egl_frame *frame) {
             return false;
 
         case SDL_EVENT_KEY_DOWN:
-            switch (sdl_event.key.key) {
-            case SDLK_Q:
-                return false;
-
-            case SDLK_W:
-                state->beetle_a.velocity.y = -BEETLE_SPEED;
-                break;
-            case SDLK_S:
-                state->beetle_a.velocity.y = BEETLE_SPEED;
-                break;
-            case SDLK_A:
-                state->beetle_a.velocity.x = -BEETLE_SPEED;
-                break;
-            case SDLK_D:
-                state->beetle_a.velocity.x = BEETLE_SPEED;
-                break;
-            }
-            break;
-
         case SDL_EVENT_KEY_UP:
-            switch (sdl_event.key.key) {
-            case SDLK_W:
-            case SDLK_S:
-                state->beetle_a.velocity.y = 0;
+            if (sdl_event.key.repeat) {
+                continue;
+            }
+            if (sdl_event.key.down) {
+                switch (sdl_event.key.key) {
+                case SDLK_Q:
+                    return false;
+
+                case SDLK_W:
+                    state->beetle_a.velocity.y = -BEETLE_JUMP_SPEED;
+                    break;
+                case SDLK_A:
+                    state->beetle_a.velocity.x = -BEETLE_SPEED;
+                    break;
+                case SDLK_D:
+                    state->beetle_a.velocity.x = BEETLE_SPEED;
+                    break;
+                }
                 break;
-            case SDLK_A:
-            case SDLK_D:
-                state->beetle_a.velocity.x = 0;
+            } else {
+                switch (sdl_event.key.key) {
+                case SDLK_A:
+                case SDLK_D:
+                    state->beetle_a.velocity.x = 0;
+                    break;
+                }
                 break;
             }
-            break;
         }
     }
 

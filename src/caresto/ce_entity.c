@@ -8,9 +8,15 @@
 
 void ce_tick(struct ce_entity *entity, struct cb_bodymap *bodymap,
              struct ct_tilemap *tilemap) {
-    entity->velocity.y += GRAVITY_ACCELERATION_PER_TICK;
-    if (entity->velocity.y > GRAVITY_MAX_VELOCITY) {
-        entity->velocity.y = GRAVITY_MAX_VELOCITY;
+    // FIXME(tnegri): Combine move and grounded into a single pass
+    if (entity->velocity.y >= 0 &&
+        cb_grounded(bodymap, tilemap, entity->body)) {
+        entity->velocity.y = 0;
+    } else {
+        entity->velocity.y += GRAVITY_ACCELERATION_PER_TICK;
+        if (entity->velocity.y > GRAVITY_MAX_VELOCITY) {
+            entity->velocity.y = GRAVITY_MAX_VELOCITY;
+        }
     }
 
     entity->movement_remaining.x += entity->velocity.x;
@@ -29,16 +35,16 @@ void ce_tick(struct ce_entity *entity, struct cb_bodymap *bodymap,
         if (moved) {
             entity->position.x += movement.x;
             entity->position.y += movement.y;
+        } else {
+            // FIXME(tnegri): Until we fix the previous comment this makes sure
+            // we can still move
+            entity->velocity.x = 0.0f;
+            entity->velocity.y = 0.0f;
         }
     }
 
     entity->movement_remaining.x -= movement.x;
     entity->movement_remaining.y -= movement.y;
-
-    // FIXME(tnegri): Combine move and grounded into a single pass
-    if (entity->velocity.y > 0 && cb_grounded(bodymap, tilemap, entity->body)) {
-        entity->velocity.y = 0;
-    }
 }
 
 void ce_frame(struct ce_entity *entity, struct cs_spritemap *spritemap) {
