@@ -1,220 +1,10 @@
 #!/bin/bash
 
-#
-# ARGS
-#
-arg_clean=1
-arg_release=1
-arg_build=1
-arg_run=1
-for arg in "$@"; do
-    case "$arg" in
-        clean) arg_clean=0 ;;
-        release) arg_release=0 ;;
-        build) arg_build=0 ;;
-        run) arg_run=0 ;;
-    esac
-done
+source ./sh/vars.sh
 
-# DEFAULTS (build run)
-if [[ "$arg_clean$arg_build$arg_run" == "111" ]]; then
-    arg_clean=1
-    arg_build=0
-    arg_run=0
-fi
+source ./sh/functions.sh
 
-
-#
-# VARS
-#
-if [ $arg_release -eq 0 ]; then
-    BUILD_TYPE="release"
-else
-    BUILD_TYPE="debug"
-fi
-
-BUILD_ROOT_PATH=build
-BUILD_PATH=$BUILD_ROOT_PATH/$BUILD_TYPE
-
-TARGET_PATH=$BUILD_PATH/bin
-TARGET_SHARED=$TARGET_PATH/caresto.dll
-TARGET=$TARGET_PATH/caresto.exe
-
-OBJ_PATH=$BUILD_PATH/obj
-OBJ_ENGINE_PATH=$BUILD_PATH/obj/engine
-OBJ_CARESTO_PATH=$BUILD_PATH/obj/caresto
-
-SRC_PATH=src
-SRC_ENGINE_PATH=src/engine
-SRC_CARESTO_PATH=src/caresto
-
-GLSL_PATH=glsl
-
-GEN_PATH=src-gen
-
-INCLUDE_PATH=include
-
-if [ $arg_release -eq 0 ]; then
-    mapfile COMPILE_FLAGS_ARR < compile_flags_release.txt
-else
-    mapfile COMPILE_FLAGS_ARR < compile_flags.txt
-fi
-
-LINK_FLAGS_ARR=(
-    "-Llib/windows/SDL3/x64"
-    "-Llib/windows/glew/x64"
-    "-lSDL3"
-    "-lglew32"
-    "-lglu32"
-    "-lopengl32"
-)
-
-OBJ_FILES_TO_LINK_ARR=(
-    "$OBJ_PATH/*.o"
-    "$OBJ_ENGINE_PATH/*.o"
-)
-
-# Use 'release' option to:
-# - Create an executable that doesn't spawn a console
-# - -O3
-# - Static link to game
-if [ $arg_release -eq 0 ]; then
-    LINK_FLAGS_ARR+=("-Xlinker /SUBSYSTEM:WINDOWS")
-    BUILD_TYPE_FLAGS="-O3"
-    OBJ_FILES_TO_LINK_ARR+=("$OBJ_CARESTO_PATH/*.o")
-else
-    LINK_FLAGS_ARR+=("-Xlinker /SUBSYSTEM:CONSOLE")
-    BUILD_TYPE_FLAGS="-fsanitize=address -g -DDEBUG -DSHARED"
-fi
-
-LINK_FLAGS="${LINK_FLAGS_ARR[*]}"
-OBJ_FILES_TO_LINK="${OBJ_FILES_TO_LINK_ARR[*]}"
-COMPILE_FLAGS="${COMPILE_FLAGS_ARR[*]}"
-
-TILE_ATLAS_ASEPRITE="assets/tiles.aseprite"
-TILE_ATLAS_JSON="assets/tiles.json"
-TILE_ATLAS_PNG="assets/tile_atlas.png"
-TILE_ATLAS_H="$GEN_PATH/gen/tile_atlas.h"
-
-
-#
-# UTILS
-#
-run() {
-    echo "$@"
-    $@
-}
-
-extract_headers() {
-    local file=$1
-    grep -oE '^\s*#\s*include\s*["<]([^">]+)[">]' "$file" | sed -E 's/\s*#\s*include\s*[<"]([^">]+)[">]/\1/'
-}
-
-need_tile_atlas() {
-    if [ ! -e "$TILE_ATLAS_PNG" ]; then
-        return 0
-    fi
-    if [ ! -e "$TILE_ATLAS_H" ]; then
-        return 0
-    fi
-    if [[ "$TILE_ATLAS_PNG" -ot "$TILE_ATLAS_ASEPRITE" ]]; then
-        return 0
-    fi
-    if [[ "$TILE_ATLAS_H" -ot "$TILE_ATLAS_ASEPRITE" ]]; then
-        return 0
-    fi
-    return 1
-}
-
-need_compile() {
-    local source_file=$1
-    local local_obj_path=$2
-    local module=$(basename $source_file .c)
-    local obj_file=$local_obj_path/$module.o
-
-    if [ ! -e "$obj_file" ]; then
-        return 0
-    fi
-    if [[ "$obj_file" -ot "$source_file" ]]; then
-        return 0
-    fi
-
-    local headers=$(extract_headers $source_file)
-    for header_file in $headers; do
-        if [[ -e "$SRC_PATH/$header_file" && "$obj_file" -ot "$SRC_PATH/$header_file" ]]; then
-            return 0
-        fi
-        if [[ -e "$GEN_PATH/$header_file" && "$obj_file" -ot "$GEN_PATH/$header_file" ]]; then
-            return 0
-        fi
-        if [[ -e "$INCLUDE_PATH/$header_file" && "$obj_file" -ot "$INCLUDE_PATH/$header_file" ]]; then
-            return 0
-        fi
-    done
-
-    return 1
-}
-
-need_shared() {
-    # Never need shared library in release mode
-    if [ $arg_release -eq 0 ]; then
-        return 1
-    fi
-
-    if [ ! -e "$TARGET_SHARED" ]; then
-        return 0
-    fi
-
-    for obj_file in ./$OBJ_ENGINE_PATH/*.o; do
-        if [[ "$TARGET_SHARED" -ot "$obj_file" ]]; then
-            return 0
-        fi
-    done
-
-    for obj_file in ./$OBJ_CARESTO_PATH/*.o; do
-        if [[ "$TARGET_SHARED" -ot "$obj_file" ]]; then
-            return 0
-        fi
-    done
-
-    return 1
-}
-
-need_link() {
-    if [ ! -e "$TARGET" ]; then
-        return 0
-    fi
-
-    for obj_file in ./$OBJ_PATH/*.o; do
-        if [[ "$TARGET" -ot "$obj_file" ]]; then
-            return 0
-        fi
-    done
-
-    for obj_file in ./$OBJ_ENGINE_PATH/*.o; do
-        if [[ "$TARGET" -ot "$obj_file" ]]; then
-            return 0
-        fi
-    done
-
-    # Only link with static game objects if in release mode
-    if [ $arg_release -eq 0 ]; then
-        for obj_file in ./$OBJ_CARESTO_PATH/*.o; do
-            if [[ "$TARGET" -ot "$obj_file" ]]; then
-                return 0
-            fi
-        done
-    fi
-
-    return 1
-}
-
-static() {
-    file=$1
-    filename=$(basename $file)
-    target_file=$TARGET_PATH/$filename
-    [ -e "$target_file" ] || run cp $file $target_file
-}
+source ./sh/generators.sh
 
 
 #
@@ -228,80 +18,37 @@ static() {
 #
 if [ $arg_build -eq 0 ]; then
     # PREPARE
-    run mkdir -p "$OBJ_PATH" "$OBJ_CARESTO_PATH" "$OBJ_ENGINE_PATH" "$TARGET_PATH" "$GEN_PATH/gen"
+    run mkdir -p "$OBJ_PATH" "$OBJ_CARESTO_PATH" \
+        "$OBJ_ENGINE_PATH" "$TARGET_PATH" "$GEN_PATH/gen"
 
     # GENERATE FILES
     for glsl_source in $GLSL_PATH/*.glsl; do
         module=$(basename $glsl_source .glsl)
         gen_file=$GEN_PATH/gen/glsl_$module.h
-        if [[ ! -e "$gen_file" || "$gen_file" -ot "$glsl_source" ]]; then
-            echo "# convert $glsl_source to $gen_file"
-            echo "// This file is generated. Do not change it." > $gen_file
-            echo "#ifndef GLSL_${module^^}_H" >> $gen_file
-            echo "#define GLSL_${module^^}_H" >> $gen_file
-            echo "#ifdef SHARED" >> $gen_file
-            echo "const long long glsl_${module}_timestamp =" >> $gen_file
-            date +%s >> $gen_file
-            echo ";" >> $gen_file
-            echo "#endif // SHARED" >> $gen_file
-            echo "const char *glsl_${module}_source =" >> $gen_file
-            sed -E 's/(.*)/"\1\\n"/' $glsl_source >> $gen_file
-            echo ";" >> $gen_file
-            echo "#endif // GLSL_${module^^}_H" >> $gen_file
+        if need_generate_glsl $gen_file $glsl_source; then
+            generate_glsl $gen_file $glsl_source
         fi
     done
 
     # GENERATE TILE ATLAS
     if need_tile_atlas; then
-        echo "# convert $TILE_ATLAS_ASEPRITE ..."
-        aseprite -b "$TILE_ATLAS_ASEPRITE" \
-            --data "$TILE_ATLAS_JSON" \
-            --sheet "$TILE_ATLAS_PNG" \
-            --sheet-type packed \
-            --filename-format '{tag}'
-        gen_file=$TILE_ATLAS_H
-        module=$(basename $gen_file .h)
-        echo "// This file is generated. Do not change it." > $gen_file
-        echo "#ifndef ${module^^}_H" >> $gen_file
-        echo "#define ${module^^}_H" >> $gen_file
-        first_sprite=$(jq '.frames | keys | first' "$TILE_ATLAS_JSON" | \
-            grep '"' | sed -E 's/.*("[^"]*").*/\1/')
-        tile_size=$(jq ".frames.${first_sprite}.sourceSize.w" "$TILE_ATLAS_JSON" | \
-                sed -E 's/(.*)/(\1)/')
-        echo "#define GEN_TILE_ATLAS_TILE_SIZE $tile_size" >> $gen_file
-        sprite_names=$(jq '.frames | keys' "$TILE_ATLAS_JSON" | \
-            grep '"' | sed -E 's/.*"([^"]*)".*/\1/')
-        for sprite_name in $sprite_names; do
-            u=$(jq ".frames.\"${sprite_name}\".frame.x" "$TILE_ATLAS_JSON" | \
-                sed -E 's/(.*)/(\1)/')
-            v=$(jq ".frames.\"${sprite_name}\".frame.y" "$TILE_ATLAS_JSON" | \
-                sed -E 's/(.*)/(\1)/')
-            echo "#define GEN_TILE_ATLAS_${sprite_name^^}_U $u" >> $gen_file
-            echo "#define GEN_TILE_ATLAS_${sprite_name^^}_V $v" >> $gen_file
-        done
-        echo "#endif // ${module^^}_H" >> $gen_file
+        generate_tile_atlas
     fi
 
     # COMPILE
     for source_file in ./$SRC_ENGINE_PATH/*.c; do
-        if need_compile "$source_file" "$OBJ_ENGINE_PATH"; then
-            module=$(basename $source_file .c)
-            obj_file=$OBJ_ENGINE_PATH/$module.o
-            run clang -c -o "$obj_file" "$source_file" $COMPILE_FLAGS $BUILD_TYPE_FLAGS
+        if need_compile "$OBJ_ENGINE_PATH" "$source_file"; then
+            compile "$OBJ_ENGINE_PATH" "$source_file"
         fi
     done
     for source_file in ./$SRC_CARESTO_PATH/*.c; do
-        if need_compile "$source_file" "$OBJ_CARESTO_PATH"; then
-            module=$(basename $source_file .c)
-            obj_file=$OBJ_CARESTO_PATH/$module.o
-            run clang -c -o "$obj_file" "$source_file" $COMPILE_FLAGS $BUILD_TYPE_FLAGS
+        if need_compile "$OBJ_CARESTO_PATH" "$source_file"; then
+            compile "$OBJ_CARESTO_PATH" "$source_file"
         fi
     done
     for source_file in ./$SRC_PATH/*.c; do
-        if need_compile "$source_file" "$OBJ_PATH"; then
-            module=$(basename $source_file .c)
-            obj_file=$OBJ_PATH/$module.o
-            run clang -c -o "$obj_file" "$source_file" $COMPILE_FLAGS $BUILD_TYPE_FLAGS
+        if need_compile "$OBJ_PATH" "$source_file"; then
+            compile "$OBJ_PATH" "$source_file"
         fi
     done
 
