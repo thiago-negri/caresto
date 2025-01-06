@@ -6,7 +6,7 @@ cs_sprite_id cs_add(struct cs_spritemap *spritemap, struct egl_sprite *sprite) {
     eu_assert(spritemap->sprite_count < CS_SPRITES_MAX);
 
     cs_sprite_id id = spritemap->sprite_count;
-    memcpy(&spritemap->sprites[id], sprite, sizeof(struct egl_sprite));
+    spritemap->sprites[id] = *sprite;
     spritemap->sprite_count++;
     return id;
 }

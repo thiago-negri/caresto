@@ -24,7 +24,7 @@
 
 // Create our game window
 SDL_Window *create_sdl_window() {
-    const char *title = "Hello";
+    const char *title = "Caresto";
     int width = 1280;
     int height = 720;
     Uint32 flags = SDL_WINDOW_OPENGL;

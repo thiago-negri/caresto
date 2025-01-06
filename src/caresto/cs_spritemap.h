@@ -2,6 +2,7 @@
 #define CS_SPRITEMAP_H
 
 #include <engine/egl_opengl.h>
+#include <gen/sprite_atlas.h>
 
 #define CS_SPRITES_MAX 1024
 

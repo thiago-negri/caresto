@@ -4,8 +4,16 @@
 # UTILS
 #
 run() {
-    echo "$@"
-    $@
+    name=$1
+    shift
+
+    if [ $arg_verbose -eq 0 ]; then
+        echo "$@"
+    else
+        echo "$name"
+    fi
+
+    "$@"
 }
 
 extract_headers() {
@@ -52,7 +60,8 @@ compile() {
     local module=$(basename $source_file .c)
     local obj_file=$obj_path/$module.o
 
-    run clang -c -o "$obj_file" "$source_file" $COMPILE_FLAGS $BUILD_TYPE_FLAGS
+    run "# compile $source_file ..." \
+        clang -c -o "$obj_file" "$source_file" $COMPILE_FLAGS $BUILD_TYPE_FLAGS
 }
 
 need_shared() {
@@ -113,5 +122,5 @@ static() {
     file=$1
     filename=$(basename $file)
     target_file=$TARGET_PATH/$filename
-    [ -e "$target_file" ] || run cp $file $target_file
+    [ -e "$target_file" ] || run "# copy $target_file ..." cp $file $target_file
 }

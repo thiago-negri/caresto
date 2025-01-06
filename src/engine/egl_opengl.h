@@ -9,14 +9,10 @@
 #include <engine/em_memory.h>
 #include <engine/eu_utils.h>
 
-struct egl_sprite_frame {
-    struct eu_ivec2 texture;
-    struct eu_ivec2 size;
-};
-
 struct egl_sprite {
     struct eu_ivec2 position;
-    struct egl_sprite_frame frame;
+    struct eu_ivec2 size;
+    struct eu_ivec2 texture_offset;
 };
 
 struct egl_sprite_buffer {

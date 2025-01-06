@@ -10,12 +10,13 @@ source ./sh/generators.sh
 #
 # CLEAN
 #
-[ $arg_clean -eq 0 ] && run rm -rf $BUILD_ROOT_PATH $GEN_PATH
+[ $arg_clean -eq 0 ] && run "# clean directories ..." rm -rf $BUILD_ROOT_PATH $GEN_PATH
 
 
 # PREPARE
 mkdir -p "$OBJ_PATH" "$OBJ_CARESTO_PATH" \
-    "$OBJ_ENGINE_PATH" "$TARGET_PATH" "$GEN_PATH/gen"
+    "$OBJ_ENGINE_PATH" "$OBJ_GEN_PATH" \
+    "$TARGET_PATH" "$GEN_PATH/gen"
 
 
 #
@@ -58,6 +59,11 @@ if [ $arg_build -eq 0 ]; then
             compile "$OBJ_CARESTO_PATH" "$source_file"
         fi
     done
+    for source_file in ./$GEN_PATH/gen/*.c; do
+        if need_compile "$OBJ_GEN_PATH" "$source_file"; then
+            compile "$OBJ_GEN_PATH" "$source_file"
+        fi
+    done
     for source_file in ./$SRC_PATH/*.c; do
         if need_compile "$OBJ_PATH" "$source_file"; then
             compile "$OBJ_PATH" "$source_file"
@@ -66,13 +72,16 @@ if [ $arg_build -eq 0 ]; then
 
     # SHARED LIBRARY
     if need_shared; then
-        run clang -shared -o "$TARGET_SHARED" \
-            "$OBJ_CARESTO_PATH/*.o" "$OBJ_ENGINE_PATH/*.o" $LINK_FLAGS $BUILD_TYPE_FLAGS
+        run "# create shared $TARGET_SHARED ..." clang -shared -o "$TARGET_SHARED" \
+            "$OBJ_CARESTO_PATH/*.o" \
+            "$OBJ_ENGINE_PATH/*.o" \
+            "$OBJ_GEN_PATH/*.o" \
+            $LINK_FLAGS $BUILD_TYPE_FLAGS
     fi
 
     # LINK
     if need_link; then
-        run clang -o "$TARGET" $OBJ_FILES_TO_LINK $LINK_FLAGS $BUILD_TYPE_FLAGS
+        run "# link $TARGET ..." clang -o "$TARGET" $OBJ_FILES_TO_LINK $LINK_FLAGS $BUILD_TYPE_FLAGS
     fi
 
     # COPY DLLS AND LICENSES
@@ -87,7 +96,7 @@ fi
 # RUN
 #
 if [ $arg_run -eq 0 ]; then
-    run ./$TARGET
+    run "# executing ..." ./$TARGET
     echo "$?"
 fi
 

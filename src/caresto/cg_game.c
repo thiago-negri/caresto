@@ -1,4 +1,3 @@
-#include "SDL3/SDL_events.h"
 #include <SDL3/SDL.h>
 
 #include <engine/egl_opengl.h>
@@ -17,10 +16,10 @@
 #include <gen/sprite_atlas.h>
 #include <gen/tile_atlas.h>
 
-/*#define GAME_CAMERA_HEIGHT 360.0f*/
-#define GAME_CAMERA_HEIGHT 180.0f
-/*#define GAME_CAMERA_WIDTH 640.0f*/
-#define GAME_CAMERA_WIDTH 320.0f
+#define GAME_CAMERA_HEIGHT 360.0f
+#define GAME_CAMERA_WIDTH 640.0f
+/*#define GAME_CAMERA_HEIGHT 180.0f*/
+/*#define GAME_CAMERA_WIDTH 320.0f*/
 #define TICKS_PER_SECOND 60
 #define ELAPSED_TIME_PER_TICK (1000.0f / TICKS_PER_SECOND)
 
@@ -91,7 +90,7 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
 
     state->camera_position = (struct eu_vec2){
         .x = (GLfloat)GAME_CAMERA_WIDTH * 0.5f,
-        .y = (GLfloat)GAME_CAMERA_HEIGHT * 1.5f,
+        .y = (GLfloat)GAME_CAMERA_HEIGHT * 0.5f,
     };
 
     rc = egl_texture_load(GEN_SPRITE_ATLAS_PATH, &state->sprite_atlas);
@@ -104,62 +103,11 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
         goto _err;
     }
 
-    struct ca_frame frames_walk[] = {
-        {
-            .texture_offset = {.u = GEN_SPRITE_ATLAS_BEETLE_WALK_0_U,
-                               .v = GEN_SPRITE_ATLAS_BEETLE_WALK_0_V},
-        },
-        {
-            .texture_offset = {.u = GEN_SPRITE_ATLAS_BEETLE_WALK_1_U,
-                               .v = GEN_SPRITE_ATLAS_BEETLE_WALK_1_V},
-        },
-        {
-            .texture_offset = {.u = GEN_SPRITE_ATLAS_BEETLE_WALK_2_U,
-                               .v = GEN_SPRITE_ATLAS_BEETLE_WALK_2_V},
-        },
-        {
-            .texture_offset = {.u = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_U,
-                               .v = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_V},
-        },
-        {
-            .texture_offset = {.u = GEN_SPRITE_ATLAS_BEETLE_WALK_4_U,
-                               .v = GEN_SPRITE_ATLAS_BEETLE_WALK_4_V},
-        },
-        {
-            .texture_offset = {.u = GEN_SPRITE_ATLAS_BEETLE_WALK_5_U,
-                               .v = GEN_SPRITE_ATLAS_BEETLE_WALK_5_V},
-        },
-        {
-            .texture_offset = {.u = GEN_SPRITE_ATLAS_BEETLE_WALK_6_U,
-                               .v = GEN_SPRITE_ATLAS_BEETLE_WALK_6_V},
-        },
-        {
-            .texture_offset = {.u = GEN_SPRITE_ATLAS_BEETLE_WALK_7_U,
-                               .v = GEN_SPRITE_ATLAS_BEETLE_WALK_7_V},
-        },
-    };
-    state->beetle_animation_walk =
-        ca_add(&state->animationmap, 100,
-               &(struct eu_ivec2){.w = GEN_SPRITE_ATLAS_BEETLE_WALK_0_W,
-                                  .h = GEN_SPRITE_ATLAS_BEETLE_WALK_0_H},
-               8, frames_walk);
-    struct ca_frame frames_idle[] = {
-        {
-            .texture_offset = {.u = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_U,
-                               .v = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_V},
-        },
-    };
-    state->beetle_animation_idle =
-        ca_add(&state->animationmap, 100,
-               &(struct eu_ivec2){.w = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_W,
-                                  .h = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_H},
-               1, frames_idle);
-
     // Initial state
     state->beetle_a.animation =
-        ca_play(&state->animationmap, state->beetle_animation_walk);
-    state->beetle_a.animation_walk = state->beetle_animation_walk;
-    state->beetle_a.animation_idle = state->beetle_animation_idle;
+        ca_play(&state->animationmap, GEN_ANIMATION_BEETLE_WALK);
+    state->beetle_a.animation_walk = GEN_ANIMATION_BEETLE_WALK;
+    state->beetle_a.animation_idle = GEN_ANIMATION_BEETLE_IDLE;
     state->beetle_a.position.x = 100.0f;
     state->beetle_a.position.y = 100.0f;
     state->beetle_a.body =
@@ -168,34 +116,31 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
                    .position =
                        {
                            .x = state->beetle_a.position.x +
-                                GEN_SPRITE_ATLAS_BEETLE_BOUNDING_BOX_X,
+                                gen_bounding_box_atlas[GEN_SPRITE_BEETLE].x,
                            .y = state->beetle_a.position.y +
-                                GEN_SPRITE_ATLAS_BEETLE_BOUNDING_BOX_Y,
+                                gen_bounding_box_atlas[GEN_SPRITE_BEETLE].y,
                        },
                    .size =
                        {
-                           .w = GEN_SPRITE_ATLAS_BEETLE_BOUNDING_BOX_W,
-                           .h = GEN_SPRITE_ATLAS_BEETLE_BOUNDING_BOX_H,
+                           .w = gen_bounding_box_atlas[GEN_SPRITE_BEETLE].w,
+                           .h = gen_bounding_box_atlas[GEN_SPRITE_BEETLE].h,
                        },
                });
-    state->beetle_a.sprite = cs_add(
-        &state->spritemap, &(struct egl_sprite){
-                               .position =
-                                   {
-                                       .x = 100,
-                                       .y = 100,
-                                   },
-                               .size =
-                                   {
-                                       .w = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_W,
-                                       .h = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_H,
-                                   },
-                               .texture_offset =
-                                   {
-                                       .u = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_U,
-                                       .v = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_V,
-                                   },
-                           });
+    state->beetle_a.sprite =
+        cs_add(&state->spritemap,
+               &(struct egl_sprite){
+                   .position = {.values = {100, 100}},
+                   .size =
+                       {
+                           .w = gen_frame_atlas[GEN_FRAME_BEETLE_0].w,
+                           .h = gen_frame_atlas[GEN_FRAME_BEETLE_0].h,
+                       },
+                   .texture_offset =
+                       {
+                           .u = gen_frame_atlas[GEN_FRAME_BEETLE_0].u,
+                           .v = gen_frame_atlas[GEN_FRAME_BEETLE_0].v,
+                       },
+               });
 
     state->beetle_b.animation =
         ca_play(&state->animationmap, state->beetle_animation_walk);
@@ -209,34 +154,31 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
                    .position =
                        {
                            .x = state->beetle_b.position.x +
-                                GEN_SPRITE_ATLAS_BEETLE_BOUNDING_BOX_X,
+                                gen_bounding_box_atlas[GEN_SPRITE_BEETLE].x,
                            .y = state->beetle_b.position.y +
-                                GEN_SPRITE_ATLAS_BEETLE_BOUNDING_BOX_Y,
+                                gen_bounding_box_atlas[GEN_SPRITE_BEETLE].y,
                        },
                    .size =
                        {
-                           .w = GEN_SPRITE_ATLAS_BEETLE_BOUNDING_BOX_W,
-                           .h = GEN_SPRITE_ATLAS_BEETLE_BOUNDING_BOX_H,
+                           .w = gen_bounding_box_atlas[GEN_SPRITE_BEETLE].w,
+                           .h = gen_bounding_box_atlas[GEN_SPRITE_BEETLE].h,
                        },
                });
-    state->beetle_b.sprite = cs_add(
-        &state->spritemap, &(struct egl_sprite){
-                               .position =
-                                   {
-                                       .x = 200,
-                                       .y = 200,
-                                   },
-                               .size =
-                                   {
-                                       .w = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_W,
-                                       .h = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_H,
-                                   },
-                               .texture_offset =
-                                   {
-                                       .u = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_U,
-                                       .v = GEN_SPRITE_ATLAS_BEETLE_IDLE_0_V,
-                                   },
-                           });
+    state->beetle_b.sprite =
+        cs_add(&state->spritemap,
+               &(struct egl_sprite){
+                   .position = {.values = {200, 200}},
+                   .size =
+                       {
+                           .w = gen_frame_atlas[GEN_FRAME_BEETLE_0].w,
+                           .h = gen_frame_atlas[GEN_FRAME_BEETLE_0].h,
+                       },
+                   .texture_offset =
+                       {
+                           .u = gen_frame_atlas[GEN_FRAME_BEETLE_0].u,
+                           .v = gen_frame_atlas[GEN_FRAME_BEETLE_0].v,
+                       },
+               });
 
     // Set some tiles
     ct_set(&state->tilemap, 0, 40, CT_TILE_TYPE_GRASS);

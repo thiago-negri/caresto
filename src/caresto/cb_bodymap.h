@@ -21,6 +21,7 @@ struct cb_bodymap {
     struct cb_body bodies[CB_BODIES_MAX];
 };
 
+// FIXME(tnegri): Use gen_body
 cb_body_id cb_add(struct cb_bodymap *bodymap, struct cb_body *body);
 struct cb_body *cb_get(struct cb_bodymap *bodymap, cb_body_id id);
 void cb_remove(struct cb_bodymap *bodymap, cb_body_id id);

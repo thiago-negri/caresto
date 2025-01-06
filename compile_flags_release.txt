@@ -1,4 +1,4 @@
 -Wall
 -Iinclude
 -Isrc
--Isrc-gen
+-Isrc_gen

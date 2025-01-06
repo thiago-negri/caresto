@@ -3,6 +3,7 @@
 #include <caresto/ce_entity.h>
 #include <caresto/cs_spritemap.h>
 #include <caresto/ct_tilemap.h>
+#include <engine/el_log.h>
 
 #define GRAVITY_MAX_VELOCITY 5.0f
 #define GRAVITY_ACCELERATION_PER_TICK 0.05f
@@ -49,11 +50,14 @@ void ce_tick(struct ce_entity *entity, struct ca_animationmap *animationmap,
 
 void ce_frame(struct ce_entity *entity, struct ca_animationmap *animationmap,
               struct cs_spritemap *spritemap, uint64_t delta_time) {
-    struct ca_frame *frame =
-        ca_frame(animationmap, entity->animation, delta_time);
+    const struct gen_frame *frame =
+        ca_step(animationmap, entity->animation, delta_time);
 
     struct egl_sprite *sprite = cs_get(spritemap, entity->sprite);
-    sprite->position.x = (int)entity->position.x;
-    sprite->position.y = (int)entity->position.y;
-    sprite->texture_offset = frame->texture_offset;
+    sprite->position.x = entity->position.x;
+    sprite->position.y = entity->position.y;
+    sprite->size.w = frame->w;
+    sprite->size.h = frame->h;
+    sprite->texture_offset.u = frame->u;
+    sprite->texture_offset.v = frame->v;
 }

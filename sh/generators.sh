@@ -20,7 +20,7 @@ generate_glsl() {
     local module=$(basename $gen_file .h)
     local timestamp=$(date +%s)
 
-    echo "# convert $glsl_source to $gen_file"
+    echo "# convert $glsl_source ..."
 
     echo "// This file is generated. Do not change it." > $gen_file
     echo "#ifndef ${module^^}_H" >> $gen_file
@@ -152,30 +152,37 @@ generate_sprite_atlas() {
     local animation_names=($(jq \
         -r -c '.meta.frameTags | map(.name) | .[]' "$SPRITE_ATLAS_JSON" | tr -d '\r' | sort -V))
 
+    local frame_names_count=${#frame_names[@]}
+    local sprite_names_count=${#sprite_names[@]}
+    local animation_names_count=${#animation_names[@]}
+
     local gen_file=$SPRITE_ATLAS_H
+    local gen_c_file=$SPRITE_ATLAS_C
     local module=$(basename $gen_file .h)
 
+    # H file
     echo "// This file is generated. Do not change it." > $gen_file
     echo "#ifndef ${module^^}_H" >> $gen_file
     echo "#define ${module^^}_H" >> $gen_file
     echo "" >> $gen_file
     echo "#define GEN_SPRITE_ATLAS_PATH \"$SPRITE_ATLAS_PNG\"" >> $gen_file
     echo "" >> $gen_file
-
+    echo "#define GEN_FRAME_COUNT $frame_names_count" >> $gen_file
+    echo "#define GEN_SPRITE_COUNT $sprite_names_count" >> $gen_file
+    echo "#define GEN_ANIMATION_COUNT $animation_names_count" >> $gen_file
+    echo "" >> $gen_file
     echo "enum gen_sprite_index {" >> $gen_file
     for sprite_name in "${sprite_names[@]}"; do
         echo "    GEN_SPRITE_${sprite_name^^}," >> $gen_file
     done
     echo "};" >> $gen_file
     echo "" >> $gen_file
-
     echo "enum gen_frame_index {" >> $gen_file
     for frame_name in "${frame_names[@]}"; do
         echo "    GEN_FRAME_${frame_name^^}," >> $gen_file
     done
     echo "};" >> $gen_file
     echo "" >> $gen_file
-
     echo "enum gen_animation_index {" >> $gen_file
     for animation_name in "${animation_names[@]}"; do
         local fix_animation_name="${animation_name//!/_}"
@@ -183,22 +190,37 @@ generate_sprite_atlas() {
     done
     echo "};" >> $gen_file
     echo "" >> $gen_file
-
     echo "struct gen_frame { int u, v, w, h; };" >> $gen_file
-    echo "const struct gen_frame gen_frame_atlas[] = {" >> $gen_file
+    echo "extern const struct gen_frame gen_frame_atlas[GEN_FRAME_COUNT];" >> $gen_file
+    echo "" >> $gen_file
+    echo "struct gen_bounding_box { int x, y, w, h; };" >> $gen_file
+    echo -n "extern const struct gen_bounding_box" >> $gen_file
+    echo " gen_bounding_box_atlas[GEN_SPRITE_COUNT];" >> $gen_file
+    echo "" >> $gen_file
+    echo "struct gen_animation { enum gen_frame_index from, to; };" >> $gen_file
+    echo -n "extern const struct gen_animation" >> $gen_file
+    echo " gen_animation_atlas[GEN_ANIMATION_COUNT];" >> $gen_file
+    echo "" >> $gen_file
+    echo "#endif // ${module^^}_H" >> $gen_file
+
+    # C file
+    echo "// This file is generated. Do not change it." > $gen_c_file
+    echo "" >> $gen_c_file
+    echo "#include <gen/${module}.h>" >> $gen_c_file
+    echo "" >> $gen_c_file
+    echo "const struct gen_frame gen_frame_atlas[GEN_FRAME_COUNT] = {" >> $gen_c_file
     for frame_name in "${frame_names[@]}"; do
         local u=$(jq -r -c ".frames.\"${frame_name}\".frame.x" "$SPRITE_ATLAS_JSON")
         local v=$(jq -r -c ".frames.\"${frame_name}\".frame.y" "$SPRITE_ATLAS_JSON")
         local w=$(jq -r -c ".frames.\"${frame_name}\".frame.w" "$SPRITE_ATLAS_JSON")
         local h=$(jq -r -c ".frames.\"${frame_name}\".frame.h" "$SPRITE_ATLAS_JSON")
 
-        echo "    [GEN_FRAME_${frame_name^^}] = {$u, $v, $w, $h}," >> $gen_file
+        echo "    [GEN_FRAME_${frame_name^^}] = {$u, $v, $w, $h}," >> $gen_c_file
     done
-    echo "};" >> $gen_file
-    echo "" >> $gen_file
-
-    echo "struct gen_bounding_box { int x, y, w, h; };" >> $gen_file
-    echo "const struct gen_bounding_box gen_bounding_box_atlas[] = {" >> $gen_file
+    echo "};" >> $gen_c_file
+    echo "" >> $gen_c_file
+    echo -n "const struct gen_bounding_box" >> $gen_c_file
+    echo " gen_bounding_box_atlas[GEN_SPRITE_COUNT] = {" >> $gen_c_file
     for sprite_name in "${sprite_names[@]}"; do
         local x=$(jq -r ".frames.\"${sprite_name}\".spriteSourceSize.x" \
             "$SPRITE_ATLAS_BOUNDING_BOX_JSON")
@@ -212,13 +234,12 @@ generate_sprite_atlas() {
         local h=$(jq -r ".frames.\"${sprite_name}\".spriteSourceSize.h" \
             "$SPRITE_ATLAS_BOUNDING_BOX_JSON")
 
-        echo "    [GEN_SPRITE_${sprite_name^^}] = {$x, $y, $w, $h}," >> $gen_file
+        echo "    [GEN_SPRITE_${sprite_name^^}] = {$x, $y, $w, $h}," >> $gen_c_file
     done
-    echo "};" >> $gen_file
-    echo "" >> $gen_file
-
-    echo "struct gen_animation { enum gen_frame_index from, to; };" >> $gen_file
-    echo "const struct gen_animation gen_animation_atlas[] = {" >> $gen_file
+    echo "};" >> $gen_c_file
+    echo "" >> $gen_c_file
+    echo -n "const struct gen_animation" >> $gen_c_file
+    echo " gen_animation_atlas[GEN_ANIMATION_COUNT] = {" >> $gen_c_file
     for animation_name in "${animation_names[@]}"; do
         local sprite_name=$(echo "$animation_name" | awk -F'!' '{print $1}')
         local fix_animation_name="${animation_name//!/_}"
@@ -231,12 +252,9 @@ generate_sprite_atlas() {
             ".meta.frameTags.[] | select(.name == \"${animation_name}\").to" \
             "$SPRITE_ATLAS_JSON")
 
-        echo -n "    [GEN_ANIMATION_${fix_animation_name^^}] =" >> $gen_file
-        echo -n " {GEN_FRAME_${sprite_name^^}_$from," >> $gen_file
-        echo " GEN_FRAME_${sprite_name^^}_$to}," >> $gen_file
+        echo -n "    [GEN_ANIMATION_${fix_animation_name^^}] =" >> $gen_c_file
+        echo -n " {GEN_FRAME_${sprite_name^^}_$from," >> $gen_c_file
+        echo " GEN_FRAME_${sprite_name^^}_$to}," >> $gen_c_file
     done
-    echo "};" >> $gen_file
-    echo "" >> $gen_file
-
-    echo "#endif // ${module^^}_H" >> $gen_file
+    echo "};" >> $gen_c_file
 }

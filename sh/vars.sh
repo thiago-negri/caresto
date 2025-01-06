@@ -8,12 +8,17 @@ arg_release=1
 arg_generate=1
 arg_build=1
 arg_run=1
+arg_verbose=1
 for arg in "$@"; do
     case "$arg" in
         clean) arg_clean=0 ;;
         release) arg_release=0 ;;
+        verbose) arg_verbose=0 ;;
         generate) arg_generate=0 ;;
-        build) arg_build=0 ;;
+        build) 
+            arg_generate=0
+            arg_build=0 
+            ;;
         run) arg_run=0 ;;
     esac
 done
@@ -46,6 +51,7 @@ TARGET=$TARGET_PATH/caresto.exe
 OBJ_PATH=$BUILD_PATH/obj
 OBJ_ENGINE_PATH=$BUILD_PATH/obj/engine
 OBJ_CARESTO_PATH=$BUILD_PATH/obj/caresto
+OBJ_GEN_PATH=$BUILD_PATH/obj/gen
 
 SRC_PATH=src
 SRC_ENGINE_PATH=src/engine
@@ -53,7 +59,7 @@ SRC_CARESTO_PATH=src/caresto
 
 GLSL_PATH=glsl
 
-GEN_PATH=src-gen
+GEN_PATH=src_gen
 
 INCLUDE_PATH=include
 
@@ -75,6 +81,7 @@ LINK_FLAGS_ARR=(
 OBJ_FILES_TO_LINK_ARR=(
     "$OBJ_PATH/*.o"
     "$OBJ_ENGINE_PATH/*.o"
+    "$OBJ_GEN_PATH/*.o"
 )
 
 # Use 'release' option to:
@@ -104,4 +111,5 @@ SPRITE_ATLAS_JSON="assets/sprites.json"
 SPRITE_ATLAS_BOUNDING_BOX_JSON="assets/sprites_bounding_box.json"
 SPRITE_ATLAS_PNG="assets/sprite_atlas.png"
 SPRITE_ATLAS_H="$GEN_PATH/gen/sprite_atlas.h"
+SPRITE_ATLAS_C="$GEN_PATH/gen/sprite_atlas.c"
 
