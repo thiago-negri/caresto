@@ -190,7 +190,7 @@ generate_sprite_atlas() {
     done
     echo "};" >> $gen_file
     echo "" >> $gen_file
-    echo "struct gen_frame { int u, v, w, h; };" >> $gen_file
+    echo "struct gen_frame { int u, v, w, h, duration; };" >> $gen_file
     echo "extern const struct gen_frame gen_frame_atlas[GEN_FRAME_COUNT];" >> $gen_file
     echo "" >> $gen_file
     echo "struct gen_bounding_box { int x, y, w, h; };" >> $gen_file
@@ -214,8 +214,9 @@ generate_sprite_atlas() {
         local v=$(jq -r -c ".frames.\"${frame_name}\".frame.y" "$SPRITE_ATLAS_JSON")
         local w=$(jq -r -c ".frames.\"${frame_name}\".frame.w" "$SPRITE_ATLAS_JSON")
         local h=$(jq -r -c ".frames.\"${frame_name}\".frame.h" "$SPRITE_ATLAS_JSON")
+        local d=$(jq -r -c ".frames.\"${frame_name}\".duration" "$SPRITE_ATLAS_JSON")
 
-        echo "    [GEN_FRAME_${frame_name^^}] = {$u, $v, $w, $h}," >> $gen_c_file
+        echo "    [GEN_FRAME_${frame_name^^}] = {$u, $v, $w, $h, $d}," >> $gen_c_file
     done
     echo "};" >> $gen_c_file
     echo "" >> $gen_c_file

@@ -1,9 +1,8 @@
+#include <caresto/ca_animation.h>
+#include <engine/eu_utils.h>
+#include <gen/sprite_atlas.h>
 #include <stdint.h>
 #include <string.h>
-
-#include <engine/eu_utils.h>
-
-#include <caresto/ca_animation.h>
 
 ca_animation_id ca_play(struct ca_animationmap *animationmap,
                         enum gen_animation_index animation_index) {
@@ -14,9 +13,9 @@ ca_animation_id ca_play(struct ca_animationmap *animationmap,
     struct ca_animation *animation = &animationmap->animations[id];
     animation->animation_index = animation_index;
     animation->current_frame = 0;
-
-    // FIXME(tnegri): How to extract frame duration from Aseprite?
-    animation->duration_remaining = 100;
+    enum gen_frame_index first_frame =
+        gen_animation_atlas[animation_index].from;
+    animation->duration_remaining = gen_frame_atlas[first_frame].duration;
 
     animationmap->animation_count++;
     return id;
@@ -33,8 +32,9 @@ void ca_change(struct ca_animationmap *animationmap, ca_animation_id id,
         animation->animation_index = animation_index;
         animation->current_frame = 0;
 
-        // FIXME(tnegri): How to extract frame duration from Aseprite?
-        animation->duration_remaining = 100;
+        enum gen_frame_index first_frame =
+            gen_animation_atlas[animation_index].from;
+        animation->duration_remaining = gen_frame_atlas[first_frame].duration;
     }
 }
 
@@ -66,8 +66,9 @@ const struct gen_frame *ca_step(struct ca_animationmap *animationmap,
             animation->current_frame = 0;
         }
 
-        // FIXME(tnegri): How to extract frame duration from Aseprite?
-        animation->duration_remaining = 100;
+        animation->duration_remaining =
+            gen_frame_atlas[animation_data.from + animation->current_frame]
+                .duration;
     }
 
     animation->duration_remaining -= delta_time;
