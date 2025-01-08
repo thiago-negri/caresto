@@ -60,18 +60,19 @@ bool cb_move(struct cb_bodymap *bodymap, struct ct_tilemap *tilemap,
         .size = body->size,
     };
 
-    size_t tile_left, tile_top, tile_right, tile_bottom;
-    ct_game_pos(&new_body.position, GEN_TILE_ATLAS_TILE_SIZE,
-                GEN_TILE_ATLAS_TILE_SIZE, &tile_left, &tile_top);
-    ct_game_pos(
-        &(struct eu_ivec2){
-            .x = new_body.position.x + body->size.w,
-            .y = new_body.position.y + body->size.h,
-        },
-        GEN_TILE_ATLAS_TILE_SIZE, GEN_TILE_ATLAS_TILE_SIZE, &tile_right,
-        &tile_bottom);
-    for (size_t y = tile_top; y <= tile_bottom; y++) {
-        for (size_t x = tile_left; x <= tile_right; x++) {
+    struct eu_isize tile_size = {GEN_TILE_ATLAS_TILE_SIZE,
+                                 GEN_TILE_ATLAS_TILE_SIZE};
+    struct eu_ixpos top_left;
+    struct eu_ixpos bottom_right;
+    ct_game_pos(&top_left, &new_body.position, &tile_size);
+    ct_game_pos(&bottom_right,
+                &(struct eu_ipos){
+                    .x = new_body.position.x + body->size.w,
+                    .y = new_body.position.y + body->size.h,
+                },
+                &tile_size);
+    for (size_t y = top_left.y; y <= bottom_right.y; y++) {
+        for (size_t x = top_left.x; x <= bottom_right.x; x++) {
             if (tilemap->tilemap[y][x].type != CT_TILE_TYPE_EMPTY) {
                 return false;
             }
@@ -105,19 +106,19 @@ bool cb_grounded(struct cb_bodymap *bodymap, struct ct_tilemap *tilemap,
         .size = body->size,
     };
 
-    // FIXME(tnegri): we don't need top, but we still need left
-    size_t tile_left, tile_top, tile_right, tile_bottom;
-    ct_game_pos(&new_body.position, GEN_TILE_ATLAS_TILE_SIZE,
-                GEN_TILE_ATLAS_TILE_SIZE, &tile_left, &tile_top);
-    ct_game_pos(
-        &(struct eu_ivec2){
-            .x = new_body.position.x + body->size.w,
-            .y = new_body.position.y + body->size.h,
-        },
-        GEN_TILE_ATLAS_TILE_SIZE, GEN_TILE_ATLAS_TILE_SIZE, &tile_right,
-        &tile_bottom);
-    for (size_t x = tile_left; x <= tile_right; x++) {
-        if (tilemap->tilemap[tile_bottom][x].type != CT_TILE_TYPE_EMPTY) {
+    struct eu_isize tile_size = {GEN_TILE_ATLAS_TILE_SIZE,
+                                 GEN_TILE_ATLAS_TILE_SIZE};
+    struct eu_ixpos_2x bottom_left_right;
+    ct_game_pos_2x(&bottom_left_right,
+                   &(struct eu_ipos_2x){
+                       .x1 = new_body.position.x,
+                       .x2 = new_body.position.x + body->size.w,
+                       .y = new_body.position.y + body->size.h + 1,
+                   },
+                   &tile_size);
+    for (size_t x = bottom_left_right.x1; x <= bottom_left_right.x2; x++) {
+        struct ct_tile tile = tilemap->tilemap[bottom_left_right.y][x];
+        if (tile.type != CT_TILE_TYPE_EMPTY) {
             return true;
         }
     }

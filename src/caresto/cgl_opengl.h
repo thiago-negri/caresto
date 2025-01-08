@@ -38,7 +38,7 @@ int cgl_tile_shader_load(struct cgl_tile_shader *out_shader,
 void cgl_tile_shader_destroy(struct cgl_tile_shader *shader);
 
 void cgl_tile_shader_render(struct cgl_tile_shader *shader,
-                            struct eu_ivec2 *g_tile_size,
+                            struct eu_isize *g_tile_size,
                             struct eu_mat4 *g_transform_mat,
                             struct egl_texture *texture, size_t sprite_count,
                             struct egl_tile_buffer *tile_buffer);

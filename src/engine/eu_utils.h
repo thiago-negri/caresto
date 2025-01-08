@@ -3,55 +3,51 @@
 
 #include <engine/em_memory.h>
 
+struct eu_ixpos {
+    size_t x, y;
+};
+
+struct eu_ixpos_2x {
+    size_t x1, x2, y;
+};
+
+struct eu_ipos {
+    int x, y;
+};
+
+struct eu_ipos_2x {
+    int x1, x2, y;
+};
+
+struct eu_itexpos {
+    int u, v;
+};
+
+struct eu_fpos {
+    float x, y;
+};
+
+struct eu_isize {
+    int w, h;
+};
+
 struct eu_vec2 {
-    union {
-        float values[2];
-        struct {
-            float x, y;
-        };
-        struct {
-            float u, v;
-        };
-        struct {
-            float w, h;
-        };
-    };
+    float x, y;
 };
 
 struct eu_ivec2 {
-    union {
-        int values[2];
-        struct {
-            int x, y;
-        };
-        struct {
-            int u, v;
-        };
-        struct {
-            int w, h;
-        };
-    };
+    int x, y;
 };
 
 struct eu_vec4 {
-    union {
-        float values[4];
-        struct {
-            float x, y, z, w;
-        };
-    };
+    float x, y, z, w;
 };
 
 struct eu_mat4 {
-    union {
-        float values[16];
-        struct {
-            float ax, bx, cx, dx;
-            float ay, by, cy, dy;
-            float az, bz, cz, dz;
-            float aw, bw, cw, dw;
-        };
-    };
+    float ax, bx, cx, dx;
+    float ay, by, cy, dy;
+    float az, bz, cz, dz;
+    float aw, bw, cw, dw;
 };
 
 int eu_copy_file(const char *from, const char *to, struct em_arena *arena);
@@ -61,6 +57,9 @@ long long eu_file_timestamp(const char *path);
 long long eu_max(long long a, long long b, long long c);
 
 float eu_lerp(float start, float end, float d);
+
+void eu_mat4_ortho_camera(struct eu_mat4 *out, float w, float h, float x,
+                          float y);
 
 void eu_mat4_ortho(struct eu_mat4 *out, float left, float right, float top,
                    float bottom, float near, float far);

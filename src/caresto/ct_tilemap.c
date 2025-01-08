@@ -1,9 +1,8 @@
+#include <caresto/cc_camera.h>
+#include <caresto/ct_tilemap.h>
 #include <engine/egl_opengl.h>
 #include <engine/el_log.h>
 #include <engine/eu_utils.h>
-
-#include <caresto/ct_tilemap.h>
-
 #include <gen/tile_atlas.h>
 
 static void ct_remove_tile(struct ct_tilemap *tilemap, size_t index) {
@@ -62,19 +61,26 @@ void ct_set(struct ct_tilemap *tilemap, size_t x, size_t y,
     tile->type = new_tile_type;
 }
 
-void ct_screen_pos(GLfloat screen_left, GLfloat screen_right,
-                   GLfloat screen_top, GLfloat screen_bottom, GLfloat screen_w,
-                   GLfloat screen_h, GLfloat screen_x, GLfloat screen_y,
-                   int tile_size_w, int tile_size_h, size_t *out_tile_x,
-                   size_t *out_tile_y) {
-    float world_x = eu_lerp(screen_left, screen_right, screen_x / screen_w);
-    float world_y = eu_lerp(screen_top, screen_bottom, screen_y / screen_h);
-    *out_tile_x = world_x / tile_size_w;
-    *out_tile_y = world_y / tile_size_h;
+void ct_screen_pos(struct eu_ixpos *pos, struct cc_bounds *cam_bounds,
+                   struct eu_isize *win_size, struct eu_fpos *win_pos,
+                   struct eu_isize *tile_size) {
+    float world_x =
+        eu_lerp(cam_bounds->left, cam_bounds->right, win_pos->x / win_size->w);
+    float world_y =
+        eu_lerp(cam_bounds->top, cam_bounds->bottom, win_pos->y / win_size->h);
+    pos->x = world_x / tile_size->w;
+    pos->y = world_y / tile_size->h;
 }
 
-void ct_game_pos(struct eu_ivec2 *pos, int tile_size_w, int tile_size_h,
-                 size_t *out_tile_x, size_t *out_tile_y) {
-    *out_tile_x = pos->x / tile_size_w;
-    *out_tile_y = pos->y / tile_size_h;
+void ct_game_pos(struct eu_ixpos *pos, struct eu_ipos *game_pos,
+                 struct eu_isize *tile_size) {
+    pos->x = game_pos->x / tile_size->w;
+    pos->y = game_pos->y / tile_size->h;
+}
+
+void ct_game_pos_2x(struct eu_ixpos_2x *pos, struct eu_ipos_2x *game_pos,
+                    struct eu_isize *tile_size) {
+    pos->x1 = game_pos->x1 / tile_size->w;
+    pos->x2 = game_pos->x2 / tile_size->w;
+    pos->y = game_pos->y / tile_size->h;
 }

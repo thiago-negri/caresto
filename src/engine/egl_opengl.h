@@ -10,9 +10,9 @@
 #include <engine/eu_utils.h>
 
 struct egl_sprite {
-    struct eu_ivec2 position;
-    struct eu_ivec2 size;
-    struct eu_ivec2 texture_offset;
+    struct eu_ipos position;
+    struct eu_isize size;
+    struct eu_itexpos texture_offset;
 };
 
 struct egl_sprite_buffer {

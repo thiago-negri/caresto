@@ -1,25 +1,23 @@
 #include <SDL3/SDL.h>
-
-#include <engine/egl_opengl.h>
-#include <engine/el_log.h>
-#include <engine/et_test.h>
-#include <engine/eu_utils.h>
-
 #include <caresto/ca_animation.h>
 #include <caresto/cb_bodymap.h>
+#include <caresto/cc_camera.h>
 #include <caresto/ce_entity.h>
 #include <caresto/cg_game.h>
 #include <caresto/cgl_opengl.h>
 #include <caresto/cs_spritemap.h>
 #include <caresto/ct_tilemap.h>
-
+#include <engine/egl_opengl.h>
+#include <engine/el_log.h>
+#include <engine/et_test.h>
+#include <engine/eu_utils.h>
 #include <gen/sprite_atlas.h>
 #include <gen/tile_atlas.h>
 
-#define GAME_CAMERA_HEIGHT 360.0f
-#define GAME_CAMERA_WIDTH 640.0f
-/*#define GAME_CAMERA_HEIGHT 180.0f*/
-/*#define GAME_CAMERA_WIDTH 320.0f*/
+// #define GAME_CAMERA_HEIGHT 360.0f
+// #define GAME_CAMERA_WIDTH 640.0f
+#define GAME_CAMERA_HEIGHT 180.0f
+#define GAME_CAMERA_WIDTH 320.0f
 #define TICKS_PER_SECOND 60
 #define ELAPSED_TIME_PER_TICK (1000.0f / TICKS_PER_SECOND)
 
@@ -28,7 +26,7 @@
 
 struct cg_state {
     // Game camera
-    struct eu_vec2 camera_position;
+    struct cc_camera camera;
 
     // Sprite shader
     struct cgl_sprite_shader sprite_shader;
@@ -88,11 +86,6 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
     egl_sprite_buffer_create(CS_SPRITES_MAX, &state->sprite_buffer);
     egl_tile_buffer_create(CT_TILES_MAX, &state->tile_buffer);
 
-    state->camera_position = (struct eu_vec2){
-        .x = (GLfloat)GAME_CAMERA_WIDTH * 0.5f,
-        .y = (GLfloat)GAME_CAMERA_HEIGHT * 0.5f,
-    };
-
     rc = egl_texture_load(GEN_SPRITE_ATLAS_PATH, &state->sprite_atlas);
     if (rc != 0) {
         goto _err;
@@ -129,7 +122,7 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
     state->beetle_a.sprite =
         cs_add(&state->spritemap,
                &(struct egl_sprite){
-                   .position = {.values = {100, 100}},
+                   .position = {100, 100},
                    .size =
                        {
                            .w = gen_frame_atlas[GEN_FRAME_BEETLE_0].w,
@@ -167,7 +160,7 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
     state->beetle_b.sprite =
         cs_add(&state->spritemap,
                &(struct egl_sprite){
-                   .position = {.values = {200, 200}},
+                   .position = {200, 200},
                    .size =
                        {
                            .w = gen_frame_atlas[GEN_FRAME_BEETLE_0].w,
@@ -179,6 +172,13 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
                            .v = gen_frame_atlas[GEN_FRAME_BEETLE_0].v,
                        },
                });
+
+    state->camera = (struct cc_camera){
+        .x = state->beetle_a.position.x,
+        .y = state->beetle_a.position.y,
+        .w = GAME_CAMERA_WIDTH,
+        .h = GAME_CAMERA_HEIGHT,
+    };
 
     // Set some tiles
     ct_set(&state->tilemap, 0, 40, CT_TILE_TYPE_GRASS);
@@ -268,19 +268,6 @@ void cg_tick(struct cg_state *state, struct egl_frame *frame) {
 bool cg_frame(void *data, struct egl_frame *frame) {
     struct cg_state *state = (struct cg_state *)data;
 
-    // Orthographic projection camera
-    GLfloat half_width = (GLfloat)GAME_CAMERA_WIDTH * 0.5f;
-    GLfloat half_height = (GLfloat)GAME_CAMERA_HEIGHT * 0.5f;
-    GLfloat camera_x = state->camera_position.x;
-    GLfloat camera_y = state->camera_position.y;
-    GLfloat screen_top = camera_y - half_height;
-    GLfloat screen_left = camera_x - half_width;
-    GLfloat screen_right = camera_x + half_width;
-    GLfloat screen_bottom = camera_y + half_height;
-    struct eu_mat4 camera_transform = {.values = {0.0f}};
-    eu_mat4_ortho(&camera_transform, screen_left, screen_right, screen_top,
-                  screen_bottom, 0.0f, 1.0f);
-
     // Handle input
     SDL_Event sdl_event = {0};
     while (SDL_PollEvent(&sdl_event)) {
@@ -324,30 +311,33 @@ bool cg_frame(void *data, struct egl_frame *frame) {
     bool tilemap_dirty = false;
 
     // Place tiles
-    float mouse_x, mouse_y;
-    SDL_MouseButtonFlags mouse_flags = SDL_GetMouseState(&mouse_x, &mouse_y);
+    struct eu_fpos win_pos;
+    SDL_MouseButtonFlags mouse_flags =
+        SDL_GetMouseState(&win_pos.x, &win_pos.y);
     if ((mouse_flags & SDL_BUTTON_MASK(SDL_BUTTON_LEFT)) != 0) {
-        size_t tile_x, tile_y;
-        int window_w, window_h;
-        SDL_GetWindowSize(frame->sdl_window, &window_w, &window_h);
-        ct_screen_pos(screen_left, screen_right, screen_top, screen_bottom,
-                      window_w, window_h, mouse_x, mouse_y,
-                      GEN_TILE_ATLAS_TILE_SIZE, GEN_TILE_ATLAS_TILE_SIZE,
-                      &tile_x, &tile_y);
-        ct_set(&state->tilemap, tile_x, tile_y, CT_TILE_TYPE_GRASS);
+        struct cc_bounds cam_bounds;
+        cc_bounds(&cam_bounds, &state->camera);
+        struct eu_isize win_size;
+        SDL_GetWindowSize(frame->sdl_window, &win_size.w, &win_size.h);
+        struct eu_ixpos tile_pos;
+        struct eu_isize tile_size = {GEN_TILE_ATLAS_TILE_SIZE,
+                                     GEN_TILE_ATLAS_TILE_SIZE};
+        ct_screen_pos(&tile_pos, &cam_bounds, &win_size, &win_pos, &tile_size);
+        ct_set(&state->tilemap, tile_pos.x, tile_pos.y, CT_TILE_TYPE_GRASS);
         tilemap_dirty = true;
     }
 
     // Remove tiles
     if ((mouse_flags & SDL_BUTTON_MASK(SDL_BUTTON_RIGHT)) != 0) {
-        size_t tile_x, tile_y;
-        int window_w, window_h;
-        SDL_GetWindowSize(frame->sdl_window, &window_w, &window_h);
-        ct_screen_pos(screen_left, screen_right, screen_top, screen_bottom,
-                      window_w, window_h, mouse_x, mouse_y,
-                      GEN_TILE_ATLAS_TILE_SIZE, GEN_TILE_ATLAS_TILE_SIZE,
-                      &tile_x, &tile_y);
-        ct_set(&state->tilemap, tile_x, tile_y, CT_TILE_TYPE_EMPTY);
+        struct cc_bounds cam_bounds;
+        cc_bounds(&cam_bounds, &state->camera);
+        struct eu_isize win_size;
+        SDL_GetWindowSize(frame->sdl_window, &win_size.w, &win_size.h);
+        struct eu_ixpos tile_pos;
+        struct eu_isize tile_size = {GEN_TILE_ATLAS_TILE_SIZE,
+                                     GEN_TILE_ATLAS_TILE_SIZE};
+        ct_screen_pos(&tile_pos, &cam_bounds, &win_size, &win_pos, &tile_size);
+        ct_set(&state->tilemap, tile_pos.x, tile_pos.y, CT_TILE_TYPE_EMPTY);
         tilemap_dirty = true;
     }
 
@@ -380,11 +370,18 @@ bool cg_frame(void *data, struct egl_frame *frame) {
     glClearColor(0.3f, 0.1f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
+    // Follow player
+    state->camera.x = state->beetle_a.position.x;
+    state->camera.y = state->beetle_a.position.y;
+
+    // Orthographic projection camera
+    struct eu_mat4 camera_transform = {0.0f};
+    eu_mat4_ortho_camera(&camera_transform, GAME_CAMERA_WIDTH,
+                         GAME_CAMERA_HEIGHT, state->camera.x, state->camera.y);
+
     // Render tiles
-    struct eu_ivec2 tile_size = {.values = {
-                                     GEN_TILE_ATLAS_TILE_SIZE,
-                                     GEN_TILE_ATLAS_TILE_SIZE,
-                                 }};
+    struct eu_isize tile_size = {GEN_TILE_ATLAS_TILE_SIZE,
+                                 GEN_TILE_ATLAS_TILE_SIZE};
     cgl_tile_shader_render(&state->tile_shader, &tile_size, &camera_transform,
                            &state->tile_atlas, state->tilemap.tile_count,
                            &state->tile_buffer);

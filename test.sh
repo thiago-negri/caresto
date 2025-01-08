@@ -59,7 +59,7 @@ echo "return 0; }" >> $TEST_C
 clang test/test.c -c -o test/test.o -Isrc -Iinclude -Isrc-gen -fsanitize=address -g
 
 # link test binary
-clang build/debug/obj/caresto/*.o build/debug/obj/engine/*.o test/*.o \
+clang build/debug/obj/caresto/*.o build/debug/obj/engine/*.o build/debug/obj/gen/*.o test/*.o \
     -o test/test.exe -fsanitize=address -g \
     -Llib/windows/SDL3/x64 \
     -Llib/windows/glew/x64 \

@@ -125,7 +125,7 @@ void cgl_sprite_shader_render(struct cgl_sprite_shader *shader,
     glBindTexture(GL_TEXTURE_2D, texture->id);
     glBindVertexArray(sprite_buffer->vertex_array_id);
     glUniformMatrix4fv(shader->g_transform_mat_id, 1, GL_FALSE,
-                       transform_mat->values);
+                       (GLfloat *)transform_mat);
 
     // Draw sprites
     glDrawArrays(GL_POINTS, 0, sprite_count);
@@ -249,7 +249,7 @@ void cgl_tile_shader_destroy(struct cgl_tile_shader *shader) {
 }
 
 void cgl_tile_shader_render(struct cgl_tile_shader *shader,
-                            struct eu_ivec2 *tile_size,
+                            struct eu_isize *tile_size,
                             struct eu_mat4 *transform_mat,
                             struct egl_texture *texture, size_t tile_count,
                             struct egl_tile_buffer *tile_buffer) {
@@ -258,9 +258,9 @@ void cgl_tile_shader_render(struct cgl_tile_shader *shader,
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture->id);
     glBindVertexArray(tile_buffer->vertex_array_id);
-    glUniform2i(shader->g_tile_size_id, tile_size->u, tile_size->v);
+    glUniform2i(shader->g_tile_size_id, tile_size->w, tile_size->h);
     glUniformMatrix4fv(shader->g_transform_mat_id, 1, GL_FALSE,
-                       transform_mat->values);
+                       (GLfloat *)transform_mat);
 
     // Draw tiles
     glDrawArrays(GL_POINTS, 0, tile_count);

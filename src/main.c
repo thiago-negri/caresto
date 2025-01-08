@@ -22,16 +22,17 @@
 #define MB_10 (10 * 1024 * 1024)
 #define MB_20 (20 * 1024 * 1024)
 
+#define WINDOW_W 1280
+#define WINDOW_H 720
+
 // Create our game window
 SDL_Window *create_sdl_window() {
     const char *title = "Caresto";
-    int width = 1280;
-    int height = 720;
     Uint32 flags = SDL_WINDOW_OPENGL;
-    SDL_Window *sdl_window = SDL_CreateWindow(title, width, height, flags);
+    SDL_Window *sdl_window = SDL_CreateWindow(title, WINDOW_W, WINDOW_H, flags);
 
 #ifdef DEBUG
-    SDL_SetWindowPosition(sdl_window, 1250, 40);
+    SDL_SetWindowPosition(sdl_window, 10, 40);
 #endif
 
     return sdl_window;

@@ -12,8 +12,8 @@
 typedef size_t cb_body_id;
 
 struct cb_body {
-    struct eu_ivec2 position;
-    struct eu_ivec2 size;
+    struct eu_ipos position;
+    struct eu_isize size;
 };
 
 struct cb_bodymap {

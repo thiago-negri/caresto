@@ -1,6 +1,7 @@
 #ifndef CT_TILEMAP_H
 #define CT_TILEMAP_H
 
+#include <caresto/cc_camera.h>
 #include <engine/egl_opengl.h>
 
 #define CT_TILEMAP_MAX_WIDTH 100
@@ -28,13 +29,14 @@ struct ct_tilemap {
 void ct_set(struct ct_tilemap *tilemap, size_t x, size_t y,
             enum ct_tile_type tile_type);
 
-void ct_screen_pos(GLfloat screen_left, GLfloat screen_right,
-                   GLfloat screen_top, GLfloat screen_bottom, GLfloat screen_w,
-                   GLfloat screen_h, GLfloat screen_x, GLfloat screen_y,
-                   int tile_size_w, int tile_size_h, size_t *out_tile_x,
-                   size_t *out_tile_y);
+void ct_screen_pos(struct eu_ixpos *pos, struct cc_bounds *cam_bounds,
+                   struct eu_isize *win_size, struct eu_fpos *win_pos,
+                   struct eu_isize *tile_size);
 
-void ct_game_pos(struct eu_ivec2 *pos, int tile_size_w, int tile_size_h,
-                 size_t *out_tile_x, size_t *out_tile_y);
+void ct_game_pos(struct eu_ixpos *pos, struct eu_ipos *game_pos,
+                 struct eu_isize *tile_size);
+
+void ct_game_pos_2x(struct eu_ixpos_2x *pos, struct eu_ipos_2x *game_pos,
+                    struct eu_isize *tile_size);
 
 #endif // CT_TILEMAP_H

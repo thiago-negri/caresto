@@ -1,9 +1,8 @@
-#include <stdio.h>
-#include <sys/stat.h>
-
 #include <engine/el_log.h>
 #include <engine/et_test.h>
 #include <engine/eu_utils.h>
+#include <stdio.h>
+#include <sys/stat.h>
 
 int eu_copy_file(const char *from, const char *to, struct em_arena *arena) {
     int rc = 0;
@@ -110,6 +109,19 @@ void eu_mat4_identity(struct eu_mat4 *out) {
     out->dw = 1.0f;
 }
 
+void eu_mat4_ortho_camera(struct eu_mat4 *out, float w, float h, float x,
+                          float y) {
+    float half_width = w * 0.5f;
+    float half_height = h * 0.5f;
+    float top = y - half_height;
+    float left = x - half_width;
+    float right = x + half_width;
+    float bottom = y + half_height;
+    float near = 0.0f;
+    float far = 1.0f;
+    eu_mat4_ortho(out, left, right, top, bottom, near, far);
+}
+
 void eu_mat4_ortho(struct eu_mat4 *out, float left, float right, float top,
                    float bottom, float near, float far) {
     out->ax = 2.0f / (right - left);
@@ -131,7 +143,7 @@ void eu_mat4_ortho(struct eu_mat4 *out, float left, float right, float top,
 }
 
 ET_TEST(mat4_ortho) {
-    struct eu_mat4 a = {.values = {0.0f}};
+    struct eu_mat4 a = {0.0f};
     eu_mat4_ortho(&a, 0.0f, 360.0f, 0.0f, 640.0f, 0.0f, 1.0f);
     ET_ASSERT(a.ax >= 0.005555f && a.ax <= 0.005557f);
     ET_ASSERT(a.ay == 0.0f);
