@@ -1,6 +1,7 @@
 #ifndef EU_UTILS_H
 #define EU_UTILS_H
 
+#include <engine/el_log.h>
 #include <engine/em_memory.h>
 
 struct eu_ixpos {
@@ -69,8 +70,12 @@ void eu_mat4_identity(struct eu_mat4 *out);
 void eu_ivec2_diff(struct eu_vec2 *value, struct eu_vec2 *subtract,
                    struct eu_ivec2 *out);
 
-#define eu_assert(X)                                                           \
-    if (X) {                                                                   \
-    }
+#define eu_assert(x)                                                           \
+    do {                                                                       \
+        if (!(x)) {                                                            \
+            el_critical("assertion %s:%d %s\n", __FILE__, __LINE__, #x);       \
+            SDL_TriggerBreakpoint();                                           \
+        }                                                                      \
+    } while (0)
 
 #endif // EU_UTILS_H
