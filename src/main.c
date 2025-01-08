@@ -82,10 +82,10 @@ int main(int argc, char *argv[]) {
     if (rc != 0) {
         goto _err;
     }
-    cg_init_ptr = shared_game.cg_init;
-    cg_reload_ptr = shared_game.cg_reload;
-    cg_frame_ptr = shared_game.cg_frame;
-    cg_destroy_ptr = shared_game.cg_destroy;
+    cg_init = shared_game.cg_init;
+    cg_reload = shared_game.cg_reload;
+    cg_frame = shared_game.cg_frame;
+    cg_destroy = shared_game.cg_destroy;
 #endif
 
     // Initialize SDL
@@ -167,16 +167,16 @@ int main(int argc, char *argv[]) {
             last_shared_lib_check = current_tick;
             bool reloaded = ep_shared_reload(&transient_storage, &shared_game);
             if (reloaded) {
-                cg_init_ptr = shared_game.cg_init;
-                cg_reload_ptr = shared_game.cg_reload;
-                cg_frame_ptr = shared_game.cg_frame;
-                cg_destroy_ptr = shared_game.cg_destroy;
+                cg_init = shared_game.cg_init;
+                cg_reload = shared_game.cg_reload;
+                cg_frame = shared_game.cg_frame;
+                cg_destroy = shared_game.cg_destroy;
             }
             // Call reload even if the same DLL is still loaded,
             // this way the game can reload external assets (e.g. sprite atlas)
             cg_reload(game_data, &transient_storage);
         }
-#endif
+#endif // SHARED
 
         // Process game frame, game is responsible for writing to
         // the current OpenGL buffer

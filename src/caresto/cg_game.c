@@ -21,7 +21,7 @@
 #define TICKS_PER_SECOND 60
 #define ELAPSED_TIME_PER_TICK (1000.0f / TICKS_PER_SECOND)
 
-#define BEETLE_SPEED 0.5f
+#define BEETLE_SPEED 1.5f
 #define BEETLE_JUMP_SPEED 2.0f
 
 struct cg_state {
