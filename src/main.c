@@ -1,23 +1,21 @@
+#define CARESTO_MAIN
+
+#include <GL/glew.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_main.h>
+#include <caresto/cg_game.h>
+#include <engine/egl_opengl.h>
+#include <engine/el_log.h>
+#include <engine/em_memory.h>
+#include <engine/ep_platform.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <GL/glew.h>
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_main.h>
-
-#include <engine/egl_opengl.h>
-#include <engine/el_log.h>
-#include <engine/em_memory.h>
-#include <engine/ep_platform.h>
-
 #define SHARED_LIB_PATH "build/debug/bin/caresto.dll"
 #define SHARED_LIB_CHECK_INTERVAL 5000
-
-#define CARESTO_MAIN
-#include <caresto/cg_game.h>
 
 #define MB_10 (10 * 1024 * 1024)
 #define MB_20 (20 * 1024 * 1024)
