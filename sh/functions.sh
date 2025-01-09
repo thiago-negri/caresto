@@ -39,14 +39,34 @@ need_compile() {
 
     local headers=$(extract_headers $source_file)
     for header_file in $headers; do
-        if [[ -e "$SRC_PATH/$header_file" && "$obj_file" -ot "$SRC_PATH/$header_file" ]]; then
-            return 0
+        local header_path=";"
+        if [[ -e "$SRC_PATH/$header_file" ]]; then
+            header_path="$SRC_PATH/$header_file"
         fi
-        if [[ -e "$GEN_PATH/$header_file" && "$obj_file" -ot "$GEN_PATH/$header_file" ]]; then
-            return 0
+        if [[ -e "$GEN_PATH/$header_file" ]]; then
+            header_path="$GEN_PATH/$header_file"
         fi
-        if [[ -e "$INCLUDE_PATH/$header_file" && "$obj_file" -ot "$INCLUDE_PATH/$header_file" ]]; then
-            return 0
+        if [[ -e "$INCLUDE_PATH/$header_file" ]]; then
+            header_path="$INCLUDE_PATH/$header_file"
+        fi
+
+        if [[ -e "$header_path" ]]; then
+            if [[ "$obj_file" -ot "$SRC_PATH/$header_file" ]]; then
+                return 0
+            fi
+
+            local headers_2=$(extract_headers $header_path)
+            for header_file_2 in $headers_2; do
+                if [[ -e "$SRC_PATH/$header_file_2" && "$obj_file" -ot "$SRC_PATH/$header_file_2" ]]; then
+                    return 0
+                fi
+                if [[ -e "$GEN_PATH/$header_file_2" && "$obj_file" -ot "$GEN_PATH/$header_file_2" ]]; then
+                    return 0
+                fi
+                if [[ -e "$INCLUDE_PATH/$header_file_2" && "$obj_file" -ot "$INCLUDE_PATH/$header_file_2" ]]; then
+                    return 0
+                fi
+            done
         fi
     done
 
