@@ -14,6 +14,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define APP_NAME "Caresto"
+#define APP_VERSION "0.0.1-dev"
+#define APP_ID "com.riverstone.caresto"
+#define APP_CREATOR "River Stone Games"
+#define APP_COPYRIGHT "Copyright (c) River Stone Games"
+#define APP_TYPE "game"
+#define APP_URL "TODO: Steam URL"
+
 #define SHARED_LIB_PATH "build/debug/bin/caresto.dll"
 #define SHARED_LIB_CHECK_INTERVAL 5000
 
@@ -30,7 +38,7 @@ SDL_Window *create_sdl_window() {
     SDL_Window *sdl_window = SDL_CreateWindow(title, WINDOW_W, WINDOW_H, flags);
 
 #ifdef DEBUG
-    SDL_SetWindowPosition(sdl_window, 10, 40);
+    SDL_SetWindowPosition(sdl_window, 0, 30);
 #endif
 
     return sdl_window;
@@ -47,18 +55,16 @@ int main(int argc, char *argv[]) {
 #endif
 
     // App Metadata
-    SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING, "Caresto");
+    SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING, APP_NAME);
     SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_VERSION_STRING,
-                               "0.0.1-dev");
-    SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_IDENTIFIER_STRING,
-                               "com.riverstonegames.caresto");
+                               APP_VERSION);
+    SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_IDENTIFIER_STRING, APP_ID);
     SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_CREATOR_STRING,
-                               "River Stone Games");
+                               APP_CREATOR);
     SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_COPYRIGHT_STRING,
-                               "Copyright (c) River Stone Games LTDA ME");
-    SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_TYPE_STRING, "game");
-    SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_URL_STRING,
-                               "TODO: steam_url");
+                               APP_COPYRIGHT);
+    SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_TYPE_STRING, APP_TYPE);
+    SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_URL_STRING, APP_URL);
 
 #ifdef DEBUG
     SDL_SetLogPriorities(SDL_LOG_PRIORITY_DEBUG);
@@ -203,7 +209,7 @@ _done:
     }
     SDL_Quit();
     em_free(memory_buffer);
-#if DEBUG
+#if SHARED
     if (shared != NULL) {
         ep_shared_free(shared);
     }

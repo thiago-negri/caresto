@@ -103,37 +103,25 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
     state->beetle_a.animation_idle = GEN_ANIMATION_BEETLE_IDLE;
     state->beetle_a.position.x = 100.0f;
     state->beetle_a.position.y = 100.0f;
-    state->beetle_a.body =
-        cb_add(&state->bodymap,
-               &(struct cb_body){
-                   .position =
-                       {
-                           .x = state->beetle_a.position.x +
-                                gen_bounding_box_atlas[GEN_SPRITE_BEETLE].x,
-                           .y = state->beetle_a.position.y +
-                                gen_bounding_box_atlas[GEN_SPRITE_BEETLE].y,
-                       },
-                   .size =
-                       {
-                           .w = gen_bounding_box_atlas[GEN_SPRITE_BEETLE].w,
-                           .h = gen_bounding_box_atlas[GEN_SPRITE_BEETLE].h,
-                       },
-               });
-    state->beetle_a.sprite =
-        cs_add(&state->spritemap,
-               &(struct egl_sprite){
-                   .position = {100, 100},
-                   .size =
-                       {
-                           .w = gen_frame_atlas[GEN_FRAME_BEETLE_0].w,
-                           .h = gen_frame_atlas[GEN_FRAME_BEETLE_0].h,
-                       },
-                   .texture_offset =
-                       {
-                           .u = gen_frame_atlas[GEN_FRAME_BEETLE_0].u,
-                           .v = gen_frame_atlas[GEN_FRAME_BEETLE_0].v,
-                       },
-               });
+    state->beetle_a.body = cb_add(
+        &state->bodymap,
+        &(struct cb_body){
+            .position = {.x = state->beetle_a.position.x +
+                              gen_bounding_box_atlas[GEN_SPRITE_BEETLE].x,
+                         .y = state->beetle_a.position.y +
+                              gen_bounding_box_atlas[GEN_SPRITE_BEETLE].y},
+            .size = {.w = gen_bounding_box_atlas[GEN_SPRITE_BEETLE].w,
+                     .h = gen_bounding_box_atlas[GEN_SPRITE_BEETLE].h},
+        });
+    state->beetle_a.sprite = cs_add(
+        &state->spritemap,
+        &(struct egl_sprite){
+            .position = {100, 100},
+            .size = {.w = gen_frame_atlas[GEN_FRAME_BEETLE_0].w,
+                     .h = gen_frame_atlas[GEN_FRAME_BEETLE_0].h},
+            .texture_offset = {.u = gen_frame_atlas[GEN_FRAME_BEETLE_0].u,
+                               .v = gen_frame_atlas[GEN_FRAME_BEETLE_0].v},
+        });
 
     state->beetle_b.animation =
         ca_play(&state->animationmap, state->beetle_animation_walk);
@@ -141,98 +129,35 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
     state->beetle_b.animation_idle = state->beetle_animation_idle;
     state->beetle_b.position.x = 200.0f;
     state->beetle_b.position.y = 200.0f;
-    state->beetle_b.body =
-        cb_add(&state->bodymap,
-               &(struct cb_body){
-                   .position =
-                       {
-                           .x = state->beetle_b.position.x +
-                                gen_bounding_box_atlas[GEN_SPRITE_BEETLE].x,
-                           .y = state->beetle_b.position.y +
-                                gen_bounding_box_atlas[GEN_SPRITE_BEETLE].y,
-                       },
-                   .size =
-                       {
-                           .w = gen_bounding_box_atlas[GEN_SPRITE_BEETLE].w,
-                           .h = gen_bounding_box_atlas[GEN_SPRITE_BEETLE].h,
-                       },
-               });
-    state->beetle_b.sprite =
-        cs_add(&state->spritemap,
-               &(struct egl_sprite){
-                   .position = {200, 200},
-                   .size =
-                       {
-                           .w = gen_frame_atlas[GEN_FRAME_BEETLE_0].w,
-                           .h = gen_frame_atlas[GEN_FRAME_BEETLE_0].h,
-                       },
-                   .texture_offset =
-                       {
-                           .u = gen_frame_atlas[GEN_FRAME_BEETLE_0].u,
-                           .v = gen_frame_atlas[GEN_FRAME_BEETLE_0].v,
-                       },
-               });
+    state->beetle_b.body = cb_add(
+        &state->bodymap,
+        &(struct cb_body){
+            .position = {.x = state->beetle_b.position.x +
+                              gen_bounding_box_atlas[GEN_SPRITE_BEETLE].x,
+                         .y = state->beetle_b.position.y +
+                              gen_bounding_box_atlas[GEN_SPRITE_BEETLE].y},
+            .size = {.w = gen_bounding_box_atlas[GEN_SPRITE_BEETLE].w,
+                     .h = gen_bounding_box_atlas[GEN_SPRITE_BEETLE].h},
+        });
+    state->beetle_b.sprite = cs_add(
+        &state->spritemap,
+        &(struct egl_sprite){
+            .position = {200, 200},
+            .size = {.w = gen_frame_atlas[GEN_FRAME_BEETLE_0].w,
+                     .h = gen_frame_atlas[GEN_FRAME_BEETLE_0].h},
+            .texture_offset = {.u = gen_frame_atlas[GEN_FRAME_BEETLE_0].u,
+                               .v = gen_frame_atlas[GEN_FRAME_BEETLE_0].v},
+        });
 
-    state->camera = (struct cc_camera){
-        .x = state->beetle_a.position.x,
-        .y = state->beetle_a.position.y,
-        .w = GAME_CAMERA_WIDTH,
-        .h = GAME_CAMERA_HEIGHT,
-    };
+    state->camera = (struct cc_camera){.x = state->beetle_a.position.x,
+                                       .y = state->beetle_a.position.y,
+                                       .w = GAME_CAMERA_WIDTH,
+                                       .h = GAME_CAMERA_HEIGHT};
 
     // Set some tiles
-    ct_set(&state->tilemap, 0, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 1, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 2, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 3, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 4, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 5, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 6, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 7, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 8, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 9, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 10, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 11, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 12, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 13, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 14, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 15, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 16, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 17, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 18, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 19, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 20, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 21, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 22, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 23, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 24, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 25, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 26, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 27, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 28, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 29, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 30, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 31, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 32, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 33, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 34, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 35, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 36, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 37, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 38, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 39, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 40, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 41, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 42, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 43, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 44, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 45, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 46, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 47, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 48, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 49, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 50, 40, CT_TILE_TYPE_GRASS);
-    ct_set(&state->tilemap, 51, 40, CT_TILE_TYPE_GRASS);
+    for (int i = 0; i < 60; i++) {
+        ct_set(&state->tilemap, i, 40, CT_TILE_TYPE_GRASS);
+    }
 
     // Load the VBOs
     egl_sprite_buffer_data(&state->sprite_buffer, state->spritemap.sprite_count,
