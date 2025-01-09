@@ -40,10 +40,6 @@ struct cg_state {
 
     uint64_t delta_time_remaining;
 
-    // Beetle
-    ca_animation_id beetle_animation_walk;
-    ca_animation_id beetle_animation_idle;
-
     struct ce_entity beetle_a;
     struct ce_entity beetle_b;
 
@@ -124,9 +120,9 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
         });
 
     state->beetle_b.animation =
-        ca_play(&state->animationmap, state->beetle_animation_walk);
-    state->beetle_b.animation_walk = state->beetle_animation_walk;
-    state->beetle_b.animation_idle = state->beetle_animation_idle;
+        ca_play(&state->animationmap, GEN_ANIMATION_BEETLE_IDLE);
+    state->beetle_b.animation_walk = GEN_ANIMATION_BEETLE_WALK;
+    state->beetle_b.animation_idle = GEN_ANIMATION_BEETLE_IDLE;
     state->beetle_b.position.x = 200.0f;
     state->beetle_b.position.y = 200.0f;
     state->beetle_b.body = cb_add(

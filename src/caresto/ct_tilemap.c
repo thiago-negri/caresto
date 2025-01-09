@@ -68,6 +68,8 @@ void ct_screen_pos(struct eu_ixpos *pos, struct cc_bounds *cam_bounds,
         eu_lerp(cam_bounds->left, cam_bounds->right, win_pos->x / win_size->w);
     float world_y =
         eu_lerp(cam_bounds->top, cam_bounds->bottom, win_pos->y / win_size->h);
+    eu_assert(world_x >= 0);
+    eu_assert(world_y >= 0);
     pos->x = world_x / tile_size->w;
     pos->y = world_y / tile_size->h;
 }

@@ -110,6 +110,5 @@ SPRITE_ATLAS_PATH="assets/sprites"
 SPRITE_ATLAS_JSON="assets/sprites.json"
 SPRITE_ATLAS_BOUNDING_BOX_JSON="assets/sprites_bounding_box.json"
 SPRITE_ATLAS_PNG="assets/sprite_atlas.png"
-SPRITE_ATLAS_H="$GEN_PATH/gen/sprite_atlas.h"
-SPRITE_ATLAS_C="$GEN_PATH/gen/sprite_atlas.c"
+SPRITE_ATLAS_GEN_MODULE="$GEN_PATH/gen/sprite_atlas"
 
