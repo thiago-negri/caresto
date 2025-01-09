@@ -1,18 +1,19 @@
 #ifndef EGL_OPENGL_H
 #define EGL_OPENGL_H
 
-#include <stdint.h>
-
 #include <GL/glew.h>
 #include <SDL3/SDL.h>
-
 #include <engine/em_memory.h>
 #include <engine/eu_utils.h>
+#include <stdint.h>
+
+#define EGL_SPRITE_MIRROR_X 1
 
 struct egl_sprite {
     struct eu_ipos position;
     struct eu_isize size;
     struct eu_itexpos texture_offset;
+    unsigned int flags;
 };
 
 struct egl_sprite_buffer {

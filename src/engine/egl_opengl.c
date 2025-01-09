@@ -135,16 +135,24 @@ void egl_sprite_buffer_create(GLsizei count,
     // Generate the VAO to be used
     glGenVertexArrays(1, &vertex_array_id);
     glBindVertexArray(vertex_array_id);
+
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(struct egl_sprite),
                           (void *)offsetof(struct egl_sprite, position.x));
     glEnableVertexAttribArray(0);
+
     glVertexAttribIPointer(1, 2, GL_INT, sizeof(struct egl_sprite),
                            (void *)offsetof(struct egl_sprite, size.w));
     glEnableVertexAttribArray(1);
+
     glVertexAttribIPointer(
         2, 2, GL_INT, sizeof(struct egl_sprite),
         (void *)offsetof(struct egl_sprite, texture_offset.u));
     glEnableVertexAttribArray(2);
+
+    glVertexAttribIPointer(
+        3, 1, GL_UNSIGNED_INT, sizeof(struct egl_sprite),
+        (void *)offsetof(struct egl_sprite, flags));
+    glEnableVertexAttribArray(3);
 
     // Reset GL objects
     glBindBuffer(GL_ARRAY_BUFFER, 0);

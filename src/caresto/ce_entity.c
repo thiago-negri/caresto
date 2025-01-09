@@ -60,4 +60,9 @@ void ce_frame(struct ce_entity *entity, struct ca_animationmap *animationmap,
     sprite->size.h = frame->h;
     sprite->texture_offset.u = frame->u;
     sprite->texture_offset.v = frame->v;
+    if (entity->velocity.x > 0.0f) {
+        sprite->flags = 0;
+    } else if (entity->velocity.x < 0.0f) {
+        sprite->flags = EGL_SPRITE_MIRROR_X;
+    }
 }

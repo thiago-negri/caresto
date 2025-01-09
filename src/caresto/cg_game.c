@@ -117,6 +117,7 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
                      .h = gen_frame_atlas[GEN_FRAME_BEETLE_0].h},
             .texture_offset = {.u = gen_frame_atlas[GEN_FRAME_BEETLE_0].u,
                                .v = gen_frame_atlas[GEN_FRAME_BEETLE_0].v},
+            .flags = 0,
         });
 
     state->beetle_b.animation =
@@ -143,6 +144,7 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
                      .h = gen_frame_atlas[GEN_FRAME_BEETLE_0].h},
             .texture_offset = {.u = gen_frame_atlas[GEN_FRAME_BEETLE_0].u,
                                .v = gen_frame_atlas[GEN_FRAME_BEETLE_0].v},
+            .flags = 0,
         });
 
     state->camera = (struct cc_camera){.x = state->beetle_a.position.x,
