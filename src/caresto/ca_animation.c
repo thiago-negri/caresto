@@ -4,74 +4,94 @@
 #include <stdint.h>
 #include <string.h>
 
-ca_animation_id ca_play(struct ca_animationmap *animationmap,
-                        enum gen_animation_index animation_index) {
+void ca_play(ca_animation_id *animation_id,
+             struct ca_animationmap *animationmap,
+             enum gen_animation_index animation_index, cs_sprite_id sprite_id,
+             struct cs_spritemap *spritemap) {
     eu_assert(animationmap->animation_count < CA_ANIMATIONS_MAX);
 
-    ca_animation_id id = animationmap->animation_count;
+    bool new_animation = *animation_id == CA_ANIMATION_NONE;
 
-    struct ca_animation *animation = &animationmap->animations[id];
-    animation->animation_index = animation_index;
-    animation->current_frame = 0;
-    enum gen_frame_index first_frame =
-        gen_animation_atlas[animation_index].from;
-    animation->duration_remaining = gen_frame_atlas[first_frame].duration;
+    const struct gen_animation *animation_data =
+        &gen_animation_atlas[animation_index];
+    const struct gen_frame *first_frame =
+        &gen_frame_atlas[animation_data->from];
+    size_t frame_limit = animation_data->to - animation_data->from;
 
-    animationmap->animation_count++;
-    return id;
-}
+    if (frame_limit < 1) {
+        ca_done(animation_id, animationmap);
 
-void ca_change(struct ca_animationmap *animationmap, ca_animation_id id,
-               enum gen_animation_index animation_index) {
-    eu_assert(id < animationmap->animation_count);
+        struct egl_sprite *sprite = cs_get(spritemap, sprite_id);
+        sprite->texture_offset.u = first_frame->u;
+        sprite->texture_offset.v = first_frame->v;
+        return;
+    }
 
-    struct ca_animation *animation = &animationmap->animations[id];
+    if (new_animation) {
+        *animation_id = animationmap->animation_count + 1;
+        animationmap->animation_count++;
+    }
 
-    // FIXME(tnegri): #35 What if we want to reset the current animation?
-    if (animation->animation_index != animation_index) {
+    ca_animation_id id = *animation_id;
+
+    eu_assert_fmt(id > 0 && id <= animationmap->animation_count,
+                  "%llu / %llu\n", id, animationmap->animation_count);
+
+    struct ca_animation *animation = &animationmap->animations[id - 1];
+    if (new_animation || animation->animation_index != animation_index) {
+        animation->sprite = sprite_id;
         animation->animation_index = animation_index;
         animation->current_frame = 0;
-
-        enum gen_frame_index first_frame =
-            gen_animation_atlas[animation_index].from;
-        animation->duration_remaining = gen_frame_atlas[first_frame].duration;
+        animation->duration_remaining = first_frame->duration;
     }
 }
 
-void ca_done(struct ca_animationmap *animationmap, ca_animation_id id) {
-    eu_assert(id < animationmap->animation_count);
+void ca_done(ca_animation_id *animation_id,
+             struct ca_animationmap *animationmap) {
+    if (*animation_id == CA_ANIMATION_NONE ||
+        *animation_id > animationmap->animation_count) {
+        return;
+    }
 
     animationmap->animation_count--;
     if (animationmap->animation_count > 0) {
-        memcpy(&animationmap->animations[id],
+        memcpy(&animationmap->animations[*animation_id - 1],
                &animationmap->animations[animationmap->animation_count],
                sizeof(struct ca_animation));
     }
+
+    *animation_id = CA_ANIMATION_NONE;
 }
 
-const struct gen_frame *ca_step(struct ca_animationmap *animationmap,
-                                ca_animation_id id, uint64_t delta_time) {
-    eu_assert(id < animationmap->animation_count);
+void ca_frame(struct ca_animationmap *animationmap, double delta_time,
+              struct cs_spritemap *spritemap) {
+    for (size_t i = 0; i < animationmap->animation_count; i++) {
+        struct ca_animation *animation = &animationmap->animations[i];
+        const struct gen_animation *animation_data =
+            &gen_animation_atlas[animation->animation_index];
+        size_t frame_limit = animation_data->to - animation_data->from;
+        const struct gen_frame *frame_data = NULL;
 
-    struct ca_animation *animation = &animationmap->animations[id];
-    struct gen_animation animation_data =
-        gen_animation_atlas[animation->animation_index];
+        while (animation->duration_remaining < delta_time) {
+            delta_time -= animation->duration_remaining;
+            if (animation->current_frame < frame_limit) {
+                animation->current_frame += 1;
+            } else {
+                animation->current_frame = 0;
+            }
 
-    while (animation->duration_remaining < delta_time) {
-        delta_time -= animation->duration_remaining;
-        size_t frame_limit = animation_data.to - animation_data.from;
-        if (animation->current_frame < frame_limit) {
-            animation->current_frame += 1;
-        } else {
-            animation->current_frame = 0;
+            frame_data = &gen_frame_atlas[animation_data->from +
+                                          animation->current_frame];
+
+            animation->duration_remaining = frame_data->duration;
         }
 
-        animation->duration_remaining =
-            gen_frame_atlas[animation_data.from + animation->current_frame]
-                .duration;
+        animation->duration_remaining -= delta_time;
+
+        if (frame_data != NULL) {
+            struct egl_sprite *sprite = cs_get(spritemap, animation->sprite);
+            sprite->texture_offset.u = frame_data->u;
+            sprite->texture_offset.v = frame_data->v;
+        }
     }
-
-    animation->duration_remaining -= delta_time;
-
-    return &gen_frame_atlas[animation_data.from + animation->current_frame];
 }

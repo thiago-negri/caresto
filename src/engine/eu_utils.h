@@ -78,4 +78,13 @@ void eu_ivec2_diff(struct eu_vec2 *value, struct eu_vec2 *subtract,
         }                                                                      \
     } while (0)
 
+#define eu_assert_fmt(x, msg, ...)                                             \
+    do {                                                                       \
+        if (!(x)) {                                                            \
+            el_critical(msg, __VA_ARGS__);                                     \
+            el_critical("assertion %s:%d %s\n", __FILE__, __LINE__, #x);       \
+            SDL_TriggerBreakpoint();                                           \
+        }                                                                      \
+    } while (0)
+
 #endif // EU_UTILS_H

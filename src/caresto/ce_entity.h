@@ -19,9 +19,9 @@ struct ce_entity {
 };
 
 void ce_tick(struct ce_entity *entity, struct ca_animationmap *animationmap,
-             struct cb_bodymap *bodymap, struct ct_tilemap *tilemap);
+             struct cb_bodymap *bodymap, struct ct_tilemap *tilemap,
+             struct cs_spritemap *spritemap);
 
-void ce_frame(struct ce_entity *entity, struct ca_animationmap *animationmap,
-              struct cs_spritemap *spritemap, uint64_t delta_time);
+void ce_frame(struct ce_entity *entity, struct cs_spritemap *spritemap);
 
 #endif // CE_ENTITY_H

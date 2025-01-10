@@ -42,7 +42,7 @@ struct egl_texture {
 };
 
 struct egl_frame {
-    uint64_t delta_time;
+    double delta_time;
     SDL_Window *sdl_window;
 };
 

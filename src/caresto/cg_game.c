@@ -38,7 +38,7 @@ struct cg_state {
     struct egl_tile_buffer tile_buffer;
     struct egl_texture tile_atlas;
 
-    uint64_t delta_time_remaining;
+    double delta_time_remaining;
 
     struct ce_entity beetle_a;
     struct ce_entity beetle_b;
@@ -93,8 +93,19 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
     }
 
     // Initial state
-    state->beetle_a.animation =
-        ca_play(&state->animationmap, GEN_ANIMATION_BEETLE_WALK);
+    state->beetle_a.sprite = cs_add(
+        &state->spritemap,
+        &(struct egl_sprite){
+            .position = {100, 100},
+            .size = {.w = gen_frame_atlas[GEN_FRAME_BEETLE_0].w,
+                     .h = gen_frame_atlas[GEN_FRAME_BEETLE_0].h},
+            .texture_offset = {.u = gen_frame_atlas[GEN_FRAME_BEETLE_0].u,
+                               .v = gen_frame_atlas[GEN_FRAME_BEETLE_0].v},
+            .flags = 0,
+        });
+    ca_play(&state->beetle_a.animation, &state->animationmap,
+            GEN_ANIMATION_BEETLE_IDLE, state->beetle_a.sprite,
+            &state->spritemap);
     state->beetle_a.animation_walk = GEN_ANIMATION_BEETLE_WALK;
     state->beetle_a.animation_idle = GEN_ANIMATION_BEETLE_IDLE;
     state->beetle_a.position.x = 100.0f;
@@ -109,19 +120,20 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
             .size = {.w = gen_bounding_box_atlas[GEN_SPRITE_BEETLE].w,
                      .h = gen_bounding_box_atlas[GEN_SPRITE_BEETLE].h},
         });
-    state->beetle_a.sprite = cs_add(
+
+    state->beetle_b.sprite = cs_add(
         &state->spritemap,
         &(struct egl_sprite){
-            .position = {100, 100},
+            .position = {200, 200},
             .size = {.w = gen_frame_atlas[GEN_FRAME_BEETLE_0].w,
                      .h = gen_frame_atlas[GEN_FRAME_BEETLE_0].h},
             .texture_offset = {.u = gen_frame_atlas[GEN_FRAME_BEETLE_0].u,
                                .v = gen_frame_atlas[GEN_FRAME_BEETLE_0].v},
             .flags = 0,
         });
-
-    state->beetle_b.animation =
-        ca_play(&state->animationmap, GEN_ANIMATION_BEETLE_IDLE);
+    ca_play(&state->beetle_b.animation, &state->animationmap,
+            GEN_ANIMATION_BEETLE_IDLE, state->beetle_b.sprite,
+            &state->spritemap);
     state->beetle_b.animation_walk = GEN_ANIMATION_BEETLE_WALK;
     state->beetle_b.animation_idle = GEN_ANIMATION_BEETLE_IDLE;
     state->beetle_b.position.x = 200.0f;
@@ -135,16 +147,6 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
                               gen_bounding_box_atlas[GEN_SPRITE_BEETLE].y},
             .size = {.w = gen_bounding_box_atlas[GEN_SPRITE_BEETLE].w,
                      .h = gen_bounding_box_atlas[GEN_SPRITE_BEETLE].h},
-        });
-    state->beetle_b.sprite = cs_add(
-        &state->spritemap,
-        &(struct egl_sprite){
-            .position = {200, 200},
-            .size = {.w = gen_frame_atlas[GEN_FRAME_BEETLE_0].w,
-                     .h = gen_frame_atlas[GEN_FRAME_BEETLE_0].h},
-            .texture_offset = {.u = gen_frame_atlas[GEN_FRAME_BEETLE_0].u,
-                               .v = gen_frame_atlas[GEN_FRAME_BEETLE_0].v},
-            .flags = 0,
         });
 
     state->camera = (struct cc_camera){.x = state->beetle_a.position.x,
@@ -183,9 +185,9 @@ void cg_reload(void *data, struct em_arena *transient_storage) {
 
 void cg_tick(struct cg_state *state, struct egl_frame *frame) {
     ce_tick(&state->beetle_a, &state->animationmap, &state->bodymap,
-            &state->tilemap);
+            &state->tilemap, &state->spritemap);
     ce_tick(&state->beetle_b, &state->animationmap, &state->bodymap,
-            &state->tilemap);
+            &state->tilemap, &state->spritemap);
 }
 
 bool cg_frame(void *data, struct egl_frame *frame) {
@@ -275,11 +277,12 @@ bool cg_frame(void *data, struct egl_frame *frame) {
         cg_tick(state, &tick_frame);
     }
 
-    // Move sprite
-    ce_frame(&state->beetle_a, &state->animationmap, &state->spritemap,
-             frame->delta_time);
-    ce_frame(&state->beetle_b, &state->animationmap, &state->spritemap,
-             frame->delta_time);
+    // Move sprites
+    ce_frame(&state->beetle_a, &state->spritemap);
+    ce_frame(&state->beetle_b, &state->spritemap);
+
+    // Animate sprites
+    ca_frame(&state->animationmap, frame->delta_time, &state->spritemap);
 
     // Update the VBOs
     egl_sprite_buffer_data(&state->sprite_buffer, state->spritemap.sprite_count,

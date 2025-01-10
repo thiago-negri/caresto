@@ -162,15 +162,18 @@ int main(int argc, char *argv[]) {
 
     // Main event loop
     bool running = true;
-    Uint64 last_tick = SDL_GetTicks();
+    Uint64 last_perf_counter = SDL_GetPerformanceCounter();
     while (running) {
-        Uint64 current_tick = SDL_GetTicks();
-        Uint64 delta_time = current_tick - last_tick;
-        last_tick = current_tick;
+        Uint64 current_perf_counter = SDL_GetPerformanceCounter();
+        double delta_time =
+            (double)((current_perf_counter - last_perf_counter) * 1000 /
+                     (double)SDL_GetPerformanceFrequency());
+        last_perf_counter = current_perf_counter;
 
 #ifdef SHARED
-        if (current_tick - last_shared_lib_check > SHARED_LIB_CHECK_INTERVAL) {
-            last_shared_lib_check = current_tick;
+        if (current_perf_counter - last_shared_lib_check >
+            SHARED_LIB_CHECK_INTERVAL) {
+            last_shared_lib_check = current_perf_counter;
             bool reloaded = ep_shared_reload(&transient_storage, &shared_game);
             if (reloaded) {
                 cg_init = shared_game.cg_init;
