@@ -63,33 +63,35 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
     }
 
     // Initial state
-    state->beetle_a.sprite = cs_add(
+    state->carestosan.type = ce_carestosan;
+    state->carestosan.sprite = cs_add(
         &state->spritemap,
         &(struct egl_sprite){
             .position = {100, 100},
-            .size = {.w = gen_frame_atlas[GEN_FRAME_BEETLE_0].w,
-                     .h = gen_frame_atlas[GEN_FRAME_BEETLE_0].h},
-            .texture_offset = {.u = gen_frame_atlas[GEN_FRAME_BEETLE_0].u,
-                               .v = gen_frame_atlas[GEN_FRAME_BEETLE_0].v},
+            .size = {.w = gen_frame_atlas[GEN_FRAME_CARESTOSAN_4].w,
+                     .h = gen_frame_atlas[GEN_FRAME_CARESTOSAN_4].h},
+            .texture_offset = {.u = gen_frame_atlas[GEN_FRAME_CARESTOSAN_4].u,
+                               .v = gen_frame_atlas[GEN_FRAME_CARESTOSAN_4].v},
             .flags = 0,
         });
-    ca_play(&state->beetle_a.animation, &state->animationmap,
-            GEN_ANIMATION_BEETLE_IDLE, state->beetle_a.sprite,
+    ca_play(&state->carestosan.animation, &state->animationmap,
+            GEN_ANIMATION_CARESTOSAN_IDLE, state->carestosan.sprite,
             &state->spritemap);
-    state->beetle_a.position.x = 100.0f;
-    state->beetle_a.position.y = 100.0f;
-    state->beetle_a.body = cb_add(
+    state->carestosan.position.x = 100.0f;
+    state->carestosan.position.y = 100.0f;
+    state->carestosan.body = cb_add(
         &state->bodymap,
         &(struct cb_body){
-            .position = {.x = state->beetle_a.position.x +
-                              gen_bounding_box_atlas[GEN_SPRITE_BEETLE].x,
-                         .y = state->beetle_a.position.y +
-                              gen_bounding_box_atlas[GEN_SPRITE_BEETLE].y},
-            .size = {.w = gen_bounding_box_atlas[GEN_SPRITE_BEETLE].w,
-                     .h = gen_bounding_box_atlas[GEN_SPRITE_BEETLE].h},
+            .position = {.x = state->carestosan.position.x +
+                              gen_bounding_box_atlas[GEN_SPRITE_CARESTOSAN].x,
+                         .y = state->carestosan.position.y +
+                              gen_bounding_box_atlas[GEN_SPRITE_CARESTOSAN].y},
+            .size = {.w = gen_bounding_box_atlas[GEN_SPRITE_CARESTOSAN].w,
+                     .h = gen_bounding_box_atlas[GEN_SPRITE_CARESTOSAN].h},
         });
 
-    state->beetle_b.sprite = cs_add(
+    state->beetle.type = ce_beetle;
+    state->beetle.sprite = cs_add(
         &state->spritemap,
         &(struct egl_sprite){
             .position = {200, 200},
@@ -99,24 +101,23 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
                                .v = gen_frame_atlas[GEN_FRAME_BEETLE_0].v},
             .flags = 0,
         });
-    ca_play(&state->beetle_b.animation, &state->animationmap,
-            GEN_ANIMATION_BEETLE_IDLE, state->beetle_b.sprite,
-            &state->spritemap);
-    state->beetle_b.position.x = 200.0f;
-    state->beetle_b.position.y = 200.0f;
-    state->beetle_b.body = cb_add(
+    ca_play(&state->beetle.animation, &state->animationmap,
+            GEN_ANIMATION_BEETLE_IDLE, state->beetle.sprite, &state->spritemap);
+    state->beetle.position.x = 200.0f;
+    state->beetle.position.y = 200.0f;
+    state->beetle.body = cb_add(
         &state->bodymap,
         &(struct cb_body){
-            .position = {.x = state->beetle_b.position.x +
+            .position = {.x = state->beetle.position.x +
                               gen_bounding_box_atlas[GEN_SPRITE_BEETLE].x,
-                         .y = state->beetle_b.position.y +
+                         .y = state->beetle.position.y +
                               gen_bounding_box_atlas[GEN_SPRITE_BEETLE].y},
             .size = {.w = gen_bounding_box_atlas[GEN_SPRITE_BEETLE].w,
                      .h = gen_bounding_box_atlas[GEN_SPRITE_BEETLE].h},
         });
 
-    state->camera = (struct cc_camera){.x = state->beetle_a.position.x,
-                                       .y = state->beetle_a.position.y,
+    state->camera = (struct cc_camera){.x = state->carestosan.position.x,
+                                       .y = state->carestosan.position.y,
                                        .w = GAME_CAMERA_WIDTH,
                                        .h = GAME_CAMERA_HEIGHT};
 
@@ -151,10 +152,10 @@ void cg_reload(void *data, struct em_arena *transient_storage) {
 
 void cg_tick(struct cd_state *state, struct egl_frame *frame) {
     cb_tick(&state->bodymap, &state->tilemap);
-    ce_tick(&state->beetle_a, &state->animationmap, &state->bodymap,
-            &state->tilemap, &state->spritemap);
-    ce_tick(&state->beetle_b, &state->animationmap, &state->bodymap,
-            &state->tilemap, &state->spritemap);
+    ce_tick((union ce_entity *)&state->carestosan, &state->animationmap,
+            &state->bodymap, &state->tilemap, &state->spritemap);
+    ce_tick((union ce_entity *)&state->beetle, &state->animationmap,
+            &state->bodymap, &state->tilemap, &state->spritemap);
 }
 
 bool cg_frame(void *data, struct egl_frame *frame) {
@@ -178,22 +179,25 @@ bool cg_frame(void *data, struct egl_frame *frame) {
                     return false;
 
                 case SDLK_W: {
-                    struct cb_body *body =
-                        cb_get(&state->bodymap, state->beetle_a.body);
-                    body->velocity.y = -BEETLE_JUMP_SPEED;
+                    if (cb_grounded(&state->bodymap, &state->tilemap,
+                                    state->carestosan.body)) {
+                        struct cb_body *body =
+                            cb_get(&state->bodymap, state->carestosan.body);
+                        body->velocity.y = -BEETLE_JUMP_SPEED;
+                    }
                     break;
                 }
 
                 case SDLK_A: {
                     struct cb_body *body =
-                        cb_get(&state->bodymap, state->beetle_a.body);
+                        cb_get(&state->bodymap, state->carestosan.body);
                     body->velocity.x = -BEETLE_SPEED;
                     break;
                 }
 
                 case SDLK_D: {
                     struct cb_body *body =
-                        cb_get(&state->bodymap, state->beetle_a.body);
+                        cb_get(&state->bodymap, state->carestosan.body);
                     body->velocity.x = BEETLE_SPEED;
                     break;
                 }
@@ -204,7 +208,7 @@ bool cg_frame(void *data, struct egl_frame *frame) {
                 case SDLK_A:
                 case SDLK_D:
                     struct cb_body *body =
-                        cb_get(&state->bodymap, state->beetle_a.body);
+                        cb_get(&state->bodymap, state->carestosan.body);
                     body->velocity.x = 0;
                     break;
                 }
@@ -273,8 +277,8 @@ bool cg_frame(void *data, struct egl_frame *frame) {
     glClear(GL_COLOR_BUFFER_BIT);
 
     // Follow player
-    state->camera.x = state->beetle_a.position.x;
-    state->camera.y = state->beetle_a.position.y;
+    state->camera.x = state->carestosan.position.x;
+    state->camera.y = state->carestosan.position.y;
 
     // Orthographic projection camera
     struct eu_mat4 camera_transform = {0.0f};
