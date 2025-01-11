@@ -9,6 +9,7 @@
 typedef size_t cs_sprite_id;
 
 struct cs_spritemap {
+    size_t ids[CS_SPRITES_MAX];
     size_t sprite_count;
     struct egl_sprite sprites[CS_SPRITES_MAX];
 };

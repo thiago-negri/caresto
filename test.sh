@@ -56,7 +56,7 @@ done
 echo "return 0; }" >> $TEST_C
 
 # compile test.c
-clang test/test.c -c -o test/test.o -Isrc -Iinclude -Isrc-gen -fsanitize=address -g
+clang test/test.c -c -o test/test.o -Isrc -Iinclude -Isrc_gen -fsanitize=address -g
 
 # link test binary
 clang build/debug/obj/caresto/*.o build/debug/obj/engine/*.o build/debug/obj/gen/*.o test/*.o \

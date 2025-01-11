@@ -19,6 +19,7 @@ struct ca_animation {
 };
 
 struct ca_animationmap {
+    size_t ids[CA_ANIMATIONS_MAX];
     size_t animation_count;
     struct ca_animation animations[CA_ANIMATIONS_MAX];
 };

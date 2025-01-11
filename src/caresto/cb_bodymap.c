@@ -1,10 +1,10 @@
+#include <caresto/cb_bodymap.h>
+#include <caresto/ci_ids.h>
+#include <engine/eu_utils.h>
+#include <gen/tile_atlas.h>
 #include <string.h>
 
-#include <engine/eu_utils.h>
-
-#include <caresto/cb_bodymap.h>
-
-#include <gen/tile_atlas.h>
+CI_IDS(cb_bodymap, cb, ids, CB_BODIES_MAX)
 
 static bool cb_collision(struct cb_body *a, struct cb_body *b) {
     int a_left = a->position.x;
@@ -24,33 +24,37 @@ static bool cb_collision(struct cb_body *a, struct cb_body *b) {
 cb_body_id cb_add(struct cb_bodymap *bodymap, struct cb_body *body) {
     eu_assert(bodymap->body_count < CB_BODIES_MAX);
 
-    cb_body_id id = bodymap->body_count;
-    memcpy(&bodymap->bodies[id], body, sizeof(struct cb_body));
+    size_t index = bodymap->body_count;
+    cb_body_id id = cb_ids_new(bodymap, index);
+
+    memcpy(&bodymap->bodies[index], body, sizeof(struct cb_body));
     bodymap->body_count++;
+
     return id;
 }
 
 struct cb_body *cb_get(struct cb_bodymap *bodymap, cb_body_id id) {
-    eu_assert(id < bodymap->body_count);
-
-    return &bodymap->bodies[id];
+    size_t index = cb_ids_get(bodymap, id);
+    return &bodymap->bodies[index];
 }
 
 void cb_remove(struct cb_bodymap *bodymap, cb_body_id id) {
-    eu_assert(id < bodymap->body_count);
+    size_t index = cb_ids_rm(bodymap, id);
 
     bodymap->body_count--;
     if (bodymap->body_count > 0) {
-        memcpy(&bodymap->bodies[id], &bodymap->bodies[bodymap->body_count],
+        memcpy(&bodymap->bodies[index], &bodymap->bodies[bodymap->body_count],
                sizeof(struct cb_body));
+
+        cb_ids_move(bodymap, index, bodymap->body_count);
     }
 }
 
 bool cb_move(struct cb_bodymap *bodymap, struct ct_tilemap *tilemap,
              cb_body_id id, struct eu_ivec2 *movement) {
-    eu_assert(id < bodymap->body_count);
+    size_t index = cb_ids_get(bodymap, id);
 
-    struct cb_body *body = &bodymap->bodies[id];
+    struct cb_body *body = &bodymap->bodies[index];
     struct cb_body new_body = {
         .position =
             {
@@ -80,7 +84,7 @@ bool cb_move(struct cb_bodymap *bodymap, struct ct_tilemap *tilemap,
     }
 
     for (size_t i = 0; i < bodymap->body_count; i++) {
-        if (i == id) {
+        if (i == index) {
             continue;
         }
         struct cb_body *other = &bodymap->bodies[i];
@@ -96,7 +100,9 @@ bool cb_move(struct cb_bodymap *bodymap, struct ct_tilemap *tilemap,
 
 bool cb_grounded(struct cb_bodymap *bodymap, struct ct_tilemap *tilemap,
                  cb_body_id id) {
-    struct cb_body *body = &bodymap->bodies[id];
+    size_t index = cb_ids_get(bodymap, id);
+
+    struct cb_body *body = &bodymap->bodies[index];
     struct cb_body new_body = {
         .position =
             {
@@ -124,7 +130,7 @@ bool cb_grounded(struct cb_bodymap *bodymap, struct ct_tilemap *tilemap,
     }
 
     for (size_t i = 0; i < bodymap->body_count; i++) {
-        if (i == id) {
+        if (i == index) {
             continue;
         }
         struct cb_body *other = &bodymap->bodies[i];

@@ -2,6 +2,7 @@
 #include <caresto/ca_animation.h>
 #include <caresto/cb_bodymap.h>
 #include <caresto/cc_camera.h>
+#include <caresto/cd_data.h>
 #include <caresto/ce_entity.h>
 #include <caresto/cg_game.h>
 #include <caresto/cgl_opengl.h>
@@ -24,50 +25,19 @@
 #define BEETLE_SPEED 1.5f
 #define BEETLE_JUMP_SPEED 2.0f
 
-struct cg_state {
-    // Game camera
-    struct cc_camera camera;
-
-    // Sprite shader
-    struct cgl_sprite_shader sprite_shader;
-    struct egl_sprite_buffer sprite_buffer;
-    struct egl_texture sprite_atlas;
-
-    // Tile shader
-    struct cgl_tile_shader tile_shader;
-    struct egl_tile_buffer tile_buffer;
-    struct egl_texture tile_atlas;
-
-    double delta_time_remaining;
-
-    struct ce_entity beetle_a;
-    struct ce_entity beetle_b;
-
-    struct cs_spritemap spritemap;
-    struct ct_tilemap tilemap;
-    struct cb_bodymap bodymap;
-    struct ca_animationmap animationmap;
-};
-
-ET_TEST(cg_state) {
-    // Make sure it fits on persistent storage
-    ET_ASSERT(sizeof(struct cg_state) < 10 * 1024 * 1024);
-    ET_DONE;
-}
-
 int cg_init(void **out_data, struct em_arena *persistent_storage,
             struct em_arena *transient_storage) {
     int rc = 0;
 
-    struct cg_state *state = (struct cg_state *)em_arena_alloc(
-        persistent_storage, sizeof(struct cg_state));
+    struct cd_state *state = (struct cd_state *)em_arena_alloc(
+        persistent_storage, sizeof(struct cd_state));
     if (state == NULL) {
         el_critical("OOM");
         rc = -1;
         goto _err;
     }
 
-    memset(state, 0, sizeof(struct cg_state));
+    memset(state, 0, sizeof(struct cd_state));
 
     rc = cgl_sprite_shader_load(&state->sprite_shader, transient_storage);
     if (rc != 0) {
@@ -176,14 +146,14 @@ _done:
 }
 
 void cg_reload(void *data, struct em_arena *transient_storage) {
-    struct cg_state *state = (struct cg_state *)data;
+    struct cd_state *state = (struct cd_state *)data;
     cgl_sprite_shader_load(&state->sprite_shader, transient_storage);
     cgl_tile_shader_load(&state->tile_shader, transient_storage);
     egl_texture_load(GEN_SPRITE_ATLAS_PATH, &state->sprite_atlas);
     egl_texture_load(GEN_TILE_ATLAS_PATH, &state->tile_atlas);
 }
 
-void cg_tick(struct cg_state *state, struct egl_frame *frame) {
+void cg_tick(struct cd_state *state, struct egl_frame *frame) {
     ce_tick(&state->beetle_a, &state->animationmap, &state->bodymap,
             &state->tilemap, &state->spritemap);
     ce_tick(&state->beetle_b, &state->animationmap, &state->bodymap,
@@ -191,7 +161,7 @@ void cg_tick(struct cg_state *state, struct egl_frame *frame) {
 }
 
 bool cg_frame(void *data, struct egl_frame *frame) {
-    struct cg_state *state = (struct cg_state *)data;
+    struct cd_state *state = (struct cd_state *)data;
 
     // Handle input
     SDL_Event sdl_event = {0};
@@ -321,7 +291,7 @@ bool cg_frame(void *data, struct egl_frame *frame) {
 }
 
 void cg_destroy(void *data) {
-    struct cg_state *state = (struct cg_state *)data;
+    struct cd_state *state = (struct cd_state *)data;
     cgl_sprite_shader_destroy(&state->sprite_shader);
     cgl_tile_shader_destroy(&state->tile_shader);
     egl_sprite_buffer_destroy(&state->sprite_buffer);

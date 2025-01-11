@@ -1,4 +1,5 @@
 #include <caresto/ca_animation.h>
+#include <caresto/ci_ids.h>
 #include <caresto/cb_bodymap.h>
 #include <caresto/ce_entity.h>
 #include <caresto/cs_spritemap.h>

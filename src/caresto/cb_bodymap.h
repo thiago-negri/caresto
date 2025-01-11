@@ -17,6 +17,7 @@ struct cb_body {
 };
 
 struct cb_bodymap {
+    size_t ids[CB_BODIES_MAX];
     size_t body_count;
     struct cb_body bodies[CB_BODIES_MAX];
 };
