@@ -76,8 +76,6 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
     ca_play(&state->beetle_a.animation, &state->animationmap,
             GEN_ANIMATION_BEETLE_IDLE, state->beetle_a.sprite,
             &state->spritemap);
-    state->beetle_a.animation_walk = GEN_ANIMATION_BEETLE_WALK;
-    state->beetle_a.animation_idle = GEN_ANIMATION_BEETLE_IDLE;
     state->beetle_a.position.x = 100.0f;
     state->beetle_a.position.y = 100.0f;
     state->beetle_a.body = cb_add(
@@ -104,8 +102,6 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
     ca_play(&state->beetle_b.animation, &state->animationmap,
             GEN_ANIMATION_BEETLE_IDLE, state->beetle_b.sprite,
             &state->spritemap);
-    state->beetle_b.animation_walk = GEN_ANIMATION_BEETLE_WALK;
-    state->beetle_b.animation_idle = GEN_ANIMATION_BEETLE_IDLE;
     state->beetle_b.position.x = 200.0f;
     state->beetle_b.position.y = 200.0f;
     state->beetle_b.body = cb_add(
@@ -154,6 +150,7 @@ void cg_reload(void *data, struct em_arena *transient_storage) {
 }
 
 void cg_tick(struct cd_state *state, struct egl_frame *frame) {
+    cb_tick(&state->bodymap, &state->tilemap);
     ce_tick(&state->beetle_a, &state->animationmap, &state->bodymap,
             &state->tilemap, &state->spritemap);
     ce_tick(&state->beetle_b, &state->animationmap, &state->bodymap,
@@ -180,22 +177,35 @@ bool cg_frame(void *data, struct egl_frame *frame) {
                 case SDLK_Q:
                     return false;
 
-                case SDLK_W:
-                    state->beetle_a.velocity.y = -BEETLE_JUMP_SPEED;
+                case SDLK_W: {
+                    struct cb_body *body =
+                        cb_get(&state->bodymap, state->beetle_a.body);
+                    body->velocity.y = -BEETLE_JUMP_SPEED;
                     break;
-                case SDLK_A:
-                    state->beetle_a.velocity.x = -BEETLE_SPEED;
+                }
+
+                case SDLK_A: {
+                    struct cb_body *body =
+                        cb_get(&state->bodymap, state->beetle_a.body);
+                    body->velocity.x = -BEETLE_SPEED;
                     break;
-                case SDLK_D:
-                    state->beetle_a.velocity.x = BEETLE_SPEED;
+                }
+
+                case SDLK_D: {
+                    struct cb_body *body =
+                        cb_get(&state->bodymap, state->beetle_a.body);
+                    body->velocity.x = BEETLE_SPEED;
                     break;
+                }
                 }
                 break;
             } else {
                 switch (sdl_event.key.key) {
                 case SDLK_A:
                 case SDLK_D:
-                    state->beetle_a.velocity.x = 0;
+                    struct cb_body *body =
+                        cb_get(&state->bodymap, state->beetle_a.body);
+                    body->velocity.x = 0;
                     break;
                 }
                 break;
@@ -246,10 +256,6 @@ bool cg_frame(void *data, struct egl_frame *frame) {
         };
         cg_tick(state, &tick_frame);
     }
-
-    // Move sprites
-    ce_frame(&state->beetle_a, &state->spritemap);
-    ce_frame(&state->beetle_b, &state->spritemap);
 
     // Animate sprites
     ca_frame(&state->animationmap, frame->delta_time, &state->spritemap);

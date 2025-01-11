@@ -21,6 +21,7 @@ struct cd_state {
 
     double delta_time_remaining;
 
+    /*struct ce_carestosan carestosan;*/
     struct ce_entity beetle_a;
     struct ce_entity beetle_b;
 

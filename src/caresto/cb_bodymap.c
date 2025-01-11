@@ -4,6 +4,9 @@
 #include <gen/tile_atlas.h>
 #include <string.h>
 
+#define GRAVITY_MAX_VELOCITY 5.0f
+#define GRAVITY_ACCELERATION_PER_TICK 0.05f
+
 CI_IDS(cb_bodymap, cb, ids, CB_BODIES_MAX)
 
 static bool cb_collision(struct cb_body *a, struct cb_body *b) {
@@ -50,10 +53,8 @@ void cb_remove(struct cb_bodymap *bodymap, cb_body_id id) {
     }
 }
 
-bool cb_move(struct cb_bodymap *bodymap, struct ct_tilemap *tilemap,
-             cb_body_id id, struct eu_ivec2 *movement) {
-    size_t index = cb_ids_get(bodymap, id);
-
+static bool cb_move_ix(struct cb_bodymap *bodymap, struct ct_tilemap *tilemap,
+                       size_t index, struct eu_ivec2 *movement) {
     struct cb_body *body = &bodymap->bodies[index];
     struct cb_body new_body = {
         .position =
@@ -98,10 +99,14 @@ bool cb_move(struct cb_bodymap *bodymap, struct ct_tilemap *tilemap,
     return true;
 }
 
-bool cb_grounded(struct cb_bodymap *bodymap, struct ct_tilemap *tilemap,
-                 cb_body_id id) {
+bool cb_move(struct cb_bodymap *bodymap, struct ct_tilemap *tilemap,
+             cb_body_id id, struct eu_ivec2 *movement) {
     size_t index = cb_ids_get(bodymap, id);
+    return cb_move_ix(bodymap, tilemap, index, movement);
+}
 
+static bool cb_grounded_ix(struct cb_bodymap *bodymap,
+                           struct ct_tilemap *tilemap, size_t index) {
     struct cb_body *body = &bodymap->bodies[index];
     struct cb_body new_body = {
         .position =
@@ -140,4 +145,45 @@ bool cb_grounded(struct cb_bodymap *bodymap, struct ct_tilemap *tilemap,
     }
 
     return false;
+}
+
+bool cb_grounded(struct cb_bodymap *bodymap, struct ct_tilemap *tilemap,
+                 cb_body_id id) {
+    size_t index = cb_ids_get(bodymap, id);
+    return cb_grounded_ix(bodymap, tilemap, index);
+}
+
+void cb_tick(struct cb_bodymap *bodymap, struct ct_tilemap *tilemap) {
+    for (size_t i = 0; i < bodymap->body_count; i++) {
+        struct cb_body *body = &bodymap->bodies[i];
+        bool grounded = cb_grounded_ix(bodymap, tilemap, i);
+        if (grounded) {
+            if (body->velocity.y >= 0) {
+                body->velocity.y = 0;
+            }
+        } else {
+            body->velocity.y += GRAVITY_ACCELERATION_PER_TICK;
+            if (body->velocity.y > GRAVITY_MAX_VELOCITY) {
+                body->velocity.y = GRAVITY_MAX_VELOCITY;
+            }
+        }
+
+        body->movement_remaining.x += body->velocity.x;
+        body->movement_remaining.y += body->velocity.y;
+
+        struct eu_ivec2 movement = {
+            .x = (int)body->movement_remaining.x,
+            .y = (int)body->movement_remaining.y,
+        };
+
+        if (movement.x != 0 || movement.y != 0) {
+            bool moved = cb_move_ix(bodymap, tilemap, i, &movement);
+            if (!moved) {
+                body->velocity.y = 0.0f;
+            }
+        }
+
+        body->movement_remaining.x -= movement.x;
+        body->movement_remaining.y -= movement.y;
+    }
 }
