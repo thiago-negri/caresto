@@ -1,10 +1,10 @@
-#define CARESTO_MAIN
+#define ENGINE_MAIN
 
 #include <GL/glew.h>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
-#include <caresto/game/cgl_loop.h>
 #include <engine/ea_allocator.h>
+#include <engine/ee_entry.h>
 #include <engine/el_log.h>
 #include <engine/eo_opengl.h>
 #include <engine/ep_platform.h>
@@ -51,7 +51,7 @@ int main(int /*argc*/, char * /*argv*/[]) {
     void *game_data = NULL;
 #ifdef SHARED
     ep_shared shared = NULL;
-#endif
+#endif // SHARED
 
     // App Metadata
     SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING, APP_NAME);
@@ -67,7 +67,7 @@ int main(int /*argc*/, char * /*argv*/[]) {
 
 #ifdef DEBUG
     SDL_SetLogPriorities(SDL_LOG_PRIORITY_DEBUG);
-#endif
+#endif // DEBUG
 
     // Allocate persistent storage
     memory_buffer = (unsigned char *)ea_alloc(MB_20);
@@ -80,19 +80,19 @@ int main(int /*argc*/, char * /*argv*/[]) {
     struct ea_arena persistent_storage = {};
     struct ea_arena transient_storage = {};
     ea_arena_init(&persistent_storage, MB_10, memory_buffer);
-    ea_arena_init(&persistent_storage, MB_10, memory_buffer + MB_10);
+    ea_arena_init(&transient_storage, MB_10, memory_buffer + MB_10);
 
 #ifdef SHARED
     struct ep_shared_game shared_game = {0};
-    rc = ep_shared_load(SHARED_LIB_PATH, &transient_storage, &shared_game);
+    rc = ep_shared_load(&shared_game, SHARED_LIB_PATH, &transient_storage);
     if (rc != 0) {
         goto _err;
     }
-    cgl_init = shared_game.cgl_init;
-    cgl_reload = shared_game.cgl_reload;
-    cgl_frame = shared_game.cgl_frame;
-    cgl_destroy = shared_game.cgl_destroy;
-#endif
+    ee_init = shared_game.ee_init;
+    ee_reload = shared_game.ee_reload;
+    ee_frame = shared_game.ee_frame;
+    ee_destroy = shared_game.ee_destroy;
+#endif // SHARED
 
     // Initialize SDL
     Uint32 sdl_flags = SDL_INIT_VIDEO;
@@ -152,12 +152,12 @@ int main(int /*argc*/, char * /*argv*/[]) {
     }
 
     // Initialize game
-    rc = cgl_init(&game_data, &persistent_storage, &transient_storage);
+    rc = ee_init(&game_data, &persistent_storage, &transient_storage);
     if (rc != 0) {
         goto _err;
     }
 
-#if SHARED
+#ifdef SHARED
     double check_shared_lib_timeout = SHARED_LIB_CHECK_INTERVAL_MS;
 #endif // SHARED
 
@@ -174,16 +174,16 @@ int main(int /*argc*/, char * /*argv*/[]) {
         check_shared_lib_timeout -= delta_time;
         if (check_shared_lib_timeout < 0.0f) {
             check_shared_lib_timeout = SHARED_LIB_CHECK_INTERVAL_MS;
-            bool reloaded = ep_shared_reload(&transient_storage, &shared_game);
+            bool reloaded = ep_shared_reload(&shared_game, &transient_storage);
             if (reloaded) {
-                cgl_init = shared_game.cgl_init;
-                cgl_reload = shared_game.cgl_reload;
-                cgl_frame = shared_game.cgl_frame;
-                cgl_destroy = shared_game.cgl_destroy;
+                ee_init = shared_game.ee_init;
+                ee_reload = shared_game.ee_reload;
+                ee_frame = shared_game.ee_frame;
+                ee_destroy = shared_game.ee_destroy;
             }
             // Call reload even if the same DLL is still loaded,
             // this way the game can reload external assets (e.g. sprite atlas)
-            cgl_reload(game_data, &transient_storage);
+            ee_reload(game_data, &transient_storage);
         }
 #endif // SHARED
 
@@ -191,7 +191,7 @@ int main(int /*argc*/, char * /*argv*/[]) {
         // the current OpenGL buffer
         struct eo_frame frame = {.sdl_window = sdl_window,
                                  .delta_time = delta_time};
-        running = cgl_frame(game_data, &frame);
+        running = ee_frame(game_data, &frame);
 
         // Swap buffers
         SDL_GL_SwapWindow(sdl_window);
@@ -203,7 +203,7 @@ int main(int /*argc*/, char * /*argv*/[]) {
 
 _err:
 _done:
-    cgl_destroy(game_data);
+    ee_destroy(game_data);
     if (sdl_gl_context != NULL) {
         SDL_GL_DestroyContext(sdl_gl_context);
     }
@@ -212,10 +212,10 @@ _done:
     }
     SDL_Quit();
     ea_free(memory_buffer);
-#if SHARED
+#ifdef SHARED
     if (shared != NULL) {
-        ep_shared_free(shared);
+        ep_shared_free(&shared_game);
     }
-#endif
+#endif // SHARED
     return rc;
 }

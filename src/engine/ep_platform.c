@@ -1,6 +1,6 @@
 #include <engine/ep_platform.h>
 
-#ifdef SHARED
+#if defined(SHARED)
 
 #ifdef _WIN32
 
@@ -8,8 +8,8 @@
 #include <engine/el_log.h>
 #include <stdio.h>
 
-int ep_shared_load(const char *path, struct ea_arena *arena,
-                   struct ep_shared_game *out_shared_game) {
+int ep_shared_load(struct ep_shared_game *out_shared_game, const char *path,
+                   struct ea_arena *arena) {
     int rc = 0;
     HMODULE dll = NULL;
 
@@ -48,32 +48,32 @@ int ep_shared_load(const char *path, struct ea_arena *arena,
         goto _err;
     }
 
-    cgl_init_fn cgl_init_ptr = (cgl_init_fn)GetProcAddress(dll, "cgl_init");
-    if (cgl_init_ptr == NULL) {
-        el_critical("WIN: Could not find cgl_init.\n");
+    ee_init_fn *ee_init_ptr = (ee_init_fn *)GetProcAddress(dll, "ee_init");
+    if (ee_init_ptr == NULL) {
+        el_critical("WIN: Could not find ee_init.\n");
         rc = -1;
         goto _err;
     }
 
-    cgl_reload_fn cgl_reload_ptr =
-        (cgl_reload_fn)GetProcAddress(dll, "cgl_reload");
-    if (cgl_reload_ptr == NULL) {
-        el_critical("WIN: Could not find cgl_reload.\n");
+    ee_reload_fn *ee_reload_ptr =
+        (ee_reload_fn *)GetProcAddress(dll, "ee_reload");
+    if (ee_reload_ptr == NULL) {
+        el_critical("WIN: Could not find ee_reload.\n");
         rc = -1;
         goto _err;
     }
 
-    cgl_frame_fn cgl_frame_ptr = (cgl_frame_fn)GetProcAddress(dll, "cgl_frame");
-    if (cgl_frame_ptr == NULL) {
-        el_critical("WIN: Could not find cgl_frame.\n");
+    ee_frame_fn *ee_frame_ptr = (ee_frame_fn *)GetProcAddress(dll, "ee_frame");
+    if (ee_frame_ptr == NULL) {
+        el_critical("WIN: Could not find ee_frame.\n");
         rc = -1;
         goto _err;
     }
 
-    cgl_destroy_fn cgl_destroy_ptr =
-        (cgl_destroy_fn)GetProcAddress(dll, "cgl_destroy");
-    if (cgl_frame_ptr == NULL) {
-        el_critical("WIN: Could not find cgl_destroy.\n");
+    ee_destroy_fn *ee_destroy_ptr =
+        (ee_destroy_fn *)GetProcAddress(dll, "ee_destroy");
+    if (ee_frame_ptr == NULL) {
+        el_critical("WIN: Could not find ee_destroy.\n");
         rc = -1;
         goto _err;
     }
@@ -83,10 +83,10 @@ int ep_shared_load(const char *path, struct ea_arena *arena,
     out_shared_game->shared_lib = dll;
     out_shared_game->timestamp = timestamp;
     out_shared_game->is_red = !out_shared_game->is_red;
-    out_shared_game->cgl_init = cgl_init_ptr;
-    out_shared_game->cgl_reload = cgl_reload_ptr;
-    out_shared_game->cgl_frame = cgl_frame_ptr;
-    out_shared_game->cgl_destroy = cgl_destroy_ptr;
+    out_shared_game->ee_init = ee_init_ptr;
+    out_shared_game->ee_reload = ee_reload_ptr;
+    out_shared_game->ee_frame = ee_frame_ptr;
+    out_shared_game->ee_destroy = ee_destroy_ptr;
     goto _done;
 
 _err:
@@ -99,40 +99,32 @@ _done:
     return rc;
 }
 
-bool ep_shared_reload(struct ea_arena *arena,
-                      struct ep_shared_game *out_shared_game) {
-    struct stat file_stat = {0};
-    stat(out_shared_game->path, &file_stat);
-    long long timestamp = file_stat.st_mtime;
+bool ep_shared_reload(struct ep_shared_game *out_shared_game,
+                      struct ea_arena *arena) {
+    long long timestamp = ef_timestamp(out_shared_game->path);
 
     // DLL is up to date, no reload
     if (timestamp <= out_shared_game->timestamp) {
         return false;
     }
 
+    ep_shared old_lib = out_shared_game->shared_lib;
+
     // Try load the new DLL, if can't, bail out and continue as nothing happened
-    struct ep_shared_game new_shared_game = {.is_red = out_shared_game->is_red};
-    int rc = ep_shared_load(out_shared_game->path, arena, &new_shared_game);
+    int rc = ep_shared_load(out_shared_game, out_shared_game->path, arena);
     if (rc != 0) {
         return false;
     }
 
     // Release old lib
-    FreeLibrary(out_shared_game->shared_lib);
-
-    out_shared_game->path = new_shared_game.path;
-    out_shared_game->shared_lib = new_shared_game.shared_lib;
-    out_shared_game->timestamp = new_shared_game.timestamp;
-    out_shared_game->is_red = new_shared_game.is_red;
-    out_shared_game->cgl_init = new_shared_game.cgl_init;
-    out_shared_game->cgl_reload = new_shared_game.cgl_reload;
-    out_shared_game->cgl_frame = new_shared_game.cgl_frame;
-    out_shared_game->cgl_destroy = new_shared_game.cgl_destroy;
+    FreeLibrary(old_lib);
     return true;
 }
 
-void ep_shared_free(ep_shared shared) { FreeLibrary(shared); }
+void ep_shared_free(struct ep_shared_game *out_shared_game) {
+    FreeLibrary(out_shared_game->shared_lib);
+}
 
 #endif // _WIN32
 
-#endif // SHARED
+#endif // defined(SHARED)

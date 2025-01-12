@@ -56,13 +56,13 @@ if [ $arg_build -eq 0 ]; then
         fi
     done
 
-    for source_file in ./$GEN_PATH/gen/*.c; do
+    for source_file in $GEN_PATH/gen/*.c; do
         if need_compile "$OBJ_GEN_PATH" "$source_file"; then
             compile "$OBJ_GEN_PATH" "$source_file"
         fi
     done
 
-    for source_file in ./$SRC_PATH/*.c; do
+    for source_file in $SRC_PATH/*.c; do
         if need_compile "$OBJ_PATH" "$source_file"; then
             compile "$OBJ_PATH" "$source_file"
         fi
@@ -71,7 +71,7 @@ if [ $arg_build -eq 0 ]; then
     # SHARED LIBRARY
     if need_shared; then
         run "# create shared $TARGET_SHARED ..." clang -shared -o "$TARGET_SHARED" \
-            $(find $OBJ_PATH -type f -name '*.o') \
+            $(find $OBJ_PATH -mindepth 2 -type f -name '*.o') \
             $LINK_FLAGS $BUILD_TYPE_FLAGS
     fi
 
@@ -80,7 +80,7 @@ if [ $arg_build -eq 0 ]; then
         if [ $arg_release -eq 0 ]; then
             obj_files=$(find $OBJ_PATH -type f -name '*.o')
         else
-            obj_files=$(find $OBJ_PATH -type f -name '*.o' ! -name '*cgl_loop.o')
+            obj_files=$(find $OBJ_PATH -type f -name '*.o' ! -wholename '*/caresto/*')
         fi
         run "# link $TARGET ..." clang -o "$TARGET" $obj_files $LINK_FLAGS $BUILD_TYPE_FLAGS
     fi

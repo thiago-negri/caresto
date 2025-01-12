@@ -1,13 +1,13 @@
 #include <SDL3/SDL.h>
 #include <caresto/data/cds_state.h>
 #include <caresto/entity/cee_entity.h>
-#include <caresto/game/cgl_loop.h>
 #include <caresto/opengl/coo_opengl.h>
 #include <caresto/system/csa_animation.h>
 #include <caresto/system/csb_body.h>
 #include <caresto/system/csc_camera.h>
 #include <caresto/system/css_sprite.h>
 #include <caresto/system/cst_tile.h>
+#include <engine/ee_entry.h>
 #include <engine/ef_file.h>
 #include <engine/el_log.h>
 #include <engine/eo_opengl.h>
@@ -25,7 +25,12 @@
 #define BEETLE_SPEED 1.5f
 #define BEETLE_JUMP_SPEED 2.0f
 
-int cgl_init(void **out_data, struct ea_arena *persistent_storage,
+#define cge_init ee_init
+#define cge_reload ee_reload
+#define cge_frame ee_frame
+#define cge_destroy ee_destroy
+
+int cge_init(void **out_data, struct ea_arena *persistent_storage,
              struct ea_arena *transient_storage) {
     int rc = 0;
 
@@ -137,13 +142,13 @@ int cgl_init(void **out_data, struct ea_arena *persistent_storage,
     goto _done;
 
 _err:
-    cgl_destroy(state);
+    cge_destroy(state);
 
 _done:
     return rc;
 }
 
-void cgl_reload(void *data, struct ea_arena *transient_storage) {
+void cge_reload(void *data, struct ea_arena *transient_storage) {
     struct cds_state *state = (struct cds_state *)data;
     coo_sprite_shader_load(&state->sprite_shader, transient_storage);
     coo_tile_shader_load(&state->tile_shader, transient_storage);
@@ -151,7 +156,7 @@ void cgl_reload(void *data, struct ea_arena *transient_storage) {
     eo_texture_load(GEN_TILE_ATLAS_PATH, &state->tile_atlas);
 }
 
-void cg_tick(struct cds_state *state, struct eo_frame *frame) {
+void cge_tick(struct cds_state *state, struct eo_frame *frame) {
     csb_tick(&state->bodymap, &state->tilemap);
     cee_tick((union cee_entity *)&state->carestosan, &state->animationmap,
              &state->bodymap, &state->spritemap);
@@ -159,7 +164,7 @@ void cg_tick(struct cds_state *state, struct eo_frame *frame) {
              &state->bodymap, &state->spritemap);
 }
 
-bool cgl_frame(void *data, struct eo_frame *frame) {
+bool cge_frame(void *data, const struct eo_frame *frame) {
     struct cds_state *state = (struct cds_state *)data;
 
     // Handle input
@@ -259,7 +264,7 @@ bool cgl_frame(void *data, struct eo_frame *frame) {
             .delta_time = ELAPSED_TIME_PER_TICK,
             .sdl_window = frame->sdl_window,
         };
-        cg_tick(state, &tick_frame);
+        cge_tick(state, &tick_frame);
     }
 
     // Animate sprites
@@ -301,7 +306,7 @@ bool cgl_frame(void *data, struct eo_frame *frame) {
     return true;
 }
 
-void cgl_destroy(void *data) {
+void cge_destroy(void *data) {
     struct cds_state *state = (struct cds_state *)data;
     coo_sprite_shader_destroy(&state->sprite_shader);
     coo_tile_shader_destroy(&state->tile_shader);
