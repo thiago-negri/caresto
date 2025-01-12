@@ -29,7 +29,7 @@ int eu_copy_file(const char *from, const char *to, struct em_arena *arena) {
     }
     memset(buffer, 0, file_size + 1);
     size_t read_count = fread(buffer, sizeof(char), file_size, fd);
-    if (read_count != file_size) {
+    if (read_count != (size_t)file_size) {
         el_critical("U: Something went wrong while reading %s.\n", from);
         rc = -1;
         goto _err;
@@ -46,7 +46,7 @@ int eu_copy_file(const char *from, const char *to, struct em_arena *arena) {
     }
 
     size_t write_count = fwrite(buffer, sizeof(char), file_size, fd);
-    if (write_count != file_size) {
+    if (write_count != (size_t)file_size) {
         el_critical("WIN: Something went wrong while writing %s.\n", to);
         rc = -1;
         goto _err;
@@ -143,7 +143,7 @@ void eu_mat4_ortho(struct eu_mat4 *out, float left, float right, float top,
 }
 
 ET_TEST(mat4_ortho) {
-    struct eu_mat4 a = {0.0f};
+    struct eu_mat4 a = {};
     eu_mat4_ortho(&a, 0.0f, 360.0f, 0.0f, 640.0f, 0.0f, 1.0f);
     ET_ASSERT(a.ax >= 0.005555f && a.ax <= 0.005557f);
     ET_ASSERT(a.ay == 0.0f);

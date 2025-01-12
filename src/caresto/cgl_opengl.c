@@ -1,15 +1,15 @@
+#include <caresto/cgl_opengl.h>
 #include <engine/egl_opengl.h>
 #include <engine/el_log.h>
+#include <engine/et_test.h>
 #include <engine/eu_utils.h>
-
-#include <caresto/cgl_opengl.h>
-
 #include <gen/glsl_sprite_fragment.h>
 #include <gen/glsl_sprite_geometry.h>
 #include <gen/glsl_sprite_vertex.h>
 #include <gen/glsl_tile_fragment.h>
 #include <gen/glsl_tile_geometry.h>
 #include <gen/glsl_tile_vertex.h>
+#include <stdio.h>
 
 int cgl_sprite_shader_load(struct cgl_sprite_shader *shader,
                            struct em_arena *arena) {
@@ -117,7 +117,7 @@ void cgl_sprite_shader_destroy(struct cgl_sprite_shader *shader) {
 
 void cgl_sprite_shader_render(struct cgl_sprite_shader *shader,
                               struct eu_mat4 *transform_mat,
-                              struct egl_texture *texture, size_t sprite_count,
+                              struct egl_texture *texture, int sprite_count,
                               struct egl_sprite_buffer *sprite_buffer) {
     // Bind GL objects
     glUseProgram(shader->program_id);
@@ -251,7 +251,7 @@ void cgl_tile_shader_destroy(struct cgl_tile_shader *shader) {
 void cgl_tile_shader_render(struct cgl_tile_shader *shader,
                             struct eu_isize *tile_size,
                             struct eu_mat4 *transform_mat,
-                            struct egl_texture *texture, size_t tile_count,
+                            struct egl_texture *texture, int tile_count,
                             struct egl_tile_buffer *tile_buffer) {
     // Bind GL objects
     glUseProgram(shader->program_id);

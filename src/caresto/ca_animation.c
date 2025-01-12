@@ -1,6 +1,6 @@
-#include "caresto/cs_spritemap.h"
 #include <caresto/ca_animation.h>
 #include <caresto/ci_ids.h>
+#include <caresto/cs_spritemap.h>
 #include <engine/et_test.h>
 #include <engine/eu_utils.h>
 #include <gen/sprite_atlas.h>

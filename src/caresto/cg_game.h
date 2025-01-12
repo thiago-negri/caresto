@@ -1,11 +1,10 @@
 #ifndef CG_GAME_H
 #define CG_GAME_H
 
-#include <stdbool.h>
-#include <stdint.h>
-
 #include <engine/egl_opengl.h>
 #include <engine/em_memory.h>
+#include <stdbool.h>
+#include <stdint.h>
 
 #if defined(SHARED) && defined(CARESTO_MAIN)
 

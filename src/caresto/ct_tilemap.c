@@ -38,7 +38,7 @@ static void ct_set_tile(struct ct_tilemap *tilemap, size_t index,
     }
 }
 
-void ct_set(struct ct_tilemap *tilemap, size_t x, size_t y,
+void ct_set(struct ct_tilemap *tilemap, int x, int y,
             enum ct_tile_type new_tile_type) {
     eu_assert(x < CT_TILEMAP_MAX_WIDTH);
     eu_assert(y < CT_TILEMAP_MAX_HEIGHT);
@@ -61,7 +61,7 @@ void ct_set(struct ct_tilemap *tilemap, size_t x, size_t y,
     tile->type = new_tile_type;
 }
 
-void ct_screen_pos(struct eu_ixpos *pos, struct cc_bounds *cam_bounds,
+void ct_screen_pos(struct eu_ipos *pos, struct cc_bounds *cam_bounds,
                    struct eu_isize *win_size, struct eu_fpos *win_pos,
                    struct eu_isize *tile_size) {
     float world_x =

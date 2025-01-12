@@ -2,14 +2,12 @@
 #include <caresto/cb_bodymap.h>
 #include <caresto/ce_entity.h>
 #include <caresto/cs_spritemap.h>
-#include <caresto/ct_tilemap.h>
 #include <engine/el_log.h>
 #include <gen/sprite_atlas.h>
 
 static void ce_tick_beetle(struct ce_beetle *entity,
                            struct ca_animationmap *animationmap,
                            struct cb_bodymap *bodymap,
-                           struct ct_tilemap *tilemap,
                            struct cs_spritemap *spritemap) {
     struct cb_body *body = cb_get(bodymap, entity->body);
     struct egl_sprite *sprite = cs_get(spritemap, entity->sprite);
@@ -36,7 +34,6 @@ static void ce_tick_beetle(struct ce_beetle *entity,
 static void ce_tick_carestosan(struct ce_carestosan *entity,
                                struct ca_animationmap *animationmap,
                                struct cb_bodymap *bodymap,
-                               struct ct_tilemap *tilemap,
                                struct cs_spritemap *spritemap) {
     struct cb_body *body = cb_get(bodymap, entity->body);
     struct egl_sprite *sprite = cs_get(spritemap, entity->sprite);
@@ -70,20 +67,18 @@ static void ce_tick_carestosan(struct ce_carestosan *entity,
 }
 
 void ce_tick(union ce_entity *entity, struct ca_animationmap *animationmap,
-             struct cb_bodymap *bodymap, struct ct_tilemap *tilemap,
-             struct cs_spritemap *spritemap) {
+             struct cb_bodymap *bodymap, struct cs_spritemap *spritemap) {
     switch (entity->type) {
     case ce_undefined:
         eu_assert("undefined entity type");
         break;
 
     case ce_beetle:
-        ce_tick_beetle(&entity->beetle, animationmap, bodymap, tilemap,
-                       spritemap);
+        ce_tick_beetle(&entity->beetle, animationmap, bodymap, spritemap);
         break;
 
     case ce_carestosan:
-        ce_tick_carestosan(&entity->carestosan, animationmap, bodymap, tilemap,
+        ce_tick_carestosan(&entity->carestosan, animationmap, bodymap,
                            spritemap);
         break;
     }

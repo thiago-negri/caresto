@@ -21,15 +21,15 @@ struct ct_tile {
 };
 
 struct ct_tilemap {
-    size_t tile_count;
+    int tile_count;
     struct egl_tile tiles[CT_TILES_MAX];
     struct ct_tile tilemap[CT_TILEMAP_MAX_HEIGHT][CT_TILEMAP_MAX_WIDTH];
 };
 
-void ct_set(struct ct_tilemap *tilemap, size_t x, size_t y,
+void ct_set(struct ct_tilemap *tilemap, int x, int y,
             enum ct_tile_type tile_type);
 
-void ct_screen_pos(struct eu_ixpos *pos, struct cc_bounds *cam_bounds,
+void ct_screen_pos(struct eu_ipos *pos, struct cc_bounds *cam_bounds,
                    struct eu_isize *win_size, struct eu_fpos *win_pos,
                    struct eu_isize *tile_size);
 

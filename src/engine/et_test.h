@@ -19,6 +19,15 @@
         }                                                                      \
     }
 
+#define ET_ASSERT_FMT(x, fmt, ...)                                             \
+    {                                                                          \
+        if (!et_assert(et_name, #x, (x))) {                                    \
+            fprintf(stderr, fmt, __VA_ARGS__);                                 \
+            *et_done_called = 1;                                               \
+            return;                                                            \
+        }                                                                      \
+    }
+
 bool et_assert(const char *et_name, const char *message, bool assertion);
 void et_done(const char *et_name);
 

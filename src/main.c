@@ -23,7 +23,7 @@
 #define APP_URL "TODO: Steam URL"
 
 #define SHARED_LIB_PATH "build/debug/bin/caresto.dll"
-#define SHARED_LIB_CHECK_INTERVAL 5000
+#define SHARED_LIB_CHECK_INTERVAL_MS 5000.0f
 
 #define MB_10 (10 * 1024 * 1024)
 #define MB_20 (20 * 1024 * 1024)
@@ -32,7 +32,7 @@
 #define WINDOW_H 720
 
 // Create our game window
-SDL_Window *create_sdl_window() {
+static SDL_Window *create_sdl_window() {
     const char *title = "Caresto";
     Uint32 flags = SDL_WINDOW_OPENGL;
     SDL_Window *sdl_window = SDL_CreateWindow(title, WINDOW_W, WINDOW_H, flags);
@@ -44,7 +44,7 @@ SDL_Window *create_sdl_window() {
     return sdl_window;
 }
 
-int main(int argc, char *argv[]) {
+int main(int /*argc*/, char * /*argv*/[]) {
     int rc = 0;
     unsigned char *memory_buffer = NULL;
     SDL_Window *sdl_window = NULL;
@@ -113,10 +113,10 @@ int main(int argc, char *argv[]) {
     }
 
     // Request OpenGL version 4.3
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
-                        SDL_GL_CONTEXT_PROFILE_CORE);
+    /*SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);*/
+    /*SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);*/
+    /*SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,*/
+    /*                    SDL_GL_CONTEXT_PROFILE_CORE);*/
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 
     // Create a OpenGL Context
@@ -157,7 +157,7 @@ int main(int argc, char *argv[]) {
     }
 
 #if SHARED
-    Uint64 last_shared_lib_check = SDL_GetTicks();
+    double check_shared_lib_timeout = SHARED_LIB_CHECK_INTERVAL_MS;
 #endif // SHARED
 
     // Main event loop
@@ -165,15 +165,14 @@ int main(int argc, char *argv[]) {
     Uint64 last_perf_counter = SDL_GetPerformanceCounter();
     while (running) {
         Uint64 current_perf_counter = SDL_GetPerformanceCounter();
-        double delta_time =
-            (double)((current_perf_counter - last_perf_counter) * 1000 /
-                     (double)SDL_GetPerformanceFrequency());
+        double delta_time = ((current_perf_counter - last_perf_counter) *
+                             1000.0f / SDL_GetPerformanceFrequency());
         last_perf_counter = current_perf_counter;
 
 #ifdef SHARED
-        if (current_perf_counter - last_shared_lib_check >
-            SHARED_LIB_CHECK_INTERVAL) {
-            last_shared_lib_check = current_perf_counter;
+        check_shared_lib_timeout -= delta_time;
+        if (check_shared_lib_timeout < 0.0f) {
+            check_shared_lib_timeout = SHARED_LIB_CHECK_INTERVAL_MS;
             bool reloaded = ep_shared_reload(&transient_storage, &shared_game);
             if (reloaded) {
                 cg_init = shared_game.cg_init;

@@ -3,14 +3,13 @@
 
 #ifdef SHARED
 
-#include <stdbool.h>
-
 #include <engine/egl_opengl.h>
 #include <engine/em_memory.h>
+#include <stdbool.h>
 
 #ifdef _WIN32
 
-#include <windows.h>
+#include <Windows.h>
 typedef HMODULE ep_shared;
 
 #endif // _WIN32

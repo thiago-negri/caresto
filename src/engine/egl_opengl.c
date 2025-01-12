@@ -149,9 +149,8 @@ void egl_sprite_buffer_create(GLsizei count,
         (void *)offsetof(struct egl_sprite, texture_offset.u));
     glEnableVertexAttribArray(2);
 
-    glVertexAttribIPointer(
-        3, 1, GL_UNSIGNED_INT, sizeof(struct egl_sprite),
-        (void *)offsetof(struct egl_sprite, flags));
+    glVertexAttribIPointer(3, 1, GL_UNSIGNED_INT, sizeof(struct egl_sprite),
+                           (void *)offsetof(struct egl_sprite, flags));
     glEnableVertexAttribArray(3);
 
     // Reset GL objects
@@ -293,8 +292,9 @@ void egl_texture_destroy(struct egl_texture *texture) {
 }
 
 void egl_debug_message_callback(GLenum source, GLenum type, GLuint id,
-                                GLenum severity, GLsizei length,
-                                const GLchar *message, const void *user_param) {
+                                GLenum severity, GLsizei /*length*/,
+                                const GLchar *message,
+                                const void * /*user_param*/) {
     el_debug("GL: Callback: %d %d %d %d %s\n", source, type, id, severity,
              message);
 }

@@ -153,9 +153,9 @@ void cg_reload(void *data, struct em_arena *transient_storage) {
 void cg_tick(struct cd_state *state, struct egl_frame *frame) {
     cb_tick(&state->bodymap, &state->tilemap);
     ce_tick((union ce_entity *)&state->carestosan, &state->animationmap,
-            &state->bodymap, &state->tilemap, &state->spritemap);
+            &state->bodymap, &state->spritemap);
     ce_tick((union ce_entity *)&state->beetle, &state->animationmap,
-            &state->bodymap, &state->tilemap, &state->spritemap);
+            &state->bodymap, &state->spritemap);
 }
 
 bool cg_frame(void *data, struct egl_frame *frame) {
@@ -228,7 +228,7 @@ bool cg_frame(void *data, struct egl_frame *frame) {
         cc_bounds(&cam_bounds, &state->camera);
         struct eu_isize win_size;
         SDL_GetWindowSize(frame->sdl_window, &win_size.w, &win_size.h);
-        struct eu_ixpos tile_pos;
+        struct eu_ipos tile_pos;
         struct eu_isize tile_size = {GEN_TILE_ATLAS_TILE_SIZE,
                                      GEN_TILE_ATLAS_TILE_SIZE};
         ct_screen_pos(&tile_pos, &cam_bounds, &win_size, &win_pos, &tile_size);
@@ -242,7 +242,7 @@ bool cg_frame(void *data, struct egl_frame *frame) {
         cc_bounds(&cam_bounds, &state->camera);
         struct eu_isize win_size;
         SDL_GetWindowSize(frame->sdl_window, &win_size.w, &win_size.h);
-        struct eu_ixpos tile_pos;
+        struct eu_ipos tile_pos;
         struct eu_isize tile_size = {GEN_TILE_ATLAS_TILE_SIZE,
                                      GEN_TILE_ATLAS_TILE_SIZE};
         ct_screen_pos(&tile_pos, &cam_bounds, &win_size, &win_pos, &tile_size);
@@ -281,7 +281,7 @@ bool cg_frame(void *data, struct egl_frame *frame) {
     state->camera.y = state->carestosan.position.y;
 
     // Orthographic projection camera
-    struct eu_mat4 camera_transform = {0.0f};
+    struct eu_mat4 camera_transform = {};
     eu_mat4_ortho_camera(&camera_transform, GAME_CAMERA_WIDTH,
                          GAME_CAMERA_HEIGHT, state->camera.x, state->camera.y);
 

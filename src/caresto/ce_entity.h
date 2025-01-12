@@ -36,7 +36,6 @@ union ce_entity {
 };
 
 void ce_tick(union ce_entity *entity, struct ca_animationmap *animationmap,
-             struct cb_bodymap *bodymap, struct ct_tilemap *tilemap,
-             struct cs_spritemap *spritemap);
+             struct cb_bodymap *bodymap, struct cs_spritemap *spritemap);
 
 #endif // CE_ENTITY_H
