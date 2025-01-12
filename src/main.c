@@ -3,12 +3,11 @@
 #include <GL/glew.h>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
-#include <caresto/cg_game.h>
-#include <engine/egl_opengl.h>
+#include <caresto/game/cgl_loop.h>
+#include <engine/ea_allocator.h>
 #include <engine/el_log.h>
-#include <engine/em_memory.h>
+#include <engine/eo_opengl.h>
 #include <engine/ep_platform.h>
-#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -71,16 +70,17 @@ int main(int /*argc*/, char * /*argv*/[]) {
 #endif
 
     // Allocate persistent storage
-    memory_buffer = (unsigned char *)em_alloc(MB_20);
+    memory_buffer = (unsigned char *)ea_alloc(MB_20);
     if (memory_buffer == NULL) {
         el_critical("OOM: Could not allocate memory.");
         rc = -1;
         goto _err;
     }
 
-    struct em_arena persistent_storage = em_arena_create(MB_10, memory_buffer);
-    struct em_arena transient_storage =
-        em_arena_create(MB_10, memory_buffer + MB_10);
+    struct ea_arena persistent_storage = {};
+    struct ea_arena transient_storage = {};
+    ea_arena_init(&persistent_storage, MB_10, memory_buffer);
+    ea_arena_init(&persistent_storage, MB_10, memory_buffer + MB_10);
 
 #ifdef SHARED
     struct ep_shared_game shared_game = {0};
@@ -88,17 +88,17 @@ int main(int /*argc*/, char * /*argv*/[]) {
     if (rc != 0) {
         goto _err;
     }
-    cg_init = shared_game.cg_init;
-    cg_reload = shared_game.cg_reload;
-    cg_frame = shared_game.cg_frame;
-    cg_destroy = shared_game.cg_destroy;
+    cgl_init = shared_game.cgl_init;
+    cgl_reload = shared_game.cgl_reload;
+    cgl_frame = shared_game.cgl_frame;
+    cgl_destroy = shared_game.cgl_destroy;
 #endif
 
     // Initialize SDL
     Uint32 sdl_flags = SDL_INIT_VIDEO;
     if (!SDL_Init(sdl_flags)) {
         const char *sdl_error = SDL_GetError();
-        el_critical("SDL: Could not initialize. %s\n", sdl_error);
+        el_critical_fmt("SDL: Could not initialize. %s\n", sdl_error);
         rc = -1;
         goto _err;
     }
@@ -107,7 +107,7 @@ int main(int /*argc*/, char * /*argv*/[]) {
     sdl_window = create_sdl_window();
     if (sdl_window == NULL) {
         const char *sdl_error = SDL_GetError();
-        el_critical("SDL: Could not create window. %s\n", sdl_error);
+        el_critical_fmt("SDL: Could not create window. %s\n", sdl_error);
         rc = -1;
         goto _err;
     }
@@ -123,7 +123,8 @@ int main(int /*argc*/, char * /*argv*/[]) {
     sdl_gl_context = SDL_GL_CreateContext(sdl_window);
     if (sdl_gl_context == NULL) {
         const char *sdl_error = SDL_GetError();
-        el_critical("SDL: Could not create OpenGL context. %s\n", sdl_error);
+        el_critical_fmt("SDL: Could not create OpenGL context. %s\n",
+                        sdl_error);
         rc = -1;
         goto _err;
     }
@@ -132,7 +133,7 @@ int main(int /*argc*/, char * /*argv*/[]) {
     GLenum glew_rc = glewInit();
     if (GLEW_OK != glew_rc) {
         const GLubyte *glew_error = glewGetErrorString(glew_rc);
-        el_critical("GL: Could not initialize glew. %s\n", glew_error);
+        el_critical_fmt("GL: Could not initialize glew. %s\n", glew_error);
         rc = -1;
         goto _err;
     }
@@ -142,16 +143,16 @@ int main(int /*argc*/, char * /*argv*/[]) {
     int gl_minor_version = 0;
     SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_major_version);
     SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_version);
-    el_debug("GL: Version %d.%d\n", gl_major_version, gl_minor_version);
+    el_debug_fmt("GL: Version %d.%d\n", gl_major_version, gl_minor_version);
 
     // Debug callback is only available in 4.3+
     if (gl_major_version > 4 ||
         (gl_major_version == 4 && gl_minor_version >= 3)) {
-        glDebugMessageCallback(egl_debug_message_callback, NULL);
+        glDebugMessageCallback(eo_debug_message_callback, NULL);
     }
 
     // Initialize game
-    rc = cg_init(&game_data, &persistent_storage, &transient_storage);
+    rc = cgl_init(&game_data, &persistent_storage, &transient_storage);
     if (rc != 0) {
         goto _err;
     }
@@ -175,34 +176,34 @@ int main(int /*argc*/, char * /*argv*/[]) {
             check_shared_lib_timeout = SHARED_LIB_CHECK_INTERVAL_MS;
             bool reloaded = ep_shared_reload(&transient_storage, &shared_game);
             if (reloaded) {
-                cg_init = shared_game.cg_init;
-                cg_reload = shared_game.cg_reload;
-                cg_frame = shared_game.cg_frame;
-                cg_destroy = shared_game.cg_destroy;
+                cgl_init = shared_game.cgl_init;
+                cgl_reload = shared_game.cgl_reload;
+                cgl_frame = shared_game.cgl_frame;
+                cgl_destroy = shared_game.cgl_destroy;
             }
             // Call reload even if the same DLL is still loaded,
             // this way the game can reload external assets (e.g. sprite atlas)
-            cg_reload(game_data, &transient_storage);
+            cgl_reload(game_data, &transient_storage);
         }
 #endif // SHARED
 
         // Process game frame, game is responsible for writing to
         // the current OpenGL buffer
-        struct egl_frame frame = {.sdl_window = sdl_window,
-                                  .delta_time = delta_time};
-        running = cg_frame(game_data, &frame);
+        struct eo_frame frame = {.sdl_window = sdl_window,
+                                 .delta_time = delta_time};
+        running = cgl_frame(game_data, &frame);
 
         // Swap buffers
         SDL_GL_SwapWindow(sdl_window);
 
-        em_arena_reset(&transient_storage);
+        ea_arena_reset(&transient_storage);
     }
 
     goto _done;
 
 _err:
 _done:
-    cg_destroy(game_data);
+    cgl_destroy(game_data);
     if (sdl_gl_context != NULL) {
         SDL_GL_DestroyContext(sdl_gl_context);
     }
@@ -210,7 +211,7 @@ _done:
         SDL_DestroyWindow(sdl_window);
     }
     SDL_Quit();
-    em_free(memory_buffer);
+    ea_free(memory_buffer);
 #if SHARED
     if (shared != NULL) {
         ep_shared_free(shared);

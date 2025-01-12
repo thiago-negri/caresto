@@ -1,33 +1,29 @@
-#ifndef CB_BODYMAP_H
-#define CB_BODYMAP_H
+#pragma once
 
-#include <caresto/cs_spritemap.h>
-#include <caresto/ct_tilemap.h>
-#include <engine/eu_utils.h>
-#include <stdbool.h>
+#include <caresto/system/css_spritemap.h>
+#include <caresto/system/cst_tilemap.h>
+#include <engine/em_math.h>
 
-#define CB_BODIES_MAX 256
+#define CSB_BODIES_MAX 256
 
-typedef size_t cb_body_id;
+typedef size_t csb_body_id;
 
-struct cb_body {
-    struct eu_ipos position;
-    struct eu_isize size;
-    struct eu_vec2 velocity;
-    struct eu_vec2 movement_remaining;
+struct csb_body {
+    struct em_ipos position;
+    struct em_isize size;
+    struct em_vec2 velocity;
+    struct em_vec2 movement_remaining;
 };
 
-struct cb_bodymap {
+struct csb_body_map {
     size_t body_count;
-    size_t ids[CB_BODIES_MAX];
-    struct cb_body bodies[CB_BODIES_MAX];
+    size_t ids[CSB_BODIES_MAX];
+    struct csb_body bodies[CSB_BODIES_MAX];
 };
 
-cb_body_id cb_add(struct cb_bodymap *bodymap, struct cb_body *body);
-struct cb_body *cb_get(struct cb_bodymap *bodymap, cb_body_id id);
-void cb_remove(struct cb_bodymap *bodymap, cb_body_id id);
-bool cb_grounded(struct cb_bodymap *bodymap, struct ct_tilemap *tilemap,
-                 cb_body_id id);
-void cb_tick(struct cb_bodymap *bodymap, struct ct_tilemap *tilemap);
-
-#endif // CB_BODYMAP_H
+csb_body_id csb_add(struct csb_body_map *bodymap, struct csb_body *body);
+struct csb_body *csb_get(struct csb_body_map *bodymap, csb_body_id id);
+void csb_remove(struct csb_body_map *bodymap, csb_body_id id);
+bool csb_grounded(struct csb_body_map *bodymap, struct ct_tilemap *tilemap,
+                  csb_body_id id);
+void csb_tick(struct csb_body_map *bodymap, struct ct_tilemap *tilemap);

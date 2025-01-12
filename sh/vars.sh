@@ -48,18 +48,13 @@ TARGET_PATH=$BUILD_PATH/bin
 TARGET_SHARED=$TARGET_PATH/caresto.dll
 TARGET=$TARGET_PATH/caresto.exe
 
-OBJ_PATH=$BUILD_PATH/obj
-OBJ_ENGINE_PATH=$BUILD_PATH/obj/engine
-OBJ_CARESTO_PATH=$BUILD_PATH/obj/caresto
-OBJ_GEN_PATH=$BUILD_PATH/obj/gen
-
 SRC_PATH=src
-SRC_ENGINE_PATH=src/engine
-SRC_CARESTO_PATH=src/caresto
+OBJ_PATH=$BUILD_PATH/obj
 
 GLSL_PATH=glsl
 
 GEN_PATH=src_gen
+OBJ_GEN_PATH=$BUILD_PATH/obj/gen
 
 INCLUDE_PATH=include
 
@@ -78,12 +73,6 @@ LINK_FLAGS_ARR=(
     "-lopengl32"
 )
 
-OBJ_FILES_TO_LINK_ARR=(
-    "$OBJ_PATH/*.o"
-    "$OBJ_ENGINE_PATH/*.o"
-    "$OBJ_GEN_PATH/*.o"
-)
-
 # Use 'release' option to:
 # - Create an executable that doesn't spawn a console
 # - -O3
@@ -91,14 +80,12 @@ OBJ_FILES_TO_LINK_ARR=(
 if [ $arg_release -eq 0 ]; then
     LINK_FLAGS_ARR+=("-Xlinker /SUBSYSTEM:WINDOWS")
     BUILD_TYPE_FLAGS="-O3"
-    OBJ_FILES_TO_LINK_ARR+=("$OBJ_CARESTO_PATH/*.o")
 else
     LINK_FLAGS_ARR+=("-Xlinker /SUBSYSTEM:CONSOLE")
     BUILD_TYPE_FLAGS="-fsanitize=address -g -DDEBUG -DSHARED"
 fi
 
 LINK_FLAGS="${LINK_FLAGS_ARR[*]}"
-OBJ_FILES_TO_LINK="${OBJ_FILES_TO_LINK_ARR[*]}"
 COMPILE_FLAGS="${COMPILE_FLAGS_ARR[*]}"
 
 TILE_ATLAS_ASEPRITE="assets/tiles/tiles.aseprite"

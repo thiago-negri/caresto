@@ -1,0 +1,33 @@
+main.c
+engine/
+    allocator               ea
+    file                    ef
+    log                     el
+    math                    em
+    opengl                  eo
+    platform                ep
+    test                    et
+caresto/
+    game/
+        loop                cgl
+        input               cgi
+    data/
+        id                  cdi
+        state               cds
+    component/
+        animation           cca
+        body                ccb
+        sprite              ccs
+        camera              ccc
+    system/
+        animation           csa
+        body                csb
+        sprite              css
+        camera              csc
+    entity/
+        type                cet
+        caresto             cec
+        beetle              ceb
+    opengl/
+        sprite              css
+        tile                cst

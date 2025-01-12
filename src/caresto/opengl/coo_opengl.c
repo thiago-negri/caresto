@@ -1,23 +1,21 @@
-#include <caresto/cgl_opengl.h>
-#include <engine/egl_opengl.h>
+#include <caresto/opengl/coo_opengl.h>
 #include <engine/el_log.h>
+#include <engine/eo_opengl.h>
 #include <engine/et_test.h>
-#include <engine/eu_utils.h>
 #include <gen/glsl_sprite_fragment.h>
 #include <gen/glsl_sprite_geometry.h>
 #include <gen/glsl_sprite_vertex.h>
 #include <gen/glsl_tile_fragment.h>
 #include <gen/glsl_tile_geometry.h>
 #include <gen/glsl_tile_vertex.h>
-#include <stdio.h>
 
-int cgl_sprite_shader_load(struct cgl_sprite_shader *shader,
-                           struct em_arena *arena) {
+int coo_sprite_shader_load(struct coo_sprite_shader *shader,
+                          struct ea_arena *arena) {
     int rc = 0;
 
 #ifdef SHARED
     long long timestamp =
-        eu_max(glsl_sprite_vertex_timestamp, glsl_sprite_geometry_timestamp,
+        em_max(glsl_sprite_vertex_timestamp, glsl_sprite_geometry_timestamp,
                glsl_sprite_fragment_timestamp);
     if (timestamp <= shader->timestamp) {
         return rc;
@@ -31,20 +29,20 @@ int cgl_sprite_shader_load(struct cgl_sprite_shader *shader,
 
     el_debug("GL: Creating sprite shader ...");
 
-    rc = egl_shader_create(GL_VERTEX_SHADER, glsl_sprite_vertex_source, arena,
-                           &shader_vertex_id);
+    rc = eo_shader_create(GL_VERTEX_SHADER, glsl_sprite_vertex_source, arena,
+                          &shader_vertex_id);
     if (rc != 0) {
         goto _err;
     }
 
-    rc = egl_shader_create(GL_GEOMETRY_SHADER, glsl_sprite_geometry_source,
-                           arena, &shader_geometry_id);
+    rc = eo_shader_create(GL_GEOMETRY_SHADER, glsl_sprite_geometry_source,
+                          arena, &shader_geometry_id);
     if (rc != 0) {
         goto _err;
     }
 
-    rc = egl_shader_create(GL_FRAGMENT_SHADER, glsl_sprite_fragment_source,
-                           arena, &shader_fragment_id);
+    rc = eo_shader_create(GL_FRAGMENT_SHADER, glsl_sprite_fragment_source,
+                          arena, &shader_fragment_id);
     if (rc != 0) {
         goto _err;
     }
@@ -55,7 +53,7 @@ int cgl_sprite_shader_load(struct cgl_sprite_shader *shader,
 
     GLuint shaders[] = {shader_vertex_id, shader_geometry_id,
                         shader_fragment_id};
-    rc = egl_program_link(program_id, 3, shaders, arena);
+    rc = eo_program_link(program_id, 3, shaders, arena);
     if (rc != 0) {
         goto _err;
     }
@@ -81,7 +79,7 @@ int cgl_sprite_shader_load(struct cgl_sprite_shader *shader,
     shader->g_transform_mat_id = g_transform_mat_id;
 #ifdef SHARED
     shader->timestamp =
-        eu_max(glsl_sprite_vertex_timestamp, glsl_sprite_geometry_timestamp,
+        em_max(glsl_sprite_vertex_timestamp, glsl_sprite_geometry_timestamp,
                glsl_sprite_fragment_timestamp);
 #endif
     goto _done;
@@ -104,7 +102,7 @@ _done:
     return rc;
 }
 
-void cgl_sprite_shader_destroy(struct cgl_sprite_shader *shader) {
+void coo_sprite_shader_destroy(struct coo_sprite_shader *shader) {
     if (shader->program_id != 0) {
         glDeleteProgram(shader->program_id);
         shader->program_id = 0;
@@ -115,10 +113,10 @@ void cgl_sprite_shader_destroy(struct cgl_sprite_shader *shader) {
     }
 }
 
-void cgl_sprite_shader_render(struct cgl_sprite_shader *shader,
-                              struct eu_mat4 *transform_mat,
-                              struct egl_texture *texture, int sprite_count,
-                              struct egl_sprite_buffer *sprite_buffer) {
+void coo_sprite_shader_render(struct coo_sprite_shader *shader,
+                             struct em_mat4 *transform_mat,
+                             struct eo_texture *texture, int sprite_count,
+                             struct eo_sprite_buffer *sprite_buffer) {
     // Bind GL objects
     glUseProgram(shader->program_id);
     glActiveTexture(GL_TEXTURE0);
@@ -136,13 +134,13 @@ void cgl_sprite_shader_render(struct cgl_sprite_shader *shader,
     glUseProgram(0);
 }
 
-int cgl_tile_shader_load(struct cgl_tile_shader *shader,
-                         struct em_arena *arena) {
+int coo_tile_shader_load(struct coo_tile_shader *shader,
+                        struct ea_arena *arena) {
     int rc = 0;
 
 #ifdef SHARED
     long long timestamp =
-        eu_max(glsl_tile_vertex_timestamp, glsl_tile_geometry_timestamp,
+        em_max(glsl_tile_vertex_timestamp, glsl_tile_geometry_timestamp,
                glsl_tile_fragment_timestamp);
     if (timestamp <= shader->timestamp) {
         return rc;
@@ -156,20 +154,20 @@ int cgl_tile_shader_load(struct cgl_tile_shader *shader,
     GLuint shader_geometry_id = 0;
     GLuint shader_fragment_id = 0;
 
-    rc = egl_shader_create(GL_VERTEX_SHADER, glsl_tile_vertex_source, arena,
-                           &shader_vertex_id);
+    rc = eo_shader_create(GL_VERTEX_SHADER, glsl_tile_vertex_source, arena,
+                          &shader_vertex_id);
     if (rc != 0) {
         goto _err;
     }
 
-    rc = egl_shader_create(GL_GEOMETRY_SHADER, glsl_tile_geometry_source, arena,
-                           &shader_geometry_id);
+    rc = eo_shader_create(GL_GEOMETRY_SHADER, glsl_tile_geometry_source, arena,
+                          &shader_geometry_id);
     if (rc != 0) {
         goto _err;
     }
 
-    rc = egl_shader_create(GL_FRAGMENT_SHADER, glsl_tile_fragment_source, arena,
-                           &shader_fragment_id);
+    rc = eo_shader_create(GL_FRAGMENT_SHADER, glsl_tile_fragment_source, arena,
+                          &shader_fragment_id);
     if (rc != 0) {
         goto _err;
     }
@@ -180,7 +178,7 @@ int cgl_tile_shader_load(struct cgl_tile_shader *shader,
 
     GLuint shaders[] = {shader_vertex_id, shader_geometry_id,
                         shader_fragment_id};
-    rc = egl_program_link(program_id, 3, shaders, arena);
+    rc = eo_program_link(program_id, 3, shaders, arena);
     if (rc != 0) {
         goto _err;
     }
@@ -214,7 +212,7 @@ int cgl_tile_shader_load(struct cgl_tile_shader *shader,
     shader->g_transform_mat_id = g_transform_mat_id;
 #ifdef SHARED
     shader->timestamp =
-        eu_max(glsl_tile_vertex_timestamp, glsl_tile_geometry_timestamp,
+        em_max(glsl_tile_vertex_timestamp, glsl_tile_geometry_timestamp,
                glsl_tile_fragment_timestamp);
 #endif
     goto _done;
@@ -237,7 +235,7 @@ _done:
     return rc;
 }
 
-void cgl_tile_shader_destroy(struct cgl_tile_shader *shader) {
+void coo_tile_shader_destroy(struct coo_tile_shader *shader) {
     if (shader->program_id != 0) {
         glDeleteProgram(shader->program_id);
         shader->program_id = 0;
@@ -248,11 +246,11 @@ void cgl_tile_shader_destroy(struct cgl_tile_shader *shader) {
     }
 }
 
-void cgl_tile_shader_render(struct cgl_tile_shader *shader,
-                            struct eu_isize *tile_size,
-                            struct eu_mat4 *transform_mat,
-                            struct egl_texture *texture, int tile_count,
-                            struct egl_tile_buffer *tile_buffer) {
+void coo_tile_shader_render(struct coo_tile_shader *shader,
+                           struct em_isize *tile_size,
+                           struct em_mat4 *transform_mat,
+                           struct eo_texture *texture, int tile_count,
+                           struct eo_tile_buffer *tile_buffer) {
     // Bind GL objects
     glUseProgram(shader->program_id);
     glActiveTexture(GL_TEXTURE0);

@@ -1,6 +1,5 @@
-#include <stdio.h>
-
 #include <engine/et_test.h>
+#include <stdio.h>
 
 bool et_assert(const char *et_name, const char *message, bool assertion) {
     if (!assertion) {

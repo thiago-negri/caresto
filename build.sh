@@ -14,8 +14,7 @@ source ./sh/generators.sh
 
 
 # PREPARE
-mkdir -p "$OBJ_PATH" "$OBJ_CARESTO_PATH" \
-    "$OBJ_ENGINE_PATH" "$OBJ_GEN_PATH" \
+mkdir -p "$OBJ_PATH" "$OBJ_GEN_PATH" \
     "$TARGET_PATH" "$GEN_PATH/gen"
 
 
@@ -49,21 +48,20 @@ fi
 #
 if [ $arg_build -eq 0 ]; then
     # COMPILE
-    for source_file in ./$SRC_ENGINE_PATH/*.c; do
-        if need_compile "$OBJ_ENGINE_PATH" "$source_file"; then
-            compile "$OBJ_ENGINE_PATH" "$source_file"
+    for source_file in $(find src/ -mindepth 2 -type f -name '*.c'); do
+        sub_obj_path=$(dirname $source_file | cut -f 2- -d '/')
+        if need_compile "$OBJ_PATH/$sub_obj_path" "$source_file"; then
+            mkdir -p "$OBJ_PATH/$sub_obj_path"
+            compile "$OBJ_PATH/$sub_obj_path" "$source_file"
         fi
     done
-    for source_file in ./$SRC_CARESTO_PATH/*.c; do
-        if need_compile "$OBJ_CARESTO_PATH" "$source_file"; then
-            compile "$OBJ_CARESTO_PATH" "$source_file"
-        fi
-    done
+
     for source_file in ./$GEN_PATH/gen/*.c; do
         if need_compile "$OBJ_GEN_PATH" "$source_file"; then
             compile "$OBJ_GEN_PATH" "$source_file"
         fi
     done
+
     for source_file in ./$SRC_PATH/*.c; do
         if need_compile "$OBJ_PATH" "$source_file"; then
             compile "$OBJ_PATH" "$source_file"
@@ -73,15 +71,18 @@ if [ $arg_build -eq 0 ]; then
     # SHARED LIBRARY
     if need_shared; then
         run "# create shared $TARGET_SHARED ..." clang -shared -o "$TARGET_SHARED" \
-            "$OBJ_CARESTO_PATH/*.o" \
-            "$OBJ_ENGINE_PATH/*.o" \
-            "$OBJ_GEN_PATH/*.o" \
+            $(find $OBJ_PATH -type f -name '*.o') \
             $LINK_FLAGS $BUILD_TYPE_FLAGS
     fi
 
     # LINK
     if need_link; then
-        run "# link $TARGET ..." clang -o "$TARGET" $OBJ_FILES_TO_LINK $LINK_FLAGS $BUILD_TYPE_FLAGS
+        if [ $arg_release -eq 0 ]; then
+            obj_files=$(find $OBJ_PATH -type f -name '*.o')
+        else
+            obj_files=$(find $OBJ_PATH -type f -name '*.o' ! -name '*cgl_loop.o')
+        fi
+        run "# link $TARGET ..." clang -o "$TARGET" $obj_files $LINK_FLAGS $BUILD_TYPE_FLAGS
     fi
 
     # COPY DLLS AND LICENSES

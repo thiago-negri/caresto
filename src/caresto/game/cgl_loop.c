@@ -1,17 +1,17 @@
 #include <SDL3/SDL.h>
-#include <caresto/ca_animation.h>
-#include <caresto/cb_bodymap.h>
-#include <caresto/cc_camera.h>
-#include <caresto/cd_data.h>
-#include <caresto/ce_entity.h>
-#include <caresto/cg_game.h>
-#include <caresto/cgl_opengl.h>
-#include <caresto/cs_spritemap.h>
-#include <caresto/ct_tilemap.h>
-#include <engine/egl_opengl.h>
+#include <caresto/data/cds_state.h>
+#include <caresto/entity/cee_entity.h>
+#include <caresto/game/cgl_loop.h>
+#include <caresto/opengl/coo_opengl.h>
+#include <caresto/system/csa_animation.h>
+#include <caresto/system/csb_body.h>
+#include <caresto/system/csc_camera.h>
+#include <caresto/system/css_sprite.h>
+#include <caresto/system/cst_tile.h>
+#include <engine/ef_file.h>
 #include <engine/el_log.h>
+#include <engine/eo_opengl.h>
 #include <engine/et_test.h>
-#include <engine/eu_utils.h>
 #include <gen/sprite_atlas.h>
 #include <gen/tile_atlas.h>
 
@@ -25,48 +25,48 @@
 #define BEETLE_SPEED 1.5f
 #define BEETLE_JUMP_SPEED 2.0f
 
-int cg_init(void **out_data, struct em_arena *persistent_storage,
-            struct em_arena *transient_storage) {
+int cgl_init(void **out_data, struct ea_arena *persistent_storage,
+             struct ea_arena *transient_storage) {
     int rc = 0;
 
-    struct cd_state *state = (struct cd_state *)em_arena_alloc(
-        persistent_storage, sizeof(struct cd_state));
+    struct cds_state *state = (struct cds_state *)ea_arena_alloc(
+        persistent_storage, sizeof(struct cds_state));
     if (state == NULL) {
         el_critical("OOM");
         rc = -1;
         goto _err;
     }
 
-    memset(state, 0, sizeof(struct cd_state));
+    memset(state, 0, sizeof(struct cds_state));
 
-    rc = cgl_sprite_shader_load(&state->sprite_shader, transient_storage);
+    rc = coo_sprite_shader_load(&state->sprite_shader, transient_storage);
     if (rc != 0) {
         goto _err;
     }
 
-    rc = cgl_tile_shader_load(&state->tile_shader, transient_storage);
+    rc = coo_tile_shader_load(&state->tile_shader, transient_storage);
     if (rc != 0) {
         goto _err;
     }
 
-    egl_sprite_buffer_create(CS_SPRITES_MAX, &state->sprite_buffer);
-    egl_tile_buffer_create(CT_TILES_MAX, &state->tile_buffer);
+    eo_sprite_buffer_create(CSS_SPRITES_MAX, &state->sprite_buffer);
+    eo_tile_buffer_create(CST_TILES_MAX, &state->tile_buffer);
 
-    rc = egl_texture_load(GEN_SPRITE_ATLAS_PATH, &state->sprite_atlas);
+    rc = eo_texture_load(GEN_SPRITE_ATLAS_PATH, &state->sprite_atlas);
     if (rc != 0) {
         goto _err;
     }
 
-    rc = egl_texture_load(GEN_TILE_ATLAS_PATH, &state->tile_atlas);
+    rc = eo_texture_load(GEN_TILE_ATLAS_PATH, &state->tile_atlas);
     if (rc != 0) {
         goto _err;
     }
 
     // Initial state
-    state->carestosan.type = ce_carestosan;
-    state->carestosan.sprite = cs_add(
+    state->carestosan.type = cee_carestosan;
+    state->carestosan.sprite = css_add(
         &state->spritemap,
-        &(struct egl_sprite){
+        &(struct eo_sprite){
             .position = {100, 100},
             .size = {.w = gen_frame_atlas[GEN_FRAME_CARESTOSAN_4].w,
                      .h = gen_frame_atlas[GEN_FRAME_CARESTOSAN_4].h},
@@ -74,14 +74,14 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
                                .v = gen_frame_atlas[GEN_FRAME_CARESTOSAN_4].v},
             .flags = 0,
         });
-    ca_play(&state->carestosan.animation, &state->animationmap,
-            GEN_ANIMATION_CARESTOSAN_IDLE, state->carestosan.sprite,
-            &state->spritemap);
+    csa_play(&state->carestosan.animation, &state->animationmap,
+             GEN_ANIMATION_CARESTOSAN_IDLE, state->carestosan.sprite,
+             &state->spritemap);
     state->carestosan.position.x = 100.0f;
     state->carestosan.position.y = 100.0f;
-    state->carestosan.body = cb_add(
+    state->carestosan.body = csb_add(
         &state->bodymap,
-        &(struct cb_body){
+        &(struct csb_body){
             .position = {.x = state->carestosan.position.x +
                               gen_bounding_box_atlas[GEN_SPRITE_CARESTOSAN].x,
                          .y = state->carestosan.position.y +
@@ -90,10 +90,10 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
                      .h = gen_bounding_box_atlas[GEN_SPRITE_CARESTOSAN].h},
         });
 
-    state->beetle.type = ce_beetle;
-    state->beetle.sprite = cs_add(
+    state->beetle.type = cee_beetle;
+    state->beetle.sprite = css_add(
         &state->spritemap,
-        &(struct egl_sprite){
+        &(struct eo_sprite){
             .position = {200, 200},
             .size = {.w = gen_frame_atlas[GEN_FRAME_BEETLE_0].w,
                      .h = gen_frame_atlas[GEN_FRAME_BEETLE_0].h},
@@ -101,13 +101,14 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
                                .v = gen_frame_atlas[GEN_FRAME_BEETLE_0].v},
             .flags = 0,
         });
-    ca_play(&state->beetle.animation, &state->animationmap,
-            GEN_ANIMATION_BEETLE_IDLE, state->beetle.sprite, &state->spritemap);
+    csa_play(&state->beetle.animation, &state->animationmap,
+             GEN_ANIMATION_BEETLE_IDLE, state->beetle.sprite,
+             &state->spritemap);
     state->beetle.position.x = 200.0f;
     state->beetle.position.y = 200.0f;
-    state->beetle.body = cb_add(
+    state->beetle.body = csb_add(
         &state->bodymap,
-        &(struct cb_body){
+        &(struct csb_body){
             .position = {.x = state->beetle.position.x +
                               gen_bounding_box_atlas[GEN_SPRITE_BEETLE].x,
                          .y = state->beetle.position.y +
@@ -116,50 +117,50 @@ int cg_init(void **out_data, struct em_arena *persistent_storage,
                      .h = gen_bounding_box_atlas[GEN_SPRITE_BEETLE].h},
         });
 
-    state->camera = (struct cc_camera){.x = state->carestosan.position.x,
-                                       .y = state->carestosan.position.y,
-                                       .w = GAME_CAMERA_WIDTH,
-                                       .h = GAME_CAMERA_HEIGHT};
+    state->camera = (struct csc_camera){.x = state->carestosan.position.x,
+                                        .y = state->carestosan.position.y,
+                                        .w = GAME_CAMERA_WIDTH,
+                                        .h = GAME_CAMERA_HEIGHT};
 
     // Set some tiles
     for (int i = 0; i < 60; i++) {
-        ct_set(&state->tilemap, i, 40, CT_TILE_TYPE_GRASS);
+        cst_set(&state->tilemap, i, 40, CST_TILE_TYPE_GRASS);
     }
 
     // Load the VBOs
-    egl_sprite_buffer_data(&state->sprite_buffer, state->spritemap.sprite_count,
-                           state->spritemap.sprites);
-    egl_tile_buffer_data(&state->tile_buffer, state->tilemap.tile_count,
-                         state->tilemap.tiles);
+    eo_sprite_buffer_data(&state->sprite_buffer, state->spritemap.sprite_count,
+                          state->spritemap.sprites);
+    eo_tile_buffer_data(&state->tile_buffer, state->tilemap.tile_count,
+                        state->tilemap.tiles);
 
     *out_data = (void *)state;
     goto _done;
 
 _err:
-    cg_destroy(state);
+    cgl_destroy(state);
 
 _done:
     return rc;
 }
 
-void cg_reload(void *data, struct em_arena *transient_storage) {
-    struct cd_state *state = (struct cd_state *)data;
-    cgl_sprite_shader_load(&state->sprite_shader, transient_storage);
-    cgl_tile_shader_load(&state->tile_shader, transient_storage);
-    egl_texture_load(GEN_SPRITE_ATLAS_PATH, &state->sprite_atlas);
-    egl_texture_load(GEN_TILE_ATLAS_PATH, &state->tile_atlas);
+void cgl_reload(void *data, struct ea_arena *transient_storage) {
+    struct cds_state *state = (struct cds_state *)data;
+    coo_sprite_shader_load(&state->sprite_shader, transient_storage);
+    coo_tile_shader_load(&state->tile_shader, transient_storage);
+    eo_texture_load(GEN_SPRITE_ATLAS_PATH, &state->sprite_atlas);
+    eo_texture_load(GEN_TILE_ATLAS_PATH, &state->tile_atlas);
 }
 
-void cg_tick(struct cd_state *state, struct egl_frame *frame) {
-    cb_tick(&state->bodymap, &state->tilemap);
-    ce_tick((union ce_entity *)&state->carestosan, &state->animationmap,
-            &state->bodymap, &state->spritemap);
-    ce_tick((union ce_entity *)&state->beetle, &state->animationmap,
-            &state->bodymap, &state->spritemap);
+void cg_tick(struct cds_state *state, struct eo_frame *frame) {
+    csb_tick(&state->bodymap, &state->tilemap);
+    cee_tick((union cee_entity *)&state->carestosan, &state->animationmap,
+             &state->bodymap, &state->spritemap);
+    cee_tick((union cee_entity *)&state->beetle, &state->animationmap,
+             &state->bodymap, &state->spritemap);
 }
 
-bool cg_frame(void *data, struct egl_frame *frame) {
-    struct cd_state *state = (struct cd_state *)data;
+bool cgl_frame(void *data, struct eo_frame *frame) {
+    struct cds_state *state = (struct cds_state *)data;
 
     // Handle input
     SDL_Event sdl_event = {0};
@@ -179,25 +180,25 @@ bool cg_frame(void *data, struct egl_frame *frame) {
                     return false;
 
                 case SDLK_W: {
-                    if (cb_grounded(&state->bodymap, &state->tilemap,
-                                    state->carestosan.body)) {
-                        struct cb_body *body =
-                            cb_get(&state->bodymap, state->carestosan.body);
+                    if (csb_grounded(&state->bodymap, &state->tilemap,
+                                     state->carestosan.body)) {
+                        struct csb_body *body =
+                            csb_get(&state->bodymap, state->carestosan.body);
                         body->velocity.y = -BEETLE_JUMP_SPEED;
                     }
                     break;
                 }
 
                 case SDLK_A: {
-                    struct cb_body *body =
-                        cb_get(&state->bodymap, state->carestosan.body);
+                    struct csb_body *body =
+                        csb_get(&state->bodymap, state->carestosan.body);
                     body->velocity.x = -BEETLE_SPEED;
                     break;
                 }
 
                 case SDLK_D: {
-                    struct cb_body *body =
-                        cb_get(&state->bodymap, state->carestosan.body);
+                    struct csb_body *body =
+                        csb_get(&state->bodymap, state->carestosan.body);
                     body->velocity.x = BEETLE_SPEED;
                     break;
                 }
@@ -207,8 +208,8 @@ bool cg_frame(void *data, struct egl_frame *frame) {
                 switch (sdl_event.key.key) {
                 case SDLK_A:
                 case SDLK_D:
-                    struct cb_body *body =
-                        cb_get(&state->bodymap, state->carestosan.body);
+                    struct csb_body *body =
+                        csb_get(&state->bodymap, state->carestosan.body);
                     body->velocity.x = 0;
                     break;
                 }
@@ -220,33 +221,33 @@ bool cg_frame(void *data, struct egl_frame *frame) {
     bool tilemap_dirty = false;
 
     // Place tiles
-    struct eu_fpos win_pos;
+    struct em_fpos win_pos;
     SDL_MouseButtonFlags mouse_flags =
         SDL_GetMouseState(&win_pos.x, &win_pos.y);
     if ((mouse_flags & SDL_BUTTON_MASK(SDL_BUTTON_LEFT)) != 0) {
-        struct cc_bounds cam_bounds;
-        cc_bounds(&cam_bounds, &state->camera);
-        struct eu_isize win_size;
+        struct csc_bounds cam_bounds;
+        csc_bounds(&cam_bounds, &state->camera);
+        struct em_isize win_size;
         SDL_GetWindowSize(frame->sdl_window, &win_size.w, &win_size.h);
-        struct eu_ipos tile_pos;
-        struct eu_isize tile_size = {GEN_TILE_ATLAS_TILE_SIZE,
+        struct em_ipos tile_pos;
+        struct em_isize tile_size = {GEN_TILE_ATLAS_TILE_SIZE,
                                      GEN_TILE_ATLAS_TILE_SIZE};
-        ct_screen_pos(&tile_pos, &cam_bounds, &win_size, &win_pos, &tile_size);
-        ct_set(&state->tilemap, tile_pos.x, tile_pos.y, CT_TILE_TYPE_GRASS);
+        cst_screen_pos(&tile_pos, &cam_bounds, &win_size, &win_pos, &tile_size);
+        cst_set(&state->tilemap, tile_pos.x, tile_pos.y, CST_TILE_TYPE_GRASS);
         tilemap_dirty = true;
     }
 
     // Remove tiles
     if ((mouse_flags & SDL_BUTTON_MASK(SDL_BUTTON_RIGHT)) != 0) {
-        struct cc_bounds cam_bounds;
-        cc_bounds(&cam_bounds, &state->camera);
-        struct eu_isize win_size;
+        struct csc_bounds cam_bounds;
+        csc_bounds(&cam_bounds, &state->camera);
+        struct em_isize win_size;
         SDL_GetWindowSize(frame->sdl_window, &win_size.w, &win_size.h);
-        struct eu_ipos tile_pos;
-        struct eu_isize tile_size = {GEN_TILE_ATLAS_TILE_SIZE,
+        struct em_ipos tile_pos;
+        struct em_isize tile_size = {GEN_TILE_ATLAS_TILE_SIZE,
                                      GEN_TILE_ATLAS_TILE_SIZE};
-        ct_screen_pos(&tile_pos, &cam_bounds, &win_size, &win_pos, &tile_size);
-        ct_set(&state->tilemap, tile_pos.x, tile_pos.y, CT_TILE_TYPE_EMPTY);
+        cst_screen_pos(&tile_pos, &cam_bounds, &win_size, &win_pos, &tile_size);
+        cst_set(&state->tilemap, tile_pos.x, tile_pos.y, CST_TILE_TYPE_EMPTY);
         tilemap_dirty = true;
     }
 
@@ -254,7 +255,7 @@ bool cg_frame(void *data, struct egl_frame *frame) {
     state->delta_time_remaining += frame->delta_time;
     while (state->delta_time_remaining > ELAPSED_TIME_PER_TICK) {
         state->delta_time_remaining -= ELAPSED_TIME_PER_TICK;
-        struct egl_frame tick_frame = {
+        struct eo_frame tick_frame = {
             .delta_time = ELAPSED_TIME_PER_TICK,
             .sdl_window = frame->sdl_window,
         };
@@ -262,14 +263,14 @@ bool cg_frame(void *data, struct egl_frame *frame) {
     }
 
     // Animate sprites
-    ca_frame(&state->animationmap, frame->delta_time, &state->spritemap);
+    csa_frame(&state->animationmap, frame->delta_time, &state->spritemap);
 
     // Update the VBOs
-    egl_sprite_buffer_data(&state->sprite_buffer, state->spritemap.sprite_count,
-                           state->spritemap.sprites);
+    eo_sprite_buffer_data(&state->sprite_buffer, state->spritemap.sprite_count,
+                          state->spritemap.sprites);
     if (tilemap_dirty) {
-        egl_tile_buffer_data(&state->tile_buffer, state->tilemap.tile_count,
-                             state->tilemap.tiles);
+        eo_tile_buffer_data(&state->tile_buffer, state->tilemap.tile_count,
+                            state->tilemap.tiles);
     }
 
     // Clear screen
@@ -281,31 +282,31 @@ bool cg_frame(void *data, struct egl_frame *frame) {
     state->camera.y = state->carestosan.position.y;
 
     // Orthographic projection camera
-    struct eu_mat4 camera_transform = {};
-    eu_mat4_ortho_camera(&camera_transform, GAME_CAMERA_WIDTH,
+    struct em_mat4 camera_transform = {};
+    em_mat4_ortho_camera(&camera_transform, GAME_CAMERA_WIDTH,
                          GAME_CAMERA_HEIGHT, state->camera.x, state->camera.y);
 
     // Render tiles
-    struct eu_isize tile_size = {GEN_TILE_ATLAS_TILE_SIZE,
+    struct em_isize tile_size = {GEN_TILE_ATLAS_TILE_SIZE,
                                  GEN_TILE_ATLAS_TILE_SIZE};
-    cgl_tile_shader_render(&state->tile_shader, &tile_size, &camera_transform,
+    coo_tile_shader_render(&state->tile_shader, &tile_size, &camera_transform,
                            &state->tile_atlas, state->tilemap.tile_count,
                            &state->tile_buffer);
 
     // Render sprites
-    cgl_sprite_shader_render(
+    coo_sprite_shader_render(
         &state->sprite_shader, &camera_transform, &state->sprite_atlas,
         state->spritemap.sprite_count, &state->sprite_buffer);
 
     return true;
 }
 
-void cg_destroy(void *data) {
-    struct cd_state *state = (struct cd_state *)data;
-    cgl_sprite_shader_destroy(&state->sprite_shader);
-    cgl_tile_shader_destroy(&state->tile_shader);
-    egl_sprite_buffer_destroy(&state->sprite_buffer);
-    egl_tile_buffer_destroy(&state->tile_buffer);
-    egl_texture_destroy(&state->sprite_atlas);
-    egl_texture_destroy(&state->tile_atlas);
+void cgl_destroy(void *data) {
+    struct cds_state *state = (struct cds_state *)data;
+    coo_sprite_shader_destroy(&state->sprite_shader);
+    coo_tile_shader_destroy(&state->tile_shader);
+    eo_sprite_buffer_destroy(&state->sprite_buffer);
+    eo_tile_buffer_destroy(&state->tile_buffer);
+    eo_texture_destroy(&state->sprite_atlas);
+    eo_texture_destroy(&state->tile_atlas);
 }

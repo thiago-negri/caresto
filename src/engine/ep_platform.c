@@ -4,28 +4,28 @@
 
 #ifdef _WIN32
 
+#include <engine/ef_file.h>
+#include <engine/el_log.h>
 #include <stdio.h>
 
-#include <engine/el_log.h>
-#include <engine/eu_utils.h>
-
-int ep_shared_load(const char *path, struct em_arena *arena,
+int ep_shared_load(const char *path, struct ea_arena *arena,
                    struct ep_shared_game *out_shared_game) {
     int rc = 0;
     HMODULE dll = NULL;
 
-    size_t arena_offset = em_arena_save_offset(arena);
+    size_t arena_offset = ea_arena_save_offset(arena);
 
     // Save DLL timestamp, we will use this to check whether we need to
     // reload it
-    long long timestamp = eu_file_timestamp(path);
+    long long timestamp = ef_timestamp(path);
 
     // Copy DLL to a new location to avoid locking the DLL we build
     // +2 ("-b") +1 (NULL terminator)
     size_t new_path_len = strlen(path) + 2 + 1;
-    char *new_path = (char *)em_arena_alloc(arena, sizeof(char) * new_path_len);
+    char *new_path = (char *)ea_arena_alloc(arena, sizeof(char) * new_path_len);
     if (new_path == NULL) {
-        el_critical("WIN: OOM: Could not allocate to write file %s.\n", path);
+        el_critical_fmt("WIN: OOM: Could not allocate to write file %s.\n",
+                        path);
         rc = -1;
         goto _err;
     }
@@ -35,7 +35,7 @@ int ep_shared_load(const char *path, struct em_arena *arena,
         snprintf(new_path, new_path_len, "%s-r", path);
     }
 
-    rc = eu_copy_file(path, new_path, arena);
+    rc = ef_copy(new_path, path, arena);
     if (rc != 0) {
         goto _err;
     }
@@ -43,36 +43,37 @@ int ep_shared_load(const char *path, struct em_arena *arena,
     // Load DLL from the new location
     dll = LoadLibraryA(new_path);
     if (dll == NULL) {
-        el_critical("WIN: Could not load DLL %s.\n", path);
+        el_critical_fmt("WIN: Could not load DLL %s.\n", path);
         rc = -1;
         goto _err;
     }
 
-    cg_init_fn cg_init_ptr = (cg_init_fn)GetProcAddress(dll, "cg_init");
-    if (cg_init_ptr == NULL) {
-        el_critical("WIN: Could not find cg_init.\n");
+    cgl_init_fn cgl_init_ptr = (cgl_init_fn)GetProcAddress(dll, "cgl_init");
+    if (cgl_init_ptr == NULL) {
+        el_critical("WIN: Could not find cgl_init.\n");
         rc = -1;
         goto _err;
     }
 
-    cg_reload_fn cg_reload_ptr = (cg_reload_fn)GetProcAddress(dll, "cg_reload");
-    if (cg_reload_ptr == NULL) {
-        el_critical("WIN: Could not find cg_reload.\n");
+    cgl_reload_fn cgl_reload_ptr =
+        (cgl_reload_fn)GetProcAddress(dll, "cgl_reload");
+    if (cgl_reload_ptr == NULL) {
+        el_critical("WIN: Could not find cgl_reload.\n");
         rc = -1;
         goto _err;
     }
 
-    cg_frame_fn cg_frame_ptr = (cg_frame_fn)GetProcAddress(dll, "cg_frame");
-    if (cg_frame_ptr == NULL) {
-        el_critical("WIN: Could not find cg_frame.\n");
+    cgl_frame_fn cgl_frame_ptr = (cgl_frame_fn)GetProcAddress(dll, "cgl_frame");
+    if (cgl_frame_ptr == NULL) {
+        el_critical("WIN: Could not find cgl_frame.\n");
         rc = -1;
         goto _err;
     }
 
-    cg_destroy_fn cg_destroy_ptr =
-        (cg_destroy_fn)GetProcAddress(dll, "cg_destroy");
-    if (cg_frame_ptr == NULL) {
-        el_critical("WIN: Could not find cg_destroy.\n");
+    cgl_destroy_fn cgl_destroy_ptr =
+        (cgl_destroy_fn)GetProcAddress(dll, "cgl_destroy");
+    if (cgl_frame_ptr == NULL) {
+        el_critical("WIN: Could not find cgl_destroy.\n");
         rc = -1;
         goto _err;
     }
@@ -82,10 +83,10 @@ int ep_shared_load(const char *path, struct em_arena *arena,
     out_shared_game->shared_lib = dll;
     out_shared_game->timestamp = timestamp;
     out_shared_game->is_red = !out_shared_game->is_red;
-    out_shared_game->cg_init = cg_init_ptr;
-    out_shared_game->cg_reload = cg_reload_ptr;
-    out_shared_game->cg_frame = cg_frame_ptr;
-    out_shared_game->cg_destroy = cg_destroy_ptr;
+    out_shared_game->cgl_init = cgl_init_ptr;
+    out_shared_game->cgl_reload = cgl_reload_ptr;
+    out_shared_game->cgl_frame = cgl_frame_ptr;
+    out_shared_game->cgl_destroy = cgl_destroy_ptr;
     goto _done;
 
 _err:
@@ -94,11 +95,11 @@ _err:
     }
 
 _done:
-    em_arena_restore_offset(arena, arena_offset);
+    ea_arena_restore_offset(arena, arena_offset);
     return rc;
 }
 
-bool ep_shared_reload(struct em_arena *arena,
+bool ep_shared_reload(struct ea_arena *arena,
                       struct ep_shared_game *out_shared_game) {
     struct stat file_stat = {0};
     stat(out_shared_game->path, &file_stat);
@@ -123,10 +124,10 @@ bool ep_shared_reload(struct em_arena *arena,
     out_shared_game->shared_lib = new_shared_game.shared_lib;
     out_shared_game->timestamp = new_shared_game.timestamp;
     out_shared_game->is_red = new_shared_game.is_red;
-    out_shared_game->cg_init = new_shared_game.cg_init;
-    out_shared_game->cg_reload = new_shared_game.cg_reload;
-    out_shared_game->cg_frame = new_shared_game.cg_frame;
-    out_shared_game->cg_destroy = new_shared_game.cg_destroy;
+    out_shared_game->cgl_init = new_shared_game.cgl_init;
+    out_shared_game->cgl_reload = new_shared_game.cgl_reload;
+    out_shared_game->cgl_frame = new_shared_game.cgl_frame;
+    out_shared_game->cgl_destroy = new_shared_game.cgl_destroy;
     return true;
 }
 

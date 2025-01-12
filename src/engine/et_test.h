@@ -1,7 +1,4 @@
-#ifndef ET_TEST_H
-#define ET_TEST_H
-
-#include <stdbool.h>
+#pragma once
 
 #define ET_TEST(x) void et_##x##_(const char *et_name, int *et_done_called)
 
@@ -29,6 +26,5 @@
     }
 
 bool et_assert(const char *et_name, const char *message, bool assertion);
-void et_done(const char *et_name);
 
-#endif // ET_TEST_H
+void et_done(const char *et_name);

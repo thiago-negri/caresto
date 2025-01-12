@@ -35,19 +35,19 @@ function main() {
     headerLines.push(`#define GEN_SPRITE_COUNT ${spriteNames.length}`);
     headerLines.push(`#define GEN_ANIMATION_COUNT ${animationNames.length}`);
     headerLines.push("");
-    headerLines.push("enum gen_sprite_index {");
+    headerLines.push("enum gen_sprite_index : unsigned char {");
     for (const spriteName of spriteNames) {
         headerLines.push(`    GEN_SPRITE_${spriteName.toUpperCase()},`);
     }
     headerLines.push("};");
     headerLines.push("");
-    headerLines.push("enum gen_frame_index {");
+    headerLines.push("enum gen_frame_index : unsigned char {");
     for (const frameName of frameNames) {
         headerLines.push(`    GEN_FRAME_${frameName.toUpperCase()},`);
     }
     headerLines.push("};");
     headerLines.push("");
-    headerLines.push("enum gen_animation_index {");
+    headerLines.push("enum gen_animation_index : unsigned char {");
     for (const animationName of animationNames) {
         const fixAnimationName = animationName.replaceAll('!', '_').toUpperCase();
         headerLines.push(`    GEN_ANIMATION_${fixAnimationName},`);
