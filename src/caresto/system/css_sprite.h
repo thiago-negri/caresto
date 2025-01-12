@@ -32,6 +32,7 @@ void css_set_texture(struct css_sprite_map *spritemap, css_sprite_id id, int u,
 void css_set_position(struct css_sprite_map *spritemap, css_sprite_id id, int x,
                       int y);
 
-void css_set_flags(struct css_sprite_map *spritemap, css_sprite_id id, unsigned int flags);
+void css_set_flags(struct css_sprite_map *spritemap, css_sprite_id id,
+                   unsigned int flags);
 
 void css_remove(struct css_sprite_map *spritemap, css_sprite_id *id);
