@@ -72,7 +72,7 @@ void em_mat4_ortho(struct em_mat4 *out, float left, float right, float top,
     out->dw = 1.0f;
 }
 
-ET_TEST(mat4_ortho) {
+ET_TEST(em_mat4_ortho) {
     struct em_mat4 a = {};
     em_mat4_ortho(&a, 0.0f, 360.0f, 0.0f, 640.0f, 0.0f, 1.0f);
     ET_ASSERT(a.ax >= 0.005555f && a.ax <= 0.005557f);

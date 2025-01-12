@@ -39,7 +39,7 @@ void ea_arena_restore_offset(struct ea_arena *a, size_t offset) {
     a->offset = offset;
 }
 
-ET_TEST(arena) {
+ET_TEST(ea_arena) {
     unsigned char buffer[10];
 
     struct ea_arena arena = {};

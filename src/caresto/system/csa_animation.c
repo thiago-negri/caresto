@@ -7,7 +7,17 @@
 #include <stdint.h>
 #include <string.h>
 
-CDI_IDS(csa_animation_map, csa, ids, CSA_ANIMATIONS_MAX)
+CDI_IDS(csa_animation_map, csa, unsigned char, ids, CSA_ANIMATIONS_MAX)
+
+typedef unsigned char csa_animation_index;
+
+ET_TEST(csa_sizes) {
+    ET_ASSERT((csa_animation_index)CSA_ANIMATIONS_MAX == CSA_ANIMATIONS_MAX)
+    ET_ASSERT((csa_animation_id)CSA_ANIMATIONS_MAX == CSA_ANIMATIONS_MAX)
+    ET_ASSERT(sizeof(((struct csa_animation *)nullptr)->current_frame) >=
+              sizeof(enum gen_frame_index))
+    ET_DONE
+}
 
 void csa_play(csa_animation_id *animation_id,
               struct csa_animation_map *animationmap,
@@ -59,7 +69,7 @@ void csa_done(csa_animation_id *animation_id,
     size_t index = csa_ids_rm(animationmap, *animation_id);
 
     animationmap->animation_count--;
-    if (animationmap->animation_count > 0) {
+    if (index < animationmap->animation_count) {
         memcpy(&animationmap->animations[index],
                &animationmap->animations[animationmap->animation_count],
                sizeof(struct csa_animation));
@@ -103,7 +113,7 @@ void csa_frame(struct csa_animation_map *animationmap, double delta_time,
     }
 }
 
-ET_TEST(animations) {
+ET_TEST(csa_animations) {
     struct csa_animation_map animationmap = {0};
     struct css_sprite_map spritemap = {0};
 
@@ -145,10 +155,4 @@ ET_TEST(animations) {
     ET_ASSERT(animations[1] == 4); // new id
 
     ET_DONE;
-}
-
-ET_TEST(csa_sizes) {
-    ET_ASSERT(sizeof(((struct csa_animation *)nullptr)->current_frame) >=
-              sizeof(enum gen_frame_index))
-    ET_DONE
 }

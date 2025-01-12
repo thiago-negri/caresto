@@ -95,7 +95,8 @@ int main(int /*argc*/, char * /*argv*/[]) {
 #endif // SHARED
 
     // Initialize SDL
-    Uint32 sdl_flags = SDL_INIT_VIDEO;
+    Uint32 sdl_flags = SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK |
+                       SDL_INIT_GAMEPAD | SDL_INIT_EVENTS;
     if (!SDL_Init(sdl_flags)) {
         const char *sdl_error = SDL_GetError();
         el_critical_fmt("SDL: Could not initialize. %s\n", sdl_error);
@@ -113,11 +114,14 @@ int main(int /*argc*/, char * /*argv*/[]) {
     }
 
     // Request OpenGL version 4.3
-    /*SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);*/
-    /*SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);*/
-    /*SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,*/
-    /*                    SDL_GL_CONTEXT_PROFILE_CORE);*/
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+                        SDL_GL_CONTEXT_PROFILE_CORE);
+
+#ifdef DEBUG
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+#endif // DEBUG
 
     // Create a OpenGL Context
     sdl_gl_context = SDL_GL_CreateContext(sdl_window);
@@ -138,6 +142,7 @@ int main(int /*argc*/, char * /*argv*/[]) {
         goto _err;
     }
 
+#ifdef DEBUG
     // Check what version of OpenGL we got
     int gl_major_version = 0;
     int gl_minor_version = 0;
@@ -150,6 +155,7 @@ int main(int /*argc*/, char * /*argv*/[]) {
         (gl_major_version == 4 && gl_minor_version >= 3)) {
         glDebugMessageCallback(eo_debug_message_callback, NULL);
     }
+#endif // DEBUG
 
     // Initialize game
     rc = ee_init(&game_data, &persistent_storage, &transient_storage);

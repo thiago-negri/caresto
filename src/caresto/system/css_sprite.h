@@ -3,13 +3,13 @@
 #include <engine/eo_opengl.h>
 #include <gen/sprite_atlas.h>
 
-#define CSS_SPRITES_MAX 1024
+#define CSS_SPRITES_MAX 100
 
-typedef size_t css_sprite_id;
+typedef unsigned char css_sprite_id;
 
 struct css_sprite_map {
-    int sprite_count;
-    size_t ids[CSS_SPRITES_MAX];
+    unsigned char sprite_count;
+    unsigned char ids[CSS_SPRITES_MAX];
     struct eo_sprite sprites[CSS_SPRITES_MAX];
 };
 

@@ -37,7 +37,7 @@ struct eo_texture {
     GLuint id;
 #if SHARED
     long long timestamp;
-#endif
+#endif // SHARED
 };
 
 struct eo_frame {

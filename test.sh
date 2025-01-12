@@ -11,47 +11,25 @@ mkdir -p test
 # generate test.c
 echo "#include <stdio.h>" > $TEST_C
 
-for source_file in src/caresto/*.c; do
+for source_file in $(find src/ -type f -name '*.c'); do
     grep 'ET_TEST' "$source_file" >/dev/null
     has_test=$?
-    module=$(basename $source_file .c)
     if [ $has_test -eq 0 ]; then
-        echo "#include <caresto/${module}.h>" >> $TEST_C
+        module=$(basename $source_file .c)
+        path=$(dirname $source_file | cut -f 2- -d '/')
+        echo "#include <${path}/${module}.h>" >> $TEST_C
+        grep 'ET_TEST' "$source_file" | \
+            sed 's/ET_TEST(\(.*\)) {/void et_\1_(const char *name, int *done);/' >> $TEST_C
     fi
-done
-
-for source_file in src/engine/*.c; do
-    grep 'ET_TEST' "$source_file" >/dev/null
-    has_test=$?
-    module=$(basename $source_file .c)
-    if [ $has_test -eq 0 ]; then
-        echo "#include <engine/${module}.h>" >> $TEST_C
-    fi
-done
-
-for source_file in src/caresto/*.c; do
-    grep 'ET_TEST' "$source_file" | \
-        sed 's/ET_TEST(\(.*\)) {/void et_\1_(const char *name, int *done);/' >> $TEST_C
-done
-
-for source_file in src/engine/*.c; do
-    grep 'ET_TEST' "$source_file" | \
-        sed 's/ET_TEST(\(.*\)) {/void et_\1_(const char *name, int *done);/' >> $TEST_C
 done
 
 echo "int main(void) {" >> $TEST_C
 echo "int done = 0;" >> $TEST_C
 
-for source_file in src/caresto/*.c; do
+for source_file in $(find src/ -type f -name '*.c'); do
     grep 'ET_TEST' "$source_file" | \
         sed 's/ET_TEST(\(.*\)) {/done = 0; et_\1_("\1", \&done); if (done != 1) { fprintf(stderr, "missing ET_DONE on \1\\n"); }/' >> $TEST_C
 done
-
-for source_file in src/engine/*.c; do
-    grep 'ET_TEST' "$source_file" | \
-        sed 's/ET_TEST(\(.*\)) {/done = 0; et_\1_("\1", \&done); if (done != 1) { fprintf(stderr, "missing ET_DONE on \1\\n"); }/' >> $TEST_C
-done
-
 
 echo "return 0; }" >> $TEST_C
 
@@ -59,7 +37,8 @@ echo "return 0; }" >> $TEST_C
 clang test/test.c -c -o test/test.o -Isrc -Iinclude -Isrc_gen -fsanitize=address -g
 
 # link test binary
-clang build/debug/obj/caresto/*.o build/debug/obj/engine/*.o build/debug/obj/gen/*.o test/*.o \
+objs=$(find build/debug/obj -mindepth 2 -type f -name '*.o')
+clang $objs test/*.o \
     -o test/test.exe -fsanitize=address -g \
     -Llib/windows/SDL3/x64 \
     -Llib/windows/glew/x64 \

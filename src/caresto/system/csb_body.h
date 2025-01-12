@@ -4,9 +4,9 @@
 #include <caresto/system/cst_tile.h>
 #include <engine/em_math.h>
 
-#define CSB_BODIES_MAX 256
+#define CSB_BODIES_MAX 100
 
-typedef size_t csb_body_id;
+typedef unsigned char csb_body_id;
 
 struct csb_body {
     struct em_ipos position;
@@ -16,8 +16,8 @@ struct csb_body {
 };
 
 struct csb_body_map {
-    size_t body_count;
-    size_t ids[CSB_BODIES_MAX];
+    unsigned char body_count;
+    unsigned char ids[CSB_BODIES_MAX];
     struct csb_body bodies[CSB_BODIES_MAX];
 };
 

@@ -129,7 +129,7 @@ int cge_init(void **out_data, struct ea_arena *persistent_storage,
 
     // Set some tiles
     for (int i = 0; i < 60; i++) {
-        cst_set(&state->tilemap, i, 40, CST_TILE_TYPE_GRASS);
+        cst_set(&state->tilemap, i, 40, CST_SOLID);
     }
 
     // Load the VBOs
@@ -235,10 +235,8 @@ bool cge_frame(void *data, const struct eo_frame *frame) {
         struct em_isize win_size;
         SDL_GetWindowSize(frame->sdl_window, &win_size.w, &win_size.h);
         struct em_ipos tile_pos;
-        struct em_isize tile_size = {GEN_TILE_ATLAS_TILE_SIZE,
-                                     GEN_TILE_ATLAS_TILE_SIZE};
-        cst_screen_pos(&tile_pos, &cam_bounds, &win_size, &win_pos, &tile_size);
-        cst_set(&state->tilemap, tile_pos.x, tile_pos.y, CST_TILE_TYPE_GRASS);
+        cst_screen_pos(&tile_pos, &cam_bounds, &win_size, &win_pos);
+        cst_set(&state->tilemap, tile_pos.x, tile_pos.y, CST_SOLID);
         tilemap_dirty = true;
     }
 
@@ -249,10 +247,8 @@ bool cge_frame(void *data, const struct eo_frame *frame) {
         struct em_isize win_size;
         SDL_GetWindowSize(frame->sdl_window, &win_size.w, &win_size.h);
         struct em_ipos tile_pos;
-        struct em_isize tile_size = {GEN_TILE_ATLAS_TILE_SIZE,
-                                     GEN_TILE_ATLAS_TILE_SIZE};
-        cst_screen_pos(&tile_pos, &cam_bounds, &win_size, &win_pos, &tile_size);
-        cst_set(&state->tilemap, tile_pos.x, tile_pos.y, CST_TILE_TYPE_EMPTY);
+        cst_screen_pos(&tile_pos, &cam_bounds, &win_size, &win_pos);
+        cst_set(&state->tilemap, tile_pos.x, tile_pos.y, CST_EMPTY);
         tilemap_dirty = true;
     }
 
