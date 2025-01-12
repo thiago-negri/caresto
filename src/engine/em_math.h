@@ -42,6 +42,10 @@ struct em_vec4 {
     float x, y, z, w;
 };
 
+struct em_color {
+    float r, g, b, a;
+};
+
 struct em_mat4 {
     float ax, bx, cx, dx;
     float ay, by, cy, dy;
@@ -49,7 +53,7 @@ struct em_mat4 {
     float aw, bw, cw, dw;
 };
 
-long long em_max(long long a, long long b, long long c);
+long long em_max(long long a, long long c);
 
 float em_lerp(float start, float end, float d);
 

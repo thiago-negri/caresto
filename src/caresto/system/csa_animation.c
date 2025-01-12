@@ -35,14 +35,11 @@ void csa_play(csa_animation_id *animation_id,
 
     if (frame_limit < 1) {
         csa_done(animation_id, animationmap);
-
-        struct eo_sprite *sprite = css_get(spritemap, sprite_id);
-        sprite->texture_offset.u = first_frame->u;
-        sprite->texture_offset.v = first_frame->v;
+        css_set_texture(spritemap, sprite_id, first_frame->u, first_frame->v);
         return;
     }
 
-    size_t index;
+    csa_animation_index index;
     if (new_animation) {
         index = animationmap->animation_count;
         *animation_id = csa_ids_new(animationmap, index);
@@ -106,9 +103,8 @@ void csa_frame(struct csa_animation_map *animationmap, double delta_time,
         animation->duration_remaining -= delta_time;
 
         if (frame_data != NULL) {
-            struct eo_sprite *sprite = css_get(spritemap, animation->sprite);
-            sprite->texture_offset.u = frame_data->u;
-            sprite->texture_offset.v = frame_data->v;
+            css_set_texture(spritemap, animation->sprite, frame_data->u,
+                            frame_data->v);
         }
     }
 }
@@ -117,12 +113,12 @@ ET_TEST(csa_animations) {
     struct csa_animation_map animationmap = {0};
     struct css_sprite_map spritemap = {0};
 
-    css_sprite_id sprites[4] = {
-        css_add(&spritemap, &(struct eo_sprite){0}),
-        css_add(&spritemap, &(struct eo_sprite){0}),
-        css_add(&spritemap, &(struct eo_sprite){0}),
-        css_add(&spritemap, &(struct eo_sprite){0}),
-    };
+    css_sprite_id sprites[4] = {0};
+
+    css_set(&spritemap, &sprites[0], &(struct css_sprite){0});
+    css_set(&spritemap, &sprites[1], &(struct css_sprite){0});
+    css_set(&spritemap, &sprites[2], &(struct css_sprite){0});
+    css_set(&spritemap, &sprites[3], &(struct css_sprite){0});
 
     csa_animation_id animations[4] = {0};
 

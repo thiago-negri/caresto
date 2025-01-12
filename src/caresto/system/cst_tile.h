@@ -1,27 +1,24 @@
 #pragma once
 
+#include <caresto/opengl/coo_opengl.h>
 #include <caresto/system/csc_camera.h>
 #include <engine/eo_opengl.h>
 
 #define CST_TILEMAP_MAX_WIDTH 100
 #define CST_TILEMAP_MAX_HEIGHT 100
-#define CST_TILES_MAX 1024
 
 enum cst_tile_type : unsigned char {
     CST_EMPTY,
     CST_SOLID,
 };
 
-struct cst_tile {
-    enum cst_tile_type type;
-    int tiles_index;
-};
-
 struct cst_tile_map {
     int tile_count;
-    struct eo_tile tiles[CST_TILES_MAX];
-    struct cst_tile tilemap[CST_TILEMAP_MAX_HEIGHT][CST_TILEMAP_MAX_WIDTH];
+    enum cst_tile_type tilemap[CST_TILEMAP_MAX_HEIGHT][CST_TILEMAP_MAX_WIDTH];
 };
+
+void cst_to_coo_buffer(struct coo_sprite *sprites,
+                       struct cst_tile_map *tilemap);
 
 enum cst_tile_type cst_get(struct cst_tile_map *tilemap, int x, int y);
 

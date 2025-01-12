@@ -2,17 +2,13 @@
 #include <engine/em_math.h>
 #include <engine/et_test.h>
 
-long long em_max(long long a, long long b, long long c) {
-    return a > b ? a > c ? a : c : b > c ? b : c;
+long long em_max(long long a, long long b) {
+    return a > b ? a : b;
 }
 
 ET_TEST(em_max) {
-    ET_ASSERT(em_max(1, 2, 3) == 3);
-    ET_ASSERT(em_max(2, 1, 3) == 3);
-    ET_ASSERT(em_max(1, 3, 2) == 3);
-    ET_ASSERT(em_max(2, 3, 1) == 3);
-    ET_ASSERT(em_max(3, 1, 2) == 3);
-    ET_ASSERT(em_max(3, 2, 1) == 3);
+    ET_ASSERT(em_max(1, 2) == 2);
+    ET_ASSERT(em_max(2, 1) == 2);
     ET_DONE;
 }
 

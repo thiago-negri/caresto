@@ -120,108 +120,43 @@ _err:
     return rc;
 }
 
-void eo_sprite_buffer_create(GLsizei count,
-                             struct eo_sprite_buffer *out_sprite_buffer) {
+void eo_buffer_create_start(struct eo_buffer *out_buffer, GLsizeiptr size) {
     GLuint buffer_id = 0;
     GLuint vertex_array_id = 0;
 
     // Generate the VBO to be used
     glGenBuffers(1, &buffer_id);
     glBindBuffer(GL_ARRAY_BUFFER, buffer_id);
-    glBufferData(GL_ARRAY_BUFFER, count * sizeof(struct eo_sprite), NULL,
-                 GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, size, NULL, GL_DYNAMIC_DRAW);
 
     // Generate the VAO to be used
     glGenVertexArrays(1, &vertex_array_id);
     glBindVertexArray(vertex_array_id);
 
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(struct eo_sprite),
-                          (void *)offsetof(struct eo_sprite, position.x));
-    glEnableVertexAttribArray(0);
+    out_buffer->buffer_id = buffer_id;
+    out_buffer->vertex_array_id = vertex_array_id;
+}
 
-    glVertexAttribIPointer(1, 2, GL_INT, sizeof(struct eo_sprite),
-                           (void *)offsetof(struct eo_sprite, size.w));
-    glEnableVertexAttribArray(1);
-
-    glVertexAttribIPointer(
-        2, 2, GL_INT, sizeof(struct eo_sprite),
-        (void *)offsetof(struct eo_sprite, texture_offset.u));
-    glEnableVertexAttribArray(2);
-
-    glVertexAttribIPointer(3, 1, GL_UNSIGNED_INT, sizeof(struct eo_sprite),
-                           (void *)offsetof(struct eo_sprite, flags));
-    glEnableVertexAttribArray(3);
-
+void eo_buffer_create_end(void) {
     // Reset GL objects
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
-
-    out_sprite_buffer->buffer_id = buffer_id;
-    out_sprite_buffer->vertex_array_id = vertex_array_id;
 }
 
-void eo_sprite_buffer_destroy(struct eo_sprite_buffer *sprite_buffer) {
-    if (sprite_buffer->vertex_array_id != 0) {
-        glDeleteVertexArrays(1, &sprite_buffer->vertex_array_id);
-        sprite_buffer->vertex_array_id = 0;
+void eo_buffer_destroy(struct eo_buffer *buffer) {
+    if (buffer->vertex_array_id != 0) {
+        glDeleteVertexArrays(1, &buffer->vertex_array_id);
+        buffer->vertex_array_id = 0;
     }
-    if (sprite_buffer->buffer_id != 0) {
-        glDeleteBuffers(1, &sprite_buffer->buffer_id);
-        sprite_buffer->buffer_id = 0;
+    if (buffer->buffer_id != 0) {
+        glDeleteBuffers(1, &buffer->buffer_id);
+        buffer->buffer_id = 0;
     }
 }
 
-void eo_sprite_buffer_data(struct eo_sprite_buffer *buffer, size_t count,
-                           struct eo_sprite *data) {
+void eo_buffer_data(struct eo_buffer *buffer, GLsizeiptr size, void *data) {
     glBindBuffer(GL_ARRAY_BUFFER, buffer->buffer_id);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, count * sizeof(struct eo_sprite), data);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
-
-void eo_tile_buffer_create(GLsizei count,
-                           struct eo_tile_buffer *out_tile_buffer) {
-    GLuint buffer_id = 0;
-    GLuint vertex_array_id = 0;
-
-    // Generate the VBO to be used
-    glGenBuffers(1, &buffer_id);
-    glBindBuffer(GL_ARRAY_BUFFER, buffer_id);
-    glBufferData(GL_ARRAY_BUFFER, count * sizeof(struct eo_tile), NULL,
-                 GL_DYNAMIC_DRAW);
-
-    // Generate the VAO to be used
-    glGenVertexArrays(1, &vertex_array_id);
-    glBindVertexArray(vertex_array_id);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(struct eo_tile),
-                          (void *)offsetof(struct eo_tile, x));
-    glEnableVertexAttribArray(0);
-    glVertexAttribIPointer(1, 2, GL_INT, sizeof(struct eo_tile),
-                           (void *)offsetof(struct eo_tile, u));
-    glEnableVertexAttribArray(1);
-
-    // Reset GL objects
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-
-    out_tile_buffer->buffer_id = buffer_id;
-    out_tile_buffer->vertex_array_id = vertex_array_id;
-}
-
-void eo_tile_buffer_destroy(struct eo_tile_buffer *tile_buffer) {
-    if (tile_buffer->vertex_array_id != 0) {
-        glDeleteVertexArrays(1, &tile_buffer->vertex_array_id);
-        tile_buffer->vertex_array_id = 0;
-    }
-    if (tile_buffer->buffer_id != 0) {
-        glDeleteBuffers(1, &tile_buffer->buffer_id);
-        tile_buffer->buffer_id = 0;
-    }
-}
-
-void eo_tile_buffer_data(struct eo_tile_buffer *buffer, size_t count,
-                         struct eo_tile *data) {
-    glBindBuffer(GL_ARRAY_BUFFER, buffer->buffer_id);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, count * sizeof(struct eo_tile), data);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, size, data);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 

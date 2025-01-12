@@ -49,13 +49,10 @@ int cge_init(void **out_data, struct ea_arena *persistent_storage,
         goto _err;
     }
 
-    rc = coo_tile_shader_load(&state->tile_shader, transient_storage);
-    if (rc != 0) {
-        goto _err;
-    }
+    coo_sprite_buffer_create(&state->sprite_buffer, CSS_SPRITES_MAX);
 
-    eo_sprite_buffer_create(CSS_SPRITES_MAX, &state->sprite_buffer);
-    eo_tile_buffer_create(CST_TILES_MAX, &state->tile_buffer);
+    // TODO(tnegri): Make this a static buffer, recreate it when tiles change
+    coo_sprite_buffer_create(&state->tile_buffer, 100);
 
     rc = eo_texture_load(GEN_SPRITE_ATLAS_PATH, &state->sprite_atlas);
     if (rc != 0) {
@@ -69,16 +66,16 @@ int cge_init(void **out_data, struct ea_arena *persistent_storage,
 
     // Initial state
     state->carestosan.type = cee_carestosan;
-    state->carestosan.sprite = css_add(
-        &state->spritemap,
-        &(struct eo_sprite){
-            .position = {100, 100},
-            .size = {.w = gen_frame_atlas[GEN_FRAME_CARESTOSAN_4].w,
-                     .h = gen_frame_atlas[GEN_FRAME_CARESTOSAN_4].h},
-            .texture_offset = {.u = gen_frame_atlas[GEN_FRAME_CARESTOSAN_4].u,
-                               .v = gen_frame_atlas[GEN_FRAME_CARESTOSAN_4].v},
-            .flags = 0,
-        });
+    css_set(&state->spritemap, &state->carestosan.sprite,
+            &(struct css_sprite){
+                .x = 100,
+                .y = 100,
+                .w = gen_frame_atlas[GEN_FRAME_CARESTOSAN_4].w,
+                .h = gen_frame_atlas[GEN_FRAME_CARESTOSAN_4].h,
+                .u = gen_frame_atlas[GEN_FRAME_CARESTOSAN_4].u,
+                .v = gen_frame_atlas[GEN_FRAME_CARESTOSAN_4].v,
+                .flags = 0,
+            });
     csa_play(&state->carestosan.animation, &state->animationmap,
              GEN_ANIMATION_CARESTOSAN_IDLE, state->carestosan.sprite,
              &state->spritemap);
@@ -96,16 +93,16 @@ int cge_init(void **out_data, struct ea_arena *persistent_storage,
         });
 
     state->beetle.type = cee_beetle;
-    state->beetle.sprite = css_add(
-        &state->spritemap,
-        &(struct eo_sprite){
-            .position = {200, 200},
-            .size = {.w = gen_frame_atlas[GEN_FRAME_BEETLE_0].w,
-                     .h = gen_frame_atlas[GEN_FRAME_BEETLE_0].h},
-            .texture_offset = {.u = gen_frame_atlas[GEN_FRAME_BEETLE_0].u,
-                               .v = gen_frame_atlas[GEN_FRAME_BEETLE_0].v},
-            .flags = 0,
-        });
+    css_set(&state->spritemap, &state->beetle.sprite,
+            &(struct css_sprite){
+                .x = 200,
+                .y = 200,
+                .w = gen_frame_atlas[GEN_FRAME_BEETLE_0].w,
+                .h = gen_frame_atlas[GEN_FRAME_BEETLE_0].h,
+                .u = gen_frame_atlas[GEN_FRAME_BEETLE_0].u,
+                .v = gen_frame_atlas[GEN_FRAME_BEETLE_0].v,
+                .flags = 0,
+            });
     csa_play(&state->beetle.animation, &state->animationmap,
              GEN_ANIMATION_BEETLE_IDLE, state->beetle.sprite,
              &state->spritemap);
@@ -133,10 +130,12 @@ int cge_init(void **out_data, struct ea_arena *persistent_storage,
     }
 
     // Load the VBOs
-    eo_sprite_buffer_data(&state->sprite_buffer, state->spritemap.sprite_count,
-                          state->spritemap.sprites);
-    eo_tile_buffer_data(&state->tile_buffer, state->tilemap.tile_count,
-                        state->tilemap.tiles);
+    eo_buffer_data(&state->sprite_buffer,
+                   state->spritemap.sprite_count * sizeof(struct coo_sprite),
+                   state->spritemap.sprites_gpu);
+    // TODO(tnegri): Load tile buffer
+    // eo_buffer_data(&state->tile_buffer, state->tilemap.tile_count,
+    //                state->tilemap.tiles);
 
     *out_data = (void *)state;
     goto _done;
@@ -151,7 +150,6 @@ _done:
 void cge_reload(void *data, struct ea_arena *transient_storage) {
     struct cds_state *state = (struct cds_state *)data;
     coo_sprite_shader_load(&state->sprite_shader, transient_storage);
-    coo_tile_shader_load(&state->tile_shader, transient_storage);
     eo_texture_load(GEN_SPRITE_ATLAS_PATH, &state->sprite_atlas);
     eo_texture_load(GEN_TILE_ATLAS_PATH, &state->tile_atlas);
 }
@@ -267,12 +265,14 @@ bool cge_frame(void *data, const struct eo_frame *frame) {
     csa_frame(&state->animationmap, frame->delta_time, &state->spritemap);
 
     // Update the VBOs
-    eo_sprite_buffer_data(&state->sprite_buffer, state->spritemap.sprite_count,
-                          state->spritemap.sprites);
-    if (tilemap_dirty) {
-        eo_tile_buffer_data(&state->tile_buffer, state->tilemap.tile_count,
-                            state->tilemap.tiles);
-    }
+    eo_buffer_data(&state->sprite_buffer,
+                   state->spritemap.sprite_count * sizeof(struct coo_sprite),
+                   state->spritemap.sprites_gpu);
+    // TODO(tnegri): Load tilemap
+    // if (tilemap_dirty) {
+    //     eo_tile_buffer_data(&state->tile_buffer, state->tilemap.tile_count,
+    //                         state->tilemap.tiles);
+    // }
 
     // Clear screen
     glClearColor(0.3f, 0.1f, 0.3f, 1.0f);
@@ -287,17 +287,18 @@ bool cge_frame(void *data, const struct eo_frame *frame) {
     em_mat4_ortho_camera(&camera_transform, GAME_CAMERA_WIDTH,
                          GAME_CAMERA_HEIGHT, state->camera.x, state->camera.y);
 
-    // Render tiles
-    struct em_isize tile_size = {GEN_TILE_ATLAS_TILE_SIZE,
-                                 GEN_TILE_ATLAS_TILE_SIZE};
-    coo_tile_shader_render(&state->tile_shader, &tile_size, &camera_transform,
-                           &state->tile_atlas, state->tilemap.tile_count,
-                           &state->tile_buffer);
+    // TODO(tnegri): Render tiles
+    // struct em_isize tile_size = {GEN_TILE_ATLAS_TILE_SIZE,
+    //                              GEN_TILE_ATLAS_TILE_SIZE};
+    // coo_tile_shader_render(&state->tile_shader, &tile_size,
+    // &camera_transform,
+    //                        &state->tile_atlas, state->tilemap.tile_count,
+    //                        &state->tile_buffer);
 
     // Render sprites
     coo_sprite_shader_render(
         &state->sprite_shader, &camera_transform, &state->sprite_atlas,
-        state->spritemap.sprite_count, &state->sprite_buffer);
+        state->spritemap.sprite_count * 6, &state->sprite_buffer);
 
     return true;
 }
@@ -305,9 +306,8 @@ bool cge_frame(void *data, const struct eo_frame *frame) {
 void cge_destroy(void *data) {
     struct cds_state *state = (struct cds_state *)data;
     coo_sprite_shader_destroy(&state->sprite_shader);
-    coo_tile_shader_destroy(&state->tile_shader);
-    eo_sprite_buffer_destroy(&state->sprite_buffer);
-    eo_tile_buffer_destroy(&state->tile_buffer);
+    eo_buffer_destroy(&state->sprite_buffer);
+    eo_buffer_destroy(&state->tile_buffer);
     eo_texture_destroy(&state->sprite_atlas);
     eo_texture_destroy(&state->tile_atlas);
 }

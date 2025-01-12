@@ -10,9 +10,7 @@ static void cee_tick_beetle(struct cee_beetle *entity,
                             struct csb_body_map *body_map,
                             struct css_sprite_map *sprite_map) {
     struct csb_body *body = csb_get(body_map, entity->body);
-    struct eo_sprite *sprite = css_get(sprite_map, entity->sprite);
-    const struct gen_bounding_box *bounding_box =
-        &gen_bounding_box_atlas[GEN_SPRITE_BEETLE];
+
     if (body->velocity.x != 0) {
         csa_play(&entity->animation, animation_map, GEN_ANIMATION_BEETLE_WALK,
                  entity->sprite, sprite_map);
@@ -20,15 +18,22 @@ static void cee_tick_beetle(struct cee_beetle *entity,
         csa_play(&entity->animation, animation_map, GEN_ANIMATION_BEETLE_IDLE,
                  entity->sprite, sprite_map);
     }
+
+    const struct gen_bounding_box *bounding_box =
+        &gen_bounding_box_atlas[GEN_SPRITE_BEETLE];
     entity->position.x = body->position.x - bounding_box->x;
     entity->position.y = body->position.y - bounding_box->y;
-    sprite->position.x = entity->position.x;
-    sprite->position.y = entity->position.y;
+
+    // FIXME(tnegri): Updating coo_sprite twice
+
     if (body->velocity.x > 0.0f) {
-        sprite->flags = 0;
+        css_set_flags(sprite_map, entity->sprite, 0);
     } else if (body->velocity.x < 0.0f) {
-        sprite->flags = EO_SPRITE_MIRROR_X;
+        css_set_flags(sprite_map, entity->sprite, CSS_MIRROR_X);
     }
+
+    css_set_position(sprite_map, entity->sprite, entity->position.x,
+                     entity->position.y);
 }
 
 static void cee_tick_carestosan(struct cee_carestosan *entity,
@@ -36,9 +41,6 @@ static void cee_tick_carestosan(struct cee_carestosan *entity,
                                 struct csb_body_map *bodymap,
                                 struct css_sprite_map *spritemap) {
     struct csb_body *body = csb_get(bodymap, entity->body);
-    struct eo_sprite *sprite = css_get(spritemap, entity->sprite);
-    const struct gen_bounding_box *bounding_box =
-        &gen_bounding_box_atlas[GEN_SPRITE_CARESTOSAN];
 
     // Carestosan animation
     if (body->velocity.y < 0.0) {
@@ -55,15 +57,21 @@ static void cee_tick_carestosan(struct cee_carestosan *entity,
                  GEN_ANIMATION_CARESTOSAN_IDLE, entity->sprite, spritemap);
     }
 
+    const struct gen_bounding_box *bounding_box =
+        &gen_bounding_box_atlas[GEN_SPRITE_CARESTOSAN];
     entity->position.x = body->position.x - bounding_box->x;
     entity->position.y = body->position.y - bounding_box->y;
-    sprite->position.x = entity->position.x;
-    sprite->position.y = entity->position.y;
+
+    // FIXME(tnegri): Updating coo_sprite twice
+
     if (body->velocity.x > 0.0f) {
-        sprite->flags = 0;
+        css_set_flags(spritemap, entity->sprite, 0);
     } else if (body->velocity.x < 0.0f) {
-        sprite->flags = EO_SPRITE_MIRROR_X;
+        css_set_flags(spritemap, entity->sprite, CSS_MIRROR_X);
     }
+
+    css_set_position(spritemap, entity->sprite, entity->position.x,
+                     entity->position.y);
 }
 
 void cee_tick(union cee_entity *entity, struct csa_animation_map *animationmap,

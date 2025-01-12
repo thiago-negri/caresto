@@ -1,19 +1,13 @@
 #version 430 core
 
 layout (location = 0) in ivec2 position;
-layout (location = 1) in ivec2 size;
-layout (location = 2) in ivec2 texture;
-layout (location = 3) in uint flags;
+layout (location = 1) in ivec2 texture;
 
-out VS_OUT {
-    ivec2 size;
-    ivec2 texture;
-    uint flags;
-} vs_out;
+out vec2 vs_texture;
+
+uniform mat4 g_transform_mat;
 
 void main() {
-    gl_Position = vec4(position.xy, 0.0, 1.0);
-    vs_out.size = size;
-    vs_out.texture = texture;
-    vs_out.flags = flags;
+    gl_Position = g_transform_mat * vec4(position.xy, 0.0, 1.0);
+    vs_texture = texture;
 }
