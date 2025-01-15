@@ -203,6 +203,10 @@ bool cge_frame(void *data, const struct eo_frame *frame) {
                 case SDLK_Q:
                     return false;
 
+                case SDLK_B:
+                    state->debug_enabled = !state->debug_enabled;
+                    break;
+
                 case SDLK_W: {
                     if (csb_grounded(&state->bodymap, &state->tilemap,
                                      state->carestosan.body)) {
@@ -323,19 +327,21 @@ bool cge_frame(void *data, const struct eo_frame *frame) {
 
 #ifdef DEBUG
     // Render debug
-    for (int i = 0; i < state->bodymap.body_count; i++) {
-        struct csb_body *body = &state->bodymap.bodies[i];
-        csd_quad(&state->debug, body->position.x, body->position.y,
-                 body->size.w, body->size.h);
+    if (state->debug_enabled) {
+        for (int i = 0; i < state->bodymap.body_count; i++) {
+            struct csb_body *body = &state->bodymap.bodies[i];
+            csd_quad(&state->debug, body->position.x, body->position.y,
+                     body->size.w, body->size.h);
+        }
+        eo_buffer_data(&state->debug_buffer,
+                       state->debug.debug_count * sizeof(struct coo_debug),
+                       state->debug.debug_gpu);
+        coo_debug_shader_render(&state->debug_shader, &camera_transform,
+                                state->debug.debug_count * COO_VERTEX_PER_QUAD,
+                                &state->debug_buffer);
+        // reset debug draws
+        state->debug.debug_count = 0;
     }
-    eo_buffer_data(&state->debug_buffer,
-                   state->debug.debug_count * sizeof(struct coo_debug),
-                   state->debug.debug_gpu);
-    coo_debug_shader_render(&state->debug_shader, &camera_transform,
-                            state->debug.debug_count * COO_VERTEX_PER_QUAD,
-                            &state->debug_buffer);
-    // reset debug draws
-    state->debug.debug_count = 0;
 #endif // DEBUG
 
     return true;

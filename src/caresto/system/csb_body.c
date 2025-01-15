@@ -208,10 +208,8 @@ void csb_tick(struct csb_body_map *bodymap, struct cst_tile_map *tilemap,
     for (csb_body_index i = 0; i < bodymap->body_count; i++) {
         struct csb_body *body = &bodymap->bodies[i];
         bool grounded = csb_grounded_ix(bodymap, tilemap, i);
-        if (grounded) {
-            if (body->velocity.y >= 0) {
-                body->velocity.y = 0;
-            }
+        if (grounded && body->velocity.y >= 0) {
+            body->velocity.y = 0;
         } else {
             body->velocity.y += GRAVITY_ACCELERATION_PER_TICK;
             if (body->velocity.y > GRAVITY_MAX_VELOCITY) {
