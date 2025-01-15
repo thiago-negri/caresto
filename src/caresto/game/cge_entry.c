@@ -49,10 +49,11 @@ int cge_init(void **out_data, struct ea_arena *persistent_storage,
         goto _err;
     }
 
-    coo_sprite_buffer_create(&state->sprite_buffer, CSS_SPRITES_MAX);
+    coo_sprite_buffer_create(&state->sprite_buffer, CSS_SPRITES_MAX,
+                             GL_STREAM_DRAW);
 
-    // TODO(tnegri): Make this a static buffer, recreate it when tiles change
-    coo_sprite_buffer_create(&state->tile_buffer, 100);
+    coo_sprite_buffer_create(&state->tile_buffer, CST_TILES_MAX,
+                             GL_DYNAMIC_DRAW);
 
     rc = eo_texture_load(GEN_SPRITE_ATLAS_PATH, &state->sprite_atlas);
     if (rc != 0) {
@@ -128,14 +129,15 @@ int cge_init(void **out_data, struct ea_arena *persistent_storage,
     for (int i = 0; i < 60; i++) {
         cst_set(&state->tilemap, i, 40, CST_SOLID);
     }
+    cst_redraw(&state->tilemap);
 
     // Load the VBOs
     eo_buffer_data(&state->sprite_buffer,
                    state->spritemap.sprite_count * sizeof(struct coo_sprite),
                    state->spritemap.sprites_gpu);
-    // TODO(tnegri): Load tile buffer
-    // eo_buffer_data(&state->tile_buffer, state->tilemap.tile_count,
-    //                state->tilemap.tiles);
+    eo_buffer_data(&state->tile_buffer,
+                   state->tilemap.tile_count * sizeof(struct coo_sprite),
+                   state->tilemap.tiles_gpu);
 
     *out_data = (void *)state;
     goto _done;
@@ -268,11 +270,13 @@ bool cge_frame(void *data, const struct eo_frame *frame) {
     eo_buffer_data(&state->sprite_buffer,
                    state->spritemap.sprite_count * sizeof(struct coo_sprite),
                    state->spritemap.sprites_gpu);
-    // TODO(tnegri): Load tilemap
-    // if (tilemap_dirty) {
-    //     eo_tile_buffer_data(&state->tile_buffer, state->tilemap.tile_count,
-    //                         state->tilemap.tiles);
-    // }
+
+    if (tilemap_dirty) {
+        cst_redraw(&state->tilemap);
+        eo_buffer_data(&state->tile_buffer,
+                       state->tilemap.tile_count * sizeof(struct coo_sprite),
+                       state->tilemap.tiles_gpu);
+    }
 
     // Clear screen
     glClearColor(0.3f, 0.1f, 0.3f, 1.0f);
@@ -287,13 +291,12 @@ bool cge_frame(void *data, const struct eo_frame *frame) {
     em_mat4_ortho_camera(&camera_transform, GAME_CAMERA_WIDTH,
                          GAME_CAMERA_HEIGHT, state->camera.x, state->camera.y);
 
-    // TODO(tnegri): Render tiles
-    // struct em_isize tile_size = {GEN_TILE_ATLAS_TILE_SIZE,
-    //                              GEN_TILE_ATLAS_TILE_SIZE};
-    // coo_tile_shader_render(&state->tile_shader, &tile_size,
-    // &camera_transform,
-    //                        &state->tile_atlas, state->tilemap.tile_count,
-    //                        &state->tile_buffer);
+    // FIXME(tnegri): Remove that *6
+
+    // Render tiles
+    coo_sprite_shader_render(&state->sprite_shader, &camera_transform,
+                             &state->tile_atlas, state->tilemap.tile_count * 6,
+                             &state->tile_buffer);
 
     // Render sprites
     coo_sprite_shader_render(

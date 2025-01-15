@@ -1,33 +1,116 @@
+#include <caresto/data/cdi_id.h>
 #include <caresto/system/csc_camera.h>
+#include <caresto/system/css_sprite.h>
 #include <caresto/system/cst_tile.h>
 #include <engine/el_log.h>
 #include <engine/em_math.h>
 #include <engine/eo_opengl.h>
 #include <gen/tile_atlas.h>
 
-enum cst_tile_type cst_get(struct cst_tile_map *tilemap, int x, int y) {
-    el_assert(x < CST_TILEMAP_MAX_WIDTH);
-    el_assert(y < CST_TILEMAP_MAX_HEIGHT);
-    return tilemap->tilemap[y][x];
+enum cst_tile_type cst_get(struct cst_tile_map *tile_map, int x, int y) {
+    el_assert(x < CST_TILE_MAP_MAX_WIDTH);
+    el_assert(y < CST_TILE_MAP_MAX_HEIGHT);
+    return tile_map->tile_map[y][x];
 }
 
-void cst_set(struct cst_tile_map *tilemap, int x, int y,
-             enum cst_tile_type new_tile_type) {
-    el_assert(x < CST_TILEMAP_MAX_WIDTH);
-    el_assert(y < CST_TILEMAP_MAX_HEIGHT);
+void cst_redraw(struct cst_tile_map *tile_map) {
+    int count = 0;
 
-    enum cst_tile_type *tile = &tilemap->tilemap[y][x];
-    if (*tile != CST_EMPTY) {
-        if (new_tile_type == CST_EMPTY) {
-            tilemap->tile_count--;
-        }
-    } else {
-        if (new_tile_type != CST_EMPTY) {
-            tilemap->tile_count++;
+    // Template
+    struct coo_sprite sprite = {
+        .vertex =
+            {
+                // Top left
+                [0] = {.position = {},
+                       .texture = {.u = GEN_TILE_ATLAS_GRASS_U,
+                                   .v = GEN_TILE_ATLAS_GRASS_V}},
+                // Bottom left
+                [1] = {.position = {},
+                       .texture = {.u = GEN_TILE_ATLAS_GRASS_U,
+                                   .v = GEN_TILE_ATLAS_GRASS_V +
+                                        GEN_TILE_ATLAS_TILE_SIZE}},
+                // Top right
+                [2] = {.position = {},
+                       .texture = {.u = GEN_TILE_ATLAS_GRASS_U +
+                                        GEN_TILE_ATLAS_TILE_SIZE,
+                                   .v = GEN_TILE_ATLAS_GRASS_V}},
+                // Top right
+                [3] = {.position = {},
+                       .texture = {.u = GEN_TILE_ATLAS_GRASS_U +
+                                        GEN_TILE_ATLAS_TILE_SIZE,
+                                   .v = GEN_TILE_ATLAS_GRASS_V}},
+                // Bottom left
+                [4] = {.position = {},
+                       .texture = {.u = GEN_TILE_ATLAS_GRASS_U,
+                                   .v = GEN_TILE_ATLAS_GRASS_V +
+                                        GEN_TILE_ATLAS_TILE_SIZE}},
+                // Bottom right
+                [5] = {.position = {},
+                       .texture = {.u = GEN_TILE_ATLAS_GRASS_U +
+                                        GEN_TILE_ATLAS_TILE_SIZE,
+                                   .v = GEN_TILE_ATLAS_GRASS_V +
+                                        GEN_TILE_ATLAS_TILE_SIZE}},
+            },
+    };
+
+    for (int y = 0; y < CST_TILE_MAP_MAX_HEIGHT; y++) {
+        int y_offset = y * GEN_TILE_ATLAS_TILE_SIZE;
+        for (int x = 0; x < CST_TILE_MAP_MAX_WIDTH; x++) {
+            enum cst_tile_type tile = tile_map->tile_map[y][x];
+
+            switch (tile) {
+            case CST_EMPTY:
+                break;
+
+            case CST_SOLID:
+                int x_offset = x * GEN_TILE_ATLAS_TILE_SIZE;
+
+                int top = y_offset;
+                int bottom = y_offset + GEN_TILE_ATLAS_TILE_SIZE;
+                int left = x_offset;
+                int right = x_offset + GEN_TILE_ATLAS_TILE_SIZE;
+
+                // Top left
+                sprite.vertex[0].position.y = top;
+                sprite.vertex[0].position.x = left;
+
+                // Bottom left
+                sprite.vertex[1].position.y = bottom;
+                sprite.vertex[1].position.x = left;
+
+                // Top right
+                sprite.vertex[2].position.y = top;
+                sprite.vertex[2].position.x = right;
+
+                // Top right
+                sprite.vertex[3].position.y = top;
+                sprite.vertex[3].position.x = right;
+
+                // Bottom left
+                sprite.vertex[4].position.y = bottom;
+                sprite.vertex[4].position.x = left;
+
+                // Bottom right
+                sprite.vertex[5].position.y = bottom;
+                sprite.vertex[5].position.x = right;
+
+                memcpy(&tile_map->tiles_gpu[count], &sprite,
+                       sizeof(struct coo_sprite));
+
+                count++;
+                break;
+            }
         }
     }
 
-    *tile = new_tile_type;
+    tile_map->tile_count = count;
+}
+
+void cst_set(struct cst_tile_map *tile_map, int x, int y,
+             enum cst_tile_type new_tile_type) {
+    el_assert(x < CST_TILE_MAP_MAX_WIDTH);
+    el_assert(y < CST_TILE_MAP_MAX_HEIGHT);
+    tile_map->tile_map[y][x] = new_tile_type;
 }
 
 void cst_screen_pos(struct em_ipos *pos, struct csc_bounds *cam_bounds,
@@ -51,9 +134,4 @@ void cst_game_pos_2x(struct em_ipos_2x *pos, struct em_ipos_2x *game_pos) {
     pos->x1 = game_pos->x1 / GEN_TILE_ATLAS_TILE_SIZE;
     pos->x2 = game_pos->x2 / GEN_TILE_ATLAS_TILE_SIZE;
     pos->y = game_pos->y / GEN_TILE_ATLAS_TILE_SIZE;
-}
-
-void cst_to_coo_buffer(struct coo_sprite *sprites,
-                       struct cst_tile_map *tilemap) {
-    // TODO(tnegri): convert from tilemap into sprites
 }

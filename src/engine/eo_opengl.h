@@ -29,7 +29,8 @@ int eo_shader_create(GLenum type, const GLchar *source, struct ea_arena *arena,
 int eo_program_link(GLuint program_id, size_t shader_count, GLuint *shaders,
                     struct ea_arena *arena);
 
-void eo_buffer_create_start(struct eo_buffer *out_buffer, GLsizeiptr size);
+void eo_buffer_create_start(struct eo_buffer *out_buffer, GLsizeiptr size,
+                            GLenum usage);
 void eo_buffer_create_end(void);
 void eo_buffer_data(struct eo_buffer *buffer, GLsizeiptr size, void *data);
 void eo_buffer_destroy(struct eo_buffer *buffer);

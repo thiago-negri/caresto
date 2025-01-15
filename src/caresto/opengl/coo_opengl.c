@@ -114,8 +114,10 @@ void coo_sprite_shader_render(struct coo_sprite_shader *shader,
     glUseProgram(0);
 }
 
-void coo_sprite_buffer_create(struct eo_buffer *out_buffer, int count) {
-    eo_buffer_create_start(out_buffer, count * sizeof(struct coo_sprite));
+void coo_sprite_buffer_create(struct eo_buffer *out_buffer, int count,
+                              GLenum usage) {
+    eo_buffer_create_start(out_buffer, count * sizeof(struct coo_sprite),
+                           usage);
 
     glVertexAttribIPointer(
         0, 2, GL_INT, sizeof(struct coo_sprite_vertex),
@@ -139,7 +141,8 @@ void coo_sprite_buffer_data(struct eo_buffer *buffer, size_t count,
 }
 
 void coo_debug_buffer_create(struct eo_buffer *out_buffer, int count) {
-    eo_buffer_create_start(out_buffer, count * sizeof(struct coo_sprite));
+    eo_buffer_create_start(out_buffer, count * sizeof(struct coo_sprite),
+                           GL_DYNAMIC_DRAW);
 
     glVertexAttribIPointer(
         0, 2, GL_INT, sizeof(struct coo_debug_vertex),

@@ -120,14 +120,15 @@ _err:
     return rc;
 }
 
-void eo_buffer_create_start(struct eo_buffer *out_buffer, GLsizeiptr size) {
+void eo_buffer_create_start(struct eo_buffer *out_buffer, GLsizeiptr size,
+                            GLenum usage) {
     GLuint buffer_id = 0;
     GLuint vertex_array_id = 0;
 
     // Generate the VBO to be used
     glGenBuffers(1, &buffer_id);
     glBindBuffer(GL_ARRAY_BUFFER, buffer_id);
-    glBufferData(GL_ARRAY_BUFFER, size, NULL, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, size, NULL, usage);
 
     // Generate the VAO to be used
     glGenVertexArrays(1, &vertex_array_id);

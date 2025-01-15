@@ -50,7 +50,8 @@ void coo_sprite_shader_render(struct coo_sprite_shader *shader,
                               struct eo_texture *texture, int count,
                               struct eo_buffer *sprite_buffer);
 
-void coo_sprite_buffer_create(struct eo_buffer *out_buffer, int sprite_count);
+void coo_sprite_buffer_create(struct eo_buffer *out_buffer, int sprite_count,
+                              GLenum usage);
 #define coo_sprite_buffer_destroy eo_buffer_destroy
 
 /*int coo_debug_shader_load(struct coo_debug_shader *out_shader,*/
