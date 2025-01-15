@@ -67,3 +67,5 @@ void em_mat4_identity(struct em_mat4 *out);
 
 void em_ivec2_diff(struct em_vec2 *value, struct em_vec2 *subtract,
                    struct em_ivec2 *out);
+
+int em_sign(int value);

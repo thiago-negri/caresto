@@ -72,9 +72,9 @@ void csb_remove(struct csb_body_map *bodymap, csb_body_id id) {
     }
 }
 
-static bool csb_move_ix(struct csb_body_map *bodymap,
-                        struct cst_tile_map *tilemap, csb_body_index index,
-                        struct em_ivec2 *movement) {
+static bool csb_try_move_ix(struct csb_body_map *bodymap,
+                            struct cst_tile_map *tilemap, csb_body_index index,
+                            struct em_ivec2 *movement) {
     struct csb_body *body = &bodymap->bodies[index];
     struct csb_body new_body = {
         .position =
@@ -114,6 +114,41 @@ static bool csb_move_ix(struct csb_body_map *bodymap,
     body->position.x = new_body.position.x;
     body->position.y = new_body.position.y;
     return true;
+}
+
+bool csb_move_ix(struct csb_body_map *bodymap, struct cst_tile_map *tilemap,
+                 csb_body_index index, struct em_ivec2 *movement) {
+    int x_remaining = movement->x;
+    int x_move = em_sign(x_remaining);
+
+    int y_remaining = movement->y;
+    int y_move = em_sign(y_remaining);
+
+    bool moved_at_all = false;
+
+    while (x_remaining != 0) {
+        bool moved = csb_try_move_ix(bodymap, tilemap, index,
+                                     &(struct em_ivec2){.x = x_move, .y = 0});
+        if (!moved) {
+            x_remaining = 0;
+        } else {
+            x_remaining -= x_move;
+            moved_at_all = true;
+        }
+    }
+
+    while (y_remaining != 0) {
+        bool moved = csb_try_move_ix(bodymap, tilemap, index,
+                                     &(struct em_ivec2){.x = 0, .y = y_move});
+        if (!moved) {
+            y_remaining = 0;
+        } else {
+            y_remaining -= y_move;
+            moved_at_all = true;
+        }
+    }
+
+    return moved_at_all;
 }
 
 bool csb_move(struct csb_body_map *bodymap, struct cst_tile_map *tilemap,
@@ -193,10 +228,7 @@ void csb_tick(struct csb_body_map *bodymap, struct cst_tile_map *tilemap,
         };
 
         if (movement.x != 0 || movement.y != 0) {
-            bool moved = csb_move_ix(bodymap, tilemap, i, &movement);
-            if (!moved) {
-                body->velocity.y = 0.0f;
-            }
+            csb_move_ix(bodymap, tilemap, i, &movement);
         }
 
         body->movement_remaining.x -= movement.x;

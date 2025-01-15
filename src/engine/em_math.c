@@ -2,9 +2,7 @@
 #include <engine/em_math.h>
 #include <engine/et_test.h>
 
-long long em_max(long long a, long long b) {
-    return a > b ? a : b;
-}
+long long em_max(long long a, long long b) { return a > b ? a : b; }
 
 ET_TEST(em_max) {
     ET_ASSERT(em_max(1, 2) == 2);
@@ -95,3 +93,5 @@ void em_ivec2_diff(struct em_vec2 *value, struct em_vec2 *subtract,
     out->x = value->x - subtract->x;
     out->y = value->y - subtract->y;
 }
+
+int em_sign(int value) { return value < 0 ? -1 : 1; }
