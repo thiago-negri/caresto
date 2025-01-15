@@ -70,13 +70,7 @@ need_shared() {
         return 0
     fi
 
-    for obj_file in ./$OBJ_ENGINE_PATH/*.o; do
-        if [[ "$TARGET_SHARED" -ot "$obj_file" ]]; then
-            return 0
-        fi
-    done
-
-    for obj_file in ./$OBJ_CARESTO_PATH/*.o; do
+    for obj_file in $(find $OBJ_PATH -type f -name '*.o'); do
         if [[ "$TARGET_SHARED" -ot "$obj_file" ]]; then
             return 0
         fi
@@ -90,26 +84,11 @@ need_link() {
         return 0
     fi
 
-    for obj_file in ./$OBJ_PATH/*.o; do
+    for obj_file in $(find $OBJ_PATH -type f -name '*.o'); do
         if [[ "$TARGET" -ot "$obj_file" ]]; then
             return 0
         fi
     done
-
-    for obj_file in ./$OBJ_ENGINE_PATH/*.o; do
-        if [[ "$TARGET" -ot "$obj_file" ]]; then
-            return 0
-        fi
-    done
-
-    # Only link with static game objects if in release mode
-    if [ $arg_release -eq 0 ]; then
-        for obj_file in ./$OBJ_CARESTO_PATH/*.o; do
-            if [[ "$TARGET" -ot "$obj_file" ]]; then
-                return 0
-            fi
-        done
-    fi
 
     return 1
 }

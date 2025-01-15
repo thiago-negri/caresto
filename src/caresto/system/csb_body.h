@@ -1,5 +1,6 @@
 #pragma once
 
+#include <caresto/system/csd_debug.h>
 #include <caresto/system/css_sprite.h>
 #include <caresto/system/cst_tile.h>
 #include <engine/em_math.h>
@@ -26,4 +27,5 @@ struct csb_body *csb_get(struct csb_body_map *body_map, csb_body_id id);
 void csb_remove(struct csb_body_map *body_map, csb_body_id id);
 bool csb_grounded(struct csb_body_map *body_map, struct cst_tile_map *tilemap,
                   csb_body_id id);
-void csb_tick(struct csb_body_map *body_map, struct cst_tile_map *tilemap);
+void csb_tick(struct csb_body_map *body_map, struct cst_tile_map *tilemap,
+              struct csd_debug *debug);

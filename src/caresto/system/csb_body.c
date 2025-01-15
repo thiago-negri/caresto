@@ -168,7 +168,8 @@ bool csb_grounded(struct csb_body_map *bodymap, struct cst_tile_map *tilemap,
     return csb_grounded_ix(bodymap, tilemap, index);
 }
 
-void csb_tick(struct csb_body_map *bodymap, struct cst_tile_map *tilemap) {
+void csb_tick(struct csb_body_map *bodymap, struct cst_tile_map *tilemap,
+              struct csd_debug *debug) {
     for (csb_body_index i = 0; i < bodymap->body_count; i++) {
         struct csb_body *body = &bodymap->bodies[i];
         bool grounded = csb_grounded_ix(bodymap, tilemap, i);

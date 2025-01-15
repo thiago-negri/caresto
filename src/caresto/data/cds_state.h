@@ -3,13 +3,17 @@
 #include <caresto/entity/cee_entity.h>
 #include <caresto/opengl/coo_opengl.h>
 #include <caresto/system/csc_camera.h>
+#include <caresto/system/csd_debug.h>
+
+#define DEBUG_VERTEX_MAX 100 * 6
 
 struct cds_state {
     struct csc_camera camera;
 
 #ifdef DEBUG
-    /*struct coo_debug_shader debug_shader;*/
-    /*struct eo_buffer debug_buffer;*/
+    struct coo_debug_shader debug_shader;
+    struct eo_buffer debug_buffer;
+    struct csd_debug debug;
 #endif // DEBUG
 
     struct coo_sprite_shader sprite_shader;

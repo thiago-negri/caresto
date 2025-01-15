@@ -1,3 +1,4 @@
+#include "caresto/system/csd_debug.h"
 #include <SDL3/SDL.h>
 #include <caresto/data/cds_state.h>
 #include <caresto/entity/cee_entity.h>
@@ -24,6 +25,7 @@
 
 #define BEETLE_SPEED 1.5f
 #define BEETLE_JUMP_SPEED 2.0f
+#define DEBUG_SPRITES_MAX 100
 
 #define cge_init ee_init
 #define cge_reload ee_reload
@@ -49,11 +51,20 @@ int cge_init(void **out_data, struct ea_arena *persistent_storage,
         goto _err;
     }
 
+#ifdef DEBUG
+    rc = coo_debug_shader_load(&state->debug_shader, transient_storage);
+    if (rc != 0) {
+        goto _err;
+    }
+#endif // DEBUG
+
     coo_sprite_buffer_create(&state->sprite_buffer, CSS_SPRITES_MAX,
                              GL_STREAM_DRAW);
 
     coo_sprite_buffer_create(&state->tile_buffer, CST_TILES_MAX,
                              GL_DYNAMIC_DRAW);
+
+    coo_debug_buffer_create(&state->debug_buffer, CSD_DEBUG_MAX);
 
     rc = eo_texture_load(GEN_SPRITE_ATLAS_PATH, &state->sprite_atlas);
     if (rc != 0) {
@@ -138,6 +149,11 @@ int cge_init(void **out_data, struct ea_arena *persistent_storage,
     eo_buffer_data(&state->tile_buffer,
                    state->tilemap.tile_count * sizeof(struct coo_sprite),
                    state->tilemap.tiles_gpu);
+#ifdef DEBUG
+    eo_buffer_data(&state->debug_buffer,
+                   state->debug.debug_count * sizeof(struct coo_debug),
+                   state->debug.debug_gpu);
+#endif // DEBUG
 
     *out_data = (void *)state;
     goto _done;
@@ -152,12 +168,15 @@ _done:
 void cge_reload(void *data, struct ea_arena *transient_storage) {
     struct cds_state *state = (struct cds_state *)data;
     coo_sprite_shader_load(&state->sprite_shader, transient_storage);
+#ifdef DEBUG
+    coo_debug_shader_load(&state->debug_shader, transient_storage);
+#endif // DEBUG
     eo_texture_load(GEN_SPRITE_ATLAS_PATH, &state->sprite_atlas);
     eo_texture_load(GEN_TILE_ATLAS_PATH, &state->tile_atlas);
 }
 
 void cge_tick(struct cds_state *state, struct eo_frame *frame) {
-    csb_tick(&state->bodymap, &state->tilemap);
+    csb_tick(&state->bodymap, &state->tilemap, &state->debug);
     cee_tick((union cee_entity *)&state->carestosan, &state->animationmap,
              &state->bodymap, &state->spritemap);
     cee_tick((union cee_entity *)&state->beetle, &state->animationmap,
@@ -291,17 +310,33 @@ bool cge_frame(void *data, const struct eo_frame *frame) {
     em_mat4_ortho_camera(&camera_transform, GAME_CAMERA_WIDTH,
                          GAME_CAMERA_HEIGHT, state->camera.x, state->camera.y);
 
-    // FIXME(tnegri): Remove that *6
-
     // Render tiles
-    coo_sprite_shader_render(&state->sprite_shader, &camera_transform,
-                             &state->tile_atlas, state->tilemap.tile_count * 6,
-                             &state->tile_buffer);
+    coo_sprite_shader_render(
+        &state->sprite_shader, &camera_transform, &state->tile_atlas,
+        state->tilemap.tile_count * COO_VERTEX_PER_QUAD, &state->tile_buffer);
 
     // Render sprites
     coo_sprite_shader_render(
         &state->sprite_shader, &camera_transform, &state->sprite_atlas,
-        state->spritemap.sprite_count * 6, &state->sprite_buffer);
+        state->spritemap.sprite_count * COO_VERTEX_PER_QUAD,
+        &state->sprite_buffer);
+
+#ifdef DEBUG
+    // Render debug
+    for (int i = 0; i < state->bodymap.body_count; i++) {
+        struct csb_body *body = &state->bodymap.bodies[i];
+        csd_quad(&state->debug, body->position.x, body->position.y,
+                 body->size.w, body->size.h);
+    }
+    eo_buffer_data(&state->debug_buffer,
+                   state->debug.debug_count * sizeof(struct coo_debug),
+                   state->debug.debug_gpu);
+    coo_debug_shader_render(&state->debug_shader, &camera_transform,
+                            state->debug.debug_count * COO_VERTEX_PER_QUAD,
+                            &state->debug_buffer);
+    // reset debug draws
+    state->debug.debug_count = 0;
+#endif // DEBUG
 
     return true;
 }
@@ -313,4 +348,8 @@ void cge_destroy(void *data) {
     eo_buffer_destroy(&state->tile_buffer);
     eo_texture_destroy(&state->sprite_atlas);
     eo_texture_destroy(&state->tile_atlas);
+#ifdef DEBUG
+    coo_debug_shader_destroy(&state->debug_shader);
+    eo_buffer_destroy(&state->debug_buffer);
+#endif
 }

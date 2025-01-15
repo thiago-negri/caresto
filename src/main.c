@@ -155,6 +155,10 @@ int main(int /*argc*/, char * /*argv*/[]) {
         (gl_major_version == 4 && gl_minor_version >= 3)) {
         glDebugMessageCallback(eo_debug_message_callback, NULL);
     }
+
+    // Enable alpha
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
 #endif // DEBUG
 
     // Initialize game
