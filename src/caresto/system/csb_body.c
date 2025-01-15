@@ -22,22 +22,22 @@ ET_TEST(csb_sizes) {
 static bool csb_collision(struct csb_body *a, struct csb_body *b) {
     int a_left = a->position.x;
     int b_right = b->position.x + b->size.w;
-    if (a_left > b_right)
+    if (a_left >= b_right)
         return false;
 
     int a_right = a->position.x + a->size.w;
     int b_left = b->position.x;
-    if (a_right < b_left)
+    if (a_right <= b_left)
         return false;
 
     int a_top = a->position.y;
     int b_bottom = b->position.y + b->size.h;
-    if (a_top > b_bottom)
+    if (a_top >= b_bottom)
         return false;
 
     int a_bottom = a->position.y + a->size.h;
     int b_top = b->position.y;
-    if (a_bottom < b_top)
+    if (a_bottom <= b_top)
         return false;
 
     return true;
@@ -89,8 +89,8 @@ static bool csb_move_ix(struct csb_body_map *bodymap,
     struct em_ipos bottom_right;
     cst_game_pos(&top_left, &new_body.position);
     cst_game_pos(&bottom_right, &(struct em_ipos){
-                                    .x = new_body.position.x + body->size.w,
-                                    .y = new_body.position.y + body->size.h,
+                                    .x = new_body.position.x + body->size.w - 1,
+                                    .y = new_body.position.y + body->size.h - 1,
                                 });
     for (int y = top_left.y; y <= bottom_right.y; y++) {
         for (int x = top_left.x; x <= bottom_right.x; x++) {
@@ -139,8 +139,8 @@ static bool csb_grounded_ix(struct csb_body_map *bodymap,
     cst_game_pos_2x(&bottom_left_right,
                     &(struct em_ipos_2x){
                         .x1 = new_body.position.x,
-                        .x2 = new_body.position.x + body->size.w,
-                        .y = new_body.position.y + body->size.h + 1,
+                        .x2 = new_body.position.x + body->size.w - 1,
+                        .y = new_body.position.y + body->size.h - 1,
                     });
     for (int x = bottom_left_right.x1; x <= bottom_left_right.x2; x++) {
         enum cst_tile_type type = cst_get(tilemap, x, bottom_left_right.y);
