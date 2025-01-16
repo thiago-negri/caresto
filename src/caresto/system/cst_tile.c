@@ -1,19 +1,15 @@
 #include <caresto/data/cdi_id.h>
 #include <caresto/system/csc_camera.h>
-#include <caresto/system/css_sprite.h>
 #include <caresto/system/cst_tile.h>
-#include <engine/el_log.h>
-#include <engine/em_math.h>
-#include <engine/eo_opengl.h>
 #include <gen/tile_atlas.h>
 
-enum cst_tile_type cst_get(struct cst_tile_map *tile_map, int x, int y) {
-    el_assert(x < CST_TILE_MAP_MAX_WIDTH);
-    el_assert(y < CST_TILE_MAP_MAX_HEIGHT);
+enum cds_tile_type cst_get(struct cds_tile_map *tile_map, int x, int y) {
+    el_assert(x < CDS_TILE_MAP_MAX_WIDTH);
+    el_assert(y < CDS_TILE_MAP_MAX_HEIGHT);
     return tile_map->tile_map[y][x];
 }
 
-void cst_redraw(struct cst_tile_map *tile_map) {
+void cst_redraw(struct cds_tile_map *tile_map) {
     int count = 0;
 
     // Template
@@ -53,16 +49,16 @@ void cst_redraw(struct cst_tile_map *tile_map) {
             },
     };
 
-    for (int y = 0; y < CST_TILE_MAP_MAX_HEIGHT; y++) {
+    for (int y = 0; y < CDS_TILE_MAP_MAX_HEIGHT; y++) {
         int y_offset = y * GEN_TILE_ATLAS_TILE_SIZE;
-        for (int x = 0; x < CST_TILE_MAP_MAX_WIDTH; x++) {
-            enum cst_tile_type tile = tile_map->tile_map[y][x];
+        for (int x = 0; x < CDS_TILE_MAP_MAX_WIDTH; x++) {
+            enum cds_tile_type tile = tile_map->tile_map[y][x];
 
             switch (tile) {
-            case CST_EMPTY:
+            case CDS_EMPTY:
                 break;
 
-            case CST_SOLID:
+            case CDS_SOLID:
                 int x_offset = x * GEN_TILE_ATLAS_TILE_SIZE;
 
                 int top = y_offset;
@@ -106,10 +102,10 @@ void cst_redraw(struct cst_tile_map *tile_map) {
     tile_map->tile_count = count;
 }
 
-void cst_set(struct cst_tile_map *tile_map, int x, int y,
-             enum cst_tile_type new_tile_type) {
-    el_assert(x < CST_TILE_MAP_MAX_WIDTH);
-    el_assert(y < CST_TILE_MAP_MAX_HEIGHT);
+void cst_set(struct cds_tile_map *tile_map, int x, int y,
+             enum cds_tile_type new_tile_type) {
+    el_assert(x < CDS_TILE_MAP_MAX_WIDTH);
+    el_assert(y < CDS_TILE_MAP_MAX_HEIGHT);
     tile_map->tile_map[y][x] = new_tile_type;
 }
 

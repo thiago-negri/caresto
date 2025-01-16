@@ -1,25 +1,23 @@
 #include <caresto/data/cdi_id.h>
 #include <caresto/system/csb_body.h>
-#include <engine/em_math.h>
+#include <caresto/system/cst_tile.h>
 #include <engine/et_test.h>
-#include <gen/tile_atlas.h>
-#include <string.h>
 
 #define GRAVITY_MAX_VELOCITY 5.0f
 #define GRAVITY_ACCELERATION_PER_TICK 0.05f
 
 typedef unsigned char csb_body_index;
 
-CDI_IDS(csb_body_map, csb, csb_body_index, ids, CSB_BODIES_MAX)
+CDI_IDS(cds_body_map, csb, csb_body_index, ids, CDS_BODIES_MAX)
 
 ET_TEST(csb_sizes) {
-    ET_ASSERT((csb_body_index)CSB_BODIES_MAX == CSB_BODIES_MAX)
-    ET_ASSERT((csb_body_id)CSB_BODIES_MAX == CSB_BODIES_MAX)
+    ET_ASSERT((csb_body_index)CDS_BODIES_MAX == CDS_BODIES_MAX)
+    ET_ASSERT((cds_body_id)CDS_BODIES_MAX == CDS_BODIES_MAX)
     ET_DONE
 }
 
 // AABB collision
-static bool csb_collision(struct csb_body *a, struct csb_body *b) {
+static bool csb_collision(struct cds_body *a, struct cds_body *b) {
     int a_left = a->position.x;
     int b_right = b->position.x + b->size.w;
     if (a_left >= b_right)
@@ -43,40 +41,40 @@ static bool csb_collision(struct csb_body *a, struct csb_body *b) {
     return true;
 }
 
-csb_body_id csb_add(struct csb_body_map *bodymap, struct csb_body *body) {
-    el_assert(bodymap->body_count < CSB_BODIES_MAX);
+cds_body_id csb_add(struct cds_systems *systems, struct cds_body *body) {
+    el_assert(systems->body_map.body_count < CDS_BODIES_MAX);
 
-    csb_body_index index = bodymap->body_count;
-    csb_body_id id = csb_ids_new(bodymap, index);
+    csb_body_index index = systems->body_map.body_count;
+    cds_body_id id = csb_ids_new(&systems->body_map, index);
 
-    memcpy(&bodymap->bodies[index], body, sizeof(struct csb_body));
-    bodymap->body_count++;
+    memcpy(&systems->body_map.bodies[index], body, sizeof(struct cds_body));
+    systems->body_map.body_count++;
 
     return id;
 }
 
-struct csb_body *csb_get(struct csb_body_map *bodymap, csb_body_id id) {
-    csb_body_index index = csb_ids_get(bodymap, id);
-    return &bodymap->bodies[index];
+struct cds_body *csb_get(struct cds_systems *systems, cds_body_id id) {
+    csb_body_index index = csb_ids_get(&systems->body_map, id);
+    return &systems->body_map.bodies[index];
 }
 
-void csb_remove(struct csb_body_map *bodymap, csb_body_id id) {
-    csb_body_index index = csb_ids_rm(bodymap, id);
+void csb_remove(struct cds_systems *systems, cds_body_id id) {
+    csb_body_index index = csb_ids_rm(&systems->body_map, id);
 
-    bodymap->body_count--;
-    if (index < bodymap->body_count) {
-        memcpy(&bodymap->bodies[index], &bodymap->bodies[bodymap->body_count],
-               sizeof(struct csb_body));
+    systems->body_map.body_count--;
+    if (index < systems->body_map.body_count) {
+        memcpy(&systems->body_map.bodies[index],
+               &systems->body_map.bodies[systems->body_map.body_count],
+               sizeof(struct cds_body));
 
-        csb_ids_move(bodymap, index, bodymap->body_count);
+        csb_ids_move(&systems->body_map, index, systems->body_map.body_count);
     }
 }
 
-static bool csb_try_move_ix(struct csb_body_map *bodymap,
-                            struct cst_tile_map *tilemap, csb_body_index index,
+static bool csb_try_move_ix(struct cds_systems *systems, csb_body_index index,
                             struct em_ivec2 *movement) {
-    struct csb_body *body = &bodymap->bodies[index];
-    struct csb_body new_body = {
+    struct cds_body *body = &systems->body_map.bodies[index];
+    struct cds_body new_body = {
         .position =
             {
                 .x = body->position.x + movement->x,
@@ -94,18 +92,18 @@ static bool csb_try_move_ix(struct csb_body_map *bodymap,
                                 });
     for (int y = top_left.y; y <= bottom_right.y; y++) {
         for (int x = top_left.x; x <= bottom_right.x; x++) {
-            enum cst_tile_type type = cst_get(tilemap, x, y);
-            if (type != CST_EMPTY) {
+            enum cds_tile_type type = cst_get(&systems->tile_map, x, y);
+            if (type != CDS_EMPTY) {
                 return false;
             }
         }
     }
 
-    for (csb_body_index i = 0; i < bodymap->body_count; i++) {
+    for (csb_body_index i = 0; i < systems->body_map.body_count; i++) {
         if (i == index) {
             continue;
         }
-        struct csb_body *other = &bodymap->bodies[i];
+        struct cds_body *other = &systems->body_map.bodies[i];
         if (csb_collision(&new_body, other)) {
             return false;
         }
@@ -116,8 +114,8 @@ static bool csb_try_move_ix(struct csb_body_map *bodymap,
     return true;
 }
 
-bool csb_move_ix(struct csb_body_map *bodymap, struct cst_tile_map *tilemap,
-                 csb_body_index index, struct em_ivec2 *movement) {
+static bool csb_move_ix(struct cds_systems *systems, csb_body_index index,
+                        struct em_ivec2 *movement) {
     int x_remaining = movement->x;
     int x_move = em_sign(x_remaining);
 
@@ -127,7 +125,7 @@ bool csb_move_ix(struct csb_body_map *bodymap, struct cst_tile_map *tilemap,
     bool moved_at_all = false;
 
     while (x_remaining != 0) {
-        bool moved = csb_try_move_ix(bodymap, tilemap, index,
+        bool moved = csb_try_move_ix(systems, index,
                                      &(struct em_ivec2){.x = x_move, .y = 0});
         if (!moved) {
             x_remaining = 0;
@@ -138,7 +136,7 @@ bool csb_move_ix(struct csb_body_map *bodymap, struct cst_tile_map *tilemap,
     }
 
     while (y_remaining != 0) {
-        bool moved = csb_try_move_ix(bodymap, tilemap, index,
+        bool moved = csb_try_move_ix(systems, index,
                                      &(struct em_ivec2){.x = 0, .y = y_move});
         if (!moved) {
             y_remaining = 0;
@@ -151,17 +149,15 @@ bool csb_move_ix(struct csb_body_map *bodymap, struct cst_tile_map *tilemap,
     return moved_at_all;
 }
 
-bool csb_move(struct csb_body_map *bodymap, struct cst_tile_map *tilemap,
-              csb_body_id id, struct em_ivec2 *movement) {
-    csb_body_index index = csb_ids_get(bodymap, id);
-    return csb_move_ix(bodymap, tilemap, index, movement);
+bool csb_move(struct cds_systems *systems, cds_body_id id,
+              struct em_ivec2 *movement) {
+    csb_body_index index = csb_ids_get(&systems->body_map, id);
+    return csb_move_ix(systems, index, movement);
 }
 
-static bool csb_grounded_ix(struct csb_body_map *bodymap,
-                            struct cst_tile_map *tilemap,
-                            csb_body_index index) {
-    struct csb_body *body = &bodymap->bodies[index];
-    struct csb_body new_body = {
+static bool csb_grounded_ix(struct cds_systems *systems, csb_body_index index) {
+    struct cds_body *body = &systems->body_map.bodies[index];
+    struct cds_body new_body = {
         .position =
             {
                 .x = body->position.x,
@@ -178,17 +174,18 @@ static bool csb_grounded_ix(struct csb_body_map *bodymap,
                         .y = new_body.position.y + body->size.h - 1,
                     });
     for (int x = bottom_left_right.x1; x <= bottom_left_right.x2; x++) {
-        enum cst_tile_type type = cst_get(tilemap, x, bottom_left_right.y);
-        if (type != CST_EMPTY) {
+        enum cds_tile_type type =
+            cst_get(&systems->tile_map, x, bottom_left_right.y);
+        if (type != CDS_EMPTY) {
             return true;
         }
     }
 
-    for (csb_body_index i = 0; i < bodymap->body_count; i++) {
+    for (csb_body_index i = 0; i < systems->body_map.body_count; i++) {
         if (i == index) {
             continue;
         }
-        struct csb_body *other = &bodymap->bodies[i];
+        struct cds_body *other = &systems->body_map.bodies[i];
         if (csb_collision(&new_body, other)) {
             return true;
         }
@@ -197,17 +194,15 @@ static bool csb_grounded_ix(struct csb_body_map *bodymap,
     return false;
 }
 
-bool csb_grounded(struct csb_body_map *bodymap, struct cst_tile_map *tilemap,
-                  csb_body_id id) {
-    csb_body_index index = csb_ids_get(bodymap, id);
-    return csb_grounded_ix(bodymap, tilemap, index);
+bool csb_grounded(struct cds_systems *systems, cds_body_id id) {
+    csb_body_index index = csb_ids_get(&systems->body_map, id);
+    return csb_grounded_ix(systems, index);
 }
 
-void csb_tick(struct csb_body_map *bodymap, struct cst_tile_map *tilemap,
-              struct csd_debug *debug) {
-    for (csb_body_index i = 0; i < bodymap->body_count; i++) {
-        struct csb_body *body = &bodymap->bodies[i];
-        bool grounded = csb_grounded_ix(bodymap, tilemap, i);
+void csb_tick(struct cds_systems *systems) {
+    for (csb_body_index i = 0; i < systems->body_map.body_count; i++) {
+        struct cds_body *body = &systems->body_map.bodies[i];
+        bool grounded = csb_grounded_ix(systems, i);
         if (grounded && body->velocity.y >= 0) {
             body->velocity.y = 0;
         } else {
@@ -226,7 +221,7 @@ void csb_tick(struct csb_body_map *bodymap, struct cst_tile_map *tilemap,
         };
 
         if (movement.x != 0 || movement.y != 0) {
-            csb_move_ix(bodymap, tilemap, i, &movement);
+            csb_move_ix(systems, i, &movement);
         }
 
         body->movement_remaining.x -= movement.x;

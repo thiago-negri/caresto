@@ -1,11 +1,9 @@
 #pragma once
 
-struct csc_camera {
-    float x, y, w, h;
-};
+#include <caresto/data/cds_systems.h>
 
 struct csc_bounds {
     float left, right, top, bottom;
 };
 
-void csc_bounds(struct csc_bounds *bounds, struct csc_camera *cam);
+void csc_bounds(struct csc_bounds *bounds, struct cds_camera *cam);

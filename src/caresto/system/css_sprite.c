@@ -5,16 +5,16 @@
 
 typedef unsigned char css_sprite_index;
 
-CDI_IDS(css_sprite_map, css, css_sprite_index, ids, CSS_SPRITES_MAX)
+CDI_IDS(cds_sprite_map, css, css_sprite_index, ids, CDS_SPRITES_MAX)
 
 ET_TEST(css_sizes) {
-    ET_ASSERT((css_sprite_index)CSS_SPRITES_MAX == CSS_SPRITES_MAX);
-    ET_ASSERT((css_sprite_id)CSS_SPRITES_MAX == CSS_SPRITES_MAX);
+    ET_ASSERT((css_sprite_index)CDS_SPRITES_MAX == CDS_SPRITES_MAX);
+    ET_ASSERT((cds_sprite_id)CDS_SPRITES_MAX == CDS_SPRITES_MAX);
     ET_DONE;
 }
 
-static void css_init_coo_sprite(struct coo_sprite *out, struct css_sprite *in) {
-    int mirror_x = in->w * (in->flags & CSS_MIRROR_X);
+static void css_init_coo_sprite(struct coo_sprite *out, struct cds_sprite *in) {
+    int mirror_x = in->w * (in->flags & CDS_SPRITE_MIRROR_X);
 
     struct coo_sprite_vertex top_left = {
         .position = {.x = in->x, .y = in->y},
@@ -47,87 +47,90 @@ static void css_init_coo_sprite(struct coo_sprite *out, struct css_sprite *in) {
     out->vertex[5] = bottom_right;
 }
 
-void css_set(struct css_sprite_map *spritemap, css_sprite_id *id,
-             struct css_sprite *sprite) {
+void css_set(struct cds_systems *systems, cds_sprite_id *id,
+             struct cds_sprite *sprite) {
     bool is_new = *id == 0;
 
     int index;
 
     if (is_new) {
-        el_assert(spritemap->sprite_count < CSS_SPRITES_MAX);
-        index = spritemap->sprite_count;
-        *id = css_ids_new(spritemap, index);
-        spritemap->sprite_count++;
+        el_assert(systems->sprite_map.sprite_count < CDS_SPRITES_MAX);
+        index = systems->sprite_map.sprite_count;
+        *id = css_ids_new(&systems->sprite_map, index);
+        systems->sprite_map.sprite_count++;
     } else {
-        index = css_ids_get(spritemap, *id);
+        index = css_ids_get(&systems->sprite_map, *id);
     }
 
     struct coo_sprite coo_sprite;
     css_init_coo_sprite(&coo_sprite, sprite);
 
-    memcpy(&spritemap->sprites[index], sprite, sizeof(struct css_sprite));
-    memcpy(&spritemap->sprites_gpu[index], &coo_sprite,
+    memcpy(&systems->sprite_map.sprites[index], sprite,
+           sizeof(struct cds_sprite));
+    memcpy(&systems->sprite_map.sprites_gpu[index], &coo_sprite,
            sizeof(struct coo_sprite));
 }
 
-void css_remove(struct css_sprite_map *spritemap, css_sprite_id *id) {
+void css_remove(struct cds_systems *systems, cds_sprite_id *id) {
     el_assert(*id != 0);
 
-    int index = css_ids_rm(spritemap, *id);
+    int index = css_ids_rm(&systems->sprite_map, *id);
 
-    spritemap->sprite_count--;
-    if (index < spritemap->sprite_count) {
-        memcpy(&spritemap->sprites[index],
-               &spritemap->sprites[spritemap->sprite_count],
-               sizeof(struct css_sprite));
+    systems->sprite_map.sprite_count--;
+    if (index < systems->sprite_map.sprite_count) {
+        memcpy(&systems->sprite_map.sprites[index],
+               &systems->sprite_map.sprites[systems->sprite_map.sprite_count],
+               sizeof(struct cds_sprite));
 
-        memcpy(&spritemap->sprites_gpu[index],
-               &spritemap->sprites_gpu[spritemap->sprite_count],
-               sizeof(struct coo_sprite));
+        memcpy(
+            &systems->sprite_map.sprites_gpu[index],
+            &systems->sprite_map.sprites_gpu[systems->sprite_map.sprite_count],
+            sizeof(struct coo_sprite));
 
-        css_ids_move(spritemap, index, spritemap->sprite_count);
+        css_ids_move(&systems->sprite_map, index,
+                     systems->sprite_map.sprite_count);
     }
 
     *id = 0;
 }
 
-void css_set_texture(struct css_sprite_map *spritemap, css_sprite_id id, int u,
+void css_set_texture(struct cds_systems *systems, cds_sprite_id id, int u,
                      int v) {
-    css_sprite_index index = css_ids_get(spritemap, id);
-    struct css_sprite *sprite = &spritemap->sprites[index];
+    css_sprite_index index = css_ids_get(&systems->sprite_map, id);
+    struct cds_sprite *sprite = &systems->sprite_map.sprites[index];
     sprite->u = u;
     sprite->v = v;
 
     struct coo_sprite coo_sprite;
     css_init_coo_sprite(&coo_sprite, sprite);
 
-    memcpy(&spritemap->sprites_gpu[index], &coo_sprite,
+    memcpy(&systems->sprite_map.sprites_gpu[index], &coo_sprite,
            sizeof(struct coo_sprite));
 }
 
-void css_set_position(struct css_sprite_map *spritemap, css_sprite_id id, int x,
+void css_set_position(struct cds_systems *systems, cds_sprite_id id, int x,
                       int y) {
-    css_sprite_index index = css_ids_get(spritemap, id);
-    struct css_sprite *sprite = &spritemap->sprites[index];
+    css_sprite_index index = css_ids_get(&systems->sprite_map, id);
+    struct cds_sprite *sprite = &systems->sprite_map.sprites[index];
     sprite->x = x;
     sprite->y = y;
 
     struct coo_sprite coo_sprite;
     css_init_coo_sprite(&coo_sprite, sprite);
 
-    memcpy(&spritemap->sprites_gpu[index], &coo_sprite,
+    memcpy(&systems->sprite_map.sprites_gpu[index], &coo_sprite,
            sizeof(struct coo_sprite));
 }
 
-void css_set_flags(struct css_sprite_map *spritemap, css_sprite_id id,
+void css_set_flags(struct cds_systems *systems, cds_sprite_id id,
                    unsigned int flags) {
-    css_sprite_index index = css_ids_get(spritemap, id);
-    struct css_sprite *sprite = &spritemap->sprites[index];
+    css_sprite_index index = css_ids_get(&systems->sprite_map, id);
+    struct cds_sprite *sprite = &systems->sprite_map.sprites[index];
     sprite->flags = flags;
 
     struct coo_sprite coo_sprite;
     css_init_coo_sprite(&coo_sprite, sprite);
 
-    memcpy(&spritemap->sprites_gpu[index], &coo_sprite,
+    memcpy(&systems->sprite_map.sprites_gpu[index], &coo_sprite,
            sizeof(struct coo_sprite));
 }

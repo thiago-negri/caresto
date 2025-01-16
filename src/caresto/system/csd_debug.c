@@ -1,10 +1,10 @@
 #include <caresto/system/csd_debug.h>
 #include <engine/el_log.h>
 
-void csd_quad(struct csd_debug *state, int x, int y, int w, int h) {
-    el_assert(state->debug_count < CSD_DEBUG_MAX);
+void csd_quad(struct cds_systems *systems, int x, int y, int w, int h) {
+    el_assert(systems->debug.debug_count < CDS_DEBUG_MAX);
     struct em_color red = {1, 0, 0, 0.5};
-    state->debug_gpu[state->debug_count++] =
+    systems->debug.debug_gpu[systems->debug.debug_count++] =
         (struct coo_debug){
             .vertex =
                 {

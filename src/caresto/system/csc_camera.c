@@ -3,7 +3,7 @@
 #include <engine/et_test.h>
 #include <string.h>
 
-void csc_bounds(struct csc_bounds *bounds, struct csc_camera *cam) {
+void csc_bounds(struct csc_bounds *bounds, struct cds_camera *cam) {
     el_assert(bounds != NULL);
     el_assert(cam != NULL);
 
@@ -17,7 +17,7 @@ void csc_bounds(struct csc_bounds *bounds, struct csc_camera *cam) {
 
 ET_TEST(csc_bounds) {
     struct csc_bounds bounds = {0};
-    struct csc_camera cam = {.x = 100.0f, .y = 50.0f, .w = 200.0f, .h = 50.0f};
+    struct cds_camera cam = {.x = 100.0f, .y = 50.0f, .w = 200.0f, .h = 50.0f};
 
     csc_bounds(&bounds, &cam);
 
