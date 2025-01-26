@@ -23,7 +23,7 @@ mkdir -p "$OBJ_PATH" "$OBJ_GEN_PATH" \
 #
 if [ $arg_generate -eq 0 ]; then
     # GENERATE FILES
-    for glsl_source in $GLSL_PATH/*.glsl; do
+    for glsl_source in $(find $GLSL_PATH/ -type f -name '*.glsl'); do
         module=$(basename $glsl_source .glsl)
         gen_file=$GEN_PATH/gen/glsl_$module.h
         if need_generate_glsl $gen_file $glsl_source; then
@@ -56,13 +56,13 @@ if [ $arg_build -eq 0 ]; then
         fi
     done
 
-    for source_file in $GEN_PATH/gen/*.c; do
+    for source_file in $(find $GEN_PATH/gen/ -type f -name '*.c'); do
         if need_compile "$OBJ_GEN_PATH" "$source_file"; then
             compile "$OBJ_GEN_PATH" "$source_file"
         fi
     done
 
-    for source_file in $SRC_PATH/*.c; do
+    for source_file in $(find $SRC_PATH/ -maxdepth 1 -type f -name '*.c'); do
         if need_compile "$OBJ_PATH" "$source_file"; then
             compile "$OBJ_PATH" "$source_file"
         fi
@@ -86,9 +86,11 @@ if [ $arg_build -eq 0 ]; then
     fi
 
     # COPY DLLS AND LICENSES
-    static lib/windows/SDL3/x64/SDL3.dll
+    if [ "$os" == "win" ]; then
+        static lib/windows/SDL3/x64/SDL3.dll
+        static lib/windows/glew/x64/glew32.dll
+    fi
     static licenses/README-SDL.txt
-    static lib/windows/glew/x64/glew32.dll
     static licenses/LICENSE-glew.txt
 fi
 

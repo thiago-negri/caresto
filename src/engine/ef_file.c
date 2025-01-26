@@ -1,6 +1,8 @@
 #include <engine/ef_file.h>
 #include <engine/el_log.h>
+#include <stddef.h>
 #include <stdio.h>
+#include <errno.h>
 #include <sys/stat.h>
 
 int ef_copy(const char *to, const char *from, struct ea_arena *arena) {
@@ -9,8 +11,8 @@ int ef_copy(const char *to, const char *from, struct ea_arena *arena) {
 
     size_t arena_offset = ea_arena_save_offset(arena);
 
-    errno_t err = fopen_s(&fd, from, "rb");
-    if (err != 0) {
+    fd = fopen(from, "rb");
+    if (errno != 0) {
         el_critical_fmt("U: Could not open for read: %s.\n", from);
         rc = -1;
         goto _err;
@@ -35,10 +37,9 @@ int ef_copy(const char *to, const char *from, struct ea_arena *arena) {
     }
 
     fclose(fd);
-    fd = 0;
 
-    err = fopen_s(&fd, to, "wb");
-    if (err != 0) {
+    fd = fopen(to, "wb");
+    if (errno != 0) {
         el_critical_fmt("U: Could not open for write: %s.\n", to);
         rc = -1;
         goto _err;

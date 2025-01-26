@@ -10,7 +10,12 @@
 #include <Windows.h>
 typedef HMODULE ep_shared;
 
-#endif // _WIN32
+#elif __linux__
+
+#include <dlfcn.h>
+typedef void *ep_shared;
+
+#endif // __linux__
 
 struct ep_shared_game {
     ep_shared shared_lib;

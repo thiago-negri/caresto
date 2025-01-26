@@ -1,6 +1,7 @@
 #pragma once
 
 #include <engine/ea_allocator.h>
+#include <stddef.h>
 
 struct em_ixpos {
     size_t x, y;

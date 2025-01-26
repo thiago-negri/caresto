@@ -2,6 +2,7 @@
 #include <engine/el_log.h>
 
 void csd_quad(struct cds_systems *systems, int x, int y, int w, int h) {
+#ifdef DEBUG
     el_assert(systems->debug.debug_count < CDS_DEBUG_MAX);
     struct em_color red = {1, 0, 0, 0.5};
     systems->debug.debug_gpu[systems->debug.debug_count++] =
@@ -16,4 +17,5 @@ void csd_quad(struct cds_systems *systems, int x, int y, int w, int h) {
                     [5] = {.position = {.x = x + w, .y = y + h}, .color = red},
                 },
         };
+#endif
 }

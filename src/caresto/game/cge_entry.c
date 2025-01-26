@@ -56,6 +56,7 @@ int cge_init(void **out_data, struct ea_arena *persistent_storage,
     if (rc != 0) {
         goto _err;
     }
+    coo_debug_buffer_create(&state->debug_buffer, CDS_DEBUG_MAX);
 #endif // DEBUG
 
     coo_sprite_buffer_create(&state->sprite_buffer, CDS_SPRITES_MAX,
@@ -63,8 +64,6 @@ int cge_init(void **out_data, struct ea_arena *persistent_storage,
 
     coo_sprite_buffer_create(&state->tile_buffer, CDS_TILES_MAX,
                              GL_DYNAMIC_DRAW);
-
-    coo_debug_buffer_create(&state->debug_buffer, CDS_DEBUG_MAX);
 
     rc = eo_texture_load(GEN_SPRITE_ATLAS_PATH, &state->sprite_atlas);
     if (rc != 0) {
@@ -203,10 +202,12 @@ bool cge_frame(void *data, const struct eo_frame *frame) {
                 case SDLK_Q:
                     return false;
 
+#ifdef DEBUG
                 case SDLK_B:
                     state->systems.debug_enabled =
                         !state->systems.debug_enabled;
                     break;
+#endif // DEBUG
 
                 case SDLK_W: {
                     if (csb_grounded(&state->systems,

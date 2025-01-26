@@ -21,7 +21,7 @@ ee_destroy_fn *ee_destroy;
 #if defined(SHARED) && defined(_WIN32)
 #define EXPORT __declspec(dllexport)
 #else
-#define EXPORT extern
+#define EXPORT
 #endif
 
 EXPORT ee_init_fn ee_init;

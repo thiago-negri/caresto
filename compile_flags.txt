@@ -13,3 +13,4 @@
 --embed-dir=embed
 -DDEBUG
 -DSHARED
+-fPIC

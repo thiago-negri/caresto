@@ -1,5 +1,12 @@
 #!/bin/bash
 
+unameOut="$(uname -s)"
+case "${unameOut}" in
+    Darwin*)    os=mac;;
+    MINGW*)     os=win;;
+    *)          os=linux;;
+esac
+
 #
 # ARGS
 #
@@ -64,24 +71,42 @@ else
     mapfile COMPILE_FLAGS_ARR < compile_flags.txt
 fi
 
-LINK_FLAGS_ARR=(
-    "-Llib/windows/SDL3/x64"
-    "-Llib/windows/glew/x64"
-    "-lSDL3"
-    "-lglew32"
-    "-lglu32"
-    "-lopengl32"
-)
+if [ "$os" == "win" ]; then
+    LINK_FLAGS_ARR=(
+        "-Llib/windows/SDL3/x64"
+        "-Llib/windows/glew/x64"
+        "-lglew32"
+        "-lglu32"
+        "-lopengl32"
+    )
+fi
+if [ "$os" == "linux" ]; then
+    LINK_FLAGS_ARR=(
+        "-lSDL3"
+        "-lGLEW"
+        "-lGL"
+        "-lX11"
+        "-lGLU"
+        "-lOpenGL"
+    )
+fi
 
 # Use 'release' option to:
 # - Create an executable that doesn't spawn a console
 # - -O3
 # - Static link to game
 if [ $arg_release -eq 0 ]; then
-    LINK_FLAGS_ARR+=("-Xlinker /SUBSYSTEM:WINDOWS")
+    if [ "$os" == "win" ]; then
+        LINK_FLAGS_ARR+=("-Xlinker /SUBSYSTEM:WINDOWS")
+    fi
+    if [ "$os" == "linux" ]; then
+        LINK_FLAGS_ARR+=("-lm")
+    fi
     BUILD_TYPE_FLAGS="-O3"
 else
-    LINK_FLAGS_ARR+=("-Xlinker /SUBSYSTEM:CONSOLE")
+    if [ "$os" == "win" ]; then
+        LINK_FLAGS_ARR+=("-Xlinker /SUBSYSTEM:CONSOLE")
+    fi
     BUILD_TYPE_FLAGS="-fsanitize=address -g -DDEBUG -DSHARED"
 fi
 

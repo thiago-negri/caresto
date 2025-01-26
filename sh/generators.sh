@@ -49,10 +49,16 @@ need_tile_atlas() {
     if [ ! -e "$TILE_ATLAS_H" ]; then
         return 0
     fi
+    if [ ! -e "$TILE_ATLAS_JSON" ]; then
+        return 0
+    fi
     if [[ "$TILE_ATLAS_PNG" -ot "$TILE_ATLAS_ASEPRITE" ]]; then
         return 0
     fi
     if [[ "$TILE_ATLAS_H" -ot "$TILE_ATLAS_ASEPRITE" ]]; then
+        return 0
+    fi
+    if [[ "$TILE_ATLAS_JSON" -ot "$TILE_ATLAS_ASEPRITE" ]]; then
         return 0
     fi
     return 1
@@ -113,7 +119,7 @@ need_sprite_atlas() {
     if [ ! -e "$SPRITE_ATLAS_GEN_MODULE.c" ]; then
         return 0
     fi
-    for file in ./$SPRITE_ATLAS_PATH/*.aseprite; do
+    for file in $(find $SPRITE_ATLAS_PATH/ -type f -name '*.aseprite'); do
         if [[ "$SPRITE_ATLAS_PNG" -ot "$file" ]]; then
             return 0
         fi
@@ -138,7 +144,7 @@ generate_sprite_atlas() {
         --filename-format '{title}_{frame}' \
         --tagname-format '{title}!{tag}' \
         --list-tags \
-        "$SPRITE_ATLAS_PATH/*.aseprite"
+        $(find $SPRITE_ATLAS_PATH/ -type f -name '*.aseprite')
 
     aseprite -b \
         --all-layers \
@@ -149,7 +155,7 @@ generate_sprite_atlas() {
         --data "$SPRITE_ATLAS_BOUNDING_BOX_JSON" \
         --sheet-type packed \
         --filename-format '{title}' \
-        "$SPRITE_ATLAS_PATH/*.aseprite"
+        $(find $SPRITE_ATLAS_PATH/ -type f -name '*.aseprite')
 
     node tools/generate-sprite-atlas.js \
         $SPRITE_ATLAS_PNG $SPRITE_ATLAS_JSON $SPRITE_ATLAS_BOUNDING_BOX_JSON \

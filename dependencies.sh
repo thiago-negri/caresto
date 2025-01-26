@@ -1,5 +1,12 @@
 #!/bin/bash
 
+unameOut="$(uname -s)"
+case "${unameOut}" in
+    Darwin*)    os=mac;;
+    MINGW*)     os=win;;
+    *)          os=linux;;
+esac
+
 rm -rf include lib tmp-dependencies
 
 mkdir tmp-dependencies
@@ -14,30 +21,40 @@ cd tmp-dependencies
 #
 # SDL
 #
-SDL=SDL3-devel-3.1.6-VC.zip
-SDL_URL=https://github.com/libsdl-org/SDL/releases/download/preview-3.1.6/$SDL
-SDL_FOLDER=SDL3-3.1.6
-wget $SDL_URL
-unzip $SDL
-cp -r $SDL_FOLDER/include/* ../include/
-cp -r $SDL_FOLDER/lib/* ../lib/windows/SDL3/
-cp $SDL_FOLDER/README-SDL.txt ../licenses/README-SDL.txt
+if [ "$os" == "win" ]; then
+    SDL=SDL3-devel-3.2.0-VC.zip
+    SDL_URL=https://github.com/libsdl-org/SDL/releases/download/release-3.2.0/$SDL
+    SDL_FOLDER=SDL3-3.2.0
+    wget $SDL_URL
+    unzip $SDL
+    cp -r $SDL_FOLDER/include/* ../include/
+    cp -r $SDL_FOLDER/lib/* ../lib/windows/SDL3/
+    cp $SDL_FOLDER/README-SDL.txt ../licenses/README-SDL.txt
+fi
+if [ "$os" == "linux" ]; then
+    sudo dnf install SDL3-devel
+fi
 
 
 #
 # GLEW
 #
-GLEW=glew-2.2.0-win32.zip
-GLEW_URL=https://github.com/nigels-com/glew/releases/download/glew-2.2.0/$GLEW
-GLEW_FOLDER=glew-2.2.0
-wget $GLEW_URL
-unzip $GLEW
-cp -r $GLEW_FOLDER/include/GL/* ../include/GL/
-cp -r $GLEW_FOLDER/lib/Release/x64/* ../lib/windows/glew/x64/
-cp -r $GLEW_FOLDER/bin/Release/x64/glew32.dll ../lib/windows/glew/x64/glew32.dll
-cp -r $GLEW_FOLDER/lib/Release/Win32/* ../lib/windows/glew/x86/
-cp -r $GLEW_FOLDER/bin/Release/Win32/glew32.dll ../lib/windows/glew/x86/glew32.dll
-cp $GLEW_FOLDER/LICENSE.txt ../licenses/LICENSE-glew.txt
+if [ "$os" == "win" ]; then
+    GLEW=glew-2.2.0-win32.zip
+    GLEW_URL=https://github.com/nigels-com/glew/releases/download/glew-2.2.0/$GLEW
+    GLEW_FOLDER=glew-2.2.0
+    wget $GLEW_URL
+    unzip $GLEW
+    cp -r $GLEW_FOLDER/include/GL/* ../include/GL/
+    cp -r $GLEW_FOLDER/lib/Release/x64/* ../lib/windows/glew/x64/
+    cp -r $GLEW_FOLDER/bin/Release/x64/glew32.dll ../lib/windows/glew/x64/glew32.dll
+    cp -r $GLEW_FOLDER/lib/Release/Win32/* ../lib/windows/glew/x86/
+    cp -r $GLEW_FOLDER/bin/Release/Win32/glew32.dll ../lib/windows/glew/x86/glew32.dll
+    cp $GLEW_FOLDER/LICENSE.txt ../licenses/LICENSE-glew.txt
+fi
+if [ "$os" == "linux" ]; then
+    sudo dnf install glew-devel
+fi
 
 
 #
