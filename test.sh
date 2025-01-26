@@ -1,5 +1,12 @@
 #!/bin/bash
 
+unameOut="$(uname -s)"
+case "${unameOut}" in
+    Darwin*)    os=mac;;
+    MINGW*)     os=win;;
+    *)          os=linux;;
+esac
+
 TEST_C=test/test.c
 
 rm -rf test
@@ -38,18 +45,32 @@ clang test/test.c -c -o test/test.o -Isrc -Iinclude -Isrc_gen -fsanitize=address
 
 # link test binary
 objs=$(find build/debug/obj -mindepth 2 -type f -name '*.o')
-clang $objs test/*.o \
-    -o test/test.exe -fsanitize=address -g \
-    -Llib/windows/SDL3/x64 \
-    -Llib/windows/glew/x64 \
-    -lSDL3 \
-    -lglew32 \
-    -lglu32 \
-    -lopengl32 \
-    -Xlinker /SUBSYSTEM:CONSOLE
 
-cp lib/windows/SDL3/x64/SDL3.dll test/SDL3.dll
-cp lib/windows/glew/x64/glew32.dll test/glew32.dll
+if [ "$os" == "win" ]; then
+    clang $objs test/*.o \
+        -o test/test.exe -fsanitize=address -g \
+        -Llib/windows/SDL3/x64 \
+        -Llib/windows/glew/x64 \
+        -lSDL3 \
+        -lglew32 \
+        -lglu32 \
+        -lopengl32 \
+        -Xlinker /SUBSYSTEM:CONSOLE
+
+    cp lib/windows/SDL3/x64/SDL3.dll test/SDL3.dll
+    cp lib/windows/glew/x64/glew32.dll test/glew32.dll
+fi
+if [ "$os" == "linux" ]; then
+    clang $objs test/*.o \
+        -o test/test.exe -fsanitize=address -g \
+        -lSDL3 \
+        -lGLEW \
+        -lGL \
+        -lX11 \
+        -lGLU \
+        -lOpenGL
+fi
+
 
 ./test/test.exe
 
