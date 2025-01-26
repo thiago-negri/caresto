@@ -1,6 +1,6 @@
-#include <engine/ep_platform.h>
 #include <engine/ef_file.h>
 #include <engine/el_log.h>
+#include <engine/ep_platform.h>
 #include <stdio.h>
 
 #if defined(SHARED)
@@ -174,8 +174,7 @@ int ep_shared_load(struct ep_shared_game *out_shared_game, const char *path,
         goto _err;
     }
 
-    ee_reload_fn *ee_reload_ptr =
-        (ee_reload_fn *)dlsym(so, "ee_reload");
+    ee_reload_fn *ee_reload_ptr = (ee_reload_fn *)dlsym(so, "ee_reload");
     if (ee_reload_ptr == NULL) {
         el_critical("LIN: Could not find ee_reload.\n");
         rc = -1;
@@ -189,15 +188,14 @@ int ep_shared_load(struct ep_shared_game *out_shared_game, const char *path,
         goto _err;
     }
 
-    ee_destroy_fn *ee_destroy_ptr =
-        (ee_destroy_fn *)dlsym(so, "ee_destroy");
+    ee_destroy_fn *ee_destroy_ptr = (ee_destroy_fn *)dlsym(so, "ee_destroy");
     if (ee_frame_ptr == NULL) {
         el_critical("LIN: Could not find ee_destroy.\n");
         rc = -1;
         goto _err;
     }
 
-    el_debug("LIN: Loaded caresto.so.\n");
+    el_debug_fmt("LIN: Loaded %s.\n", new_path);
     out_shared_game->path = path;
     out_shared_game->shared_lib = so;
     out_shared_game->timestamp = timestamp;
@@ -216,7 +214,6 @@ _err:
 _done:
     ea_arena_restore_offset(arena, arena_offset);
     return rc;
-
 }
 
 bool ep_shared_reload(struct ep_shared_game *out_shared_game,

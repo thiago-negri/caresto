@@ -52,8 +52,14 @@ BUILD_ROOT_PATH=build
 BUILD_PATH=$BUILD_ROOT_PATH/$BUILD_TYPE
 
 TARGET_PATH=$BUILD_PATH/bin
-TARGET_SHARED=$TARGET_PATH/caresto.dll
-TARGET=$TARGET_PATH/caresto.exe
+if [ "$os" == "win" ]; then
+    TARGET_SHARED=$TARGET_PATH/caresto.dll
+    TARGET=$TARGET_PATH/caresto.exe
+fi
+if [ "$os" == "linux" ]; then
+    TARGET_SHARED=$TARGET_PATH/caresto.so
+    TARGET=$TARGET_PATH/caresto
+fi
 
 SRC_PATH=src
 OBJ_PATH=$BUILD_PATH/obj
@@ -88,6 +94,7 @@ if [ "$os" == "linux" ]; then
         "-lX11"
         "-lGLU"
         "-lOpenGL"
+        "-lpthread"
     )
 fi
 
@@ -95,12 +102,16 @@ fi
 # - Create an executable that doesn't spawn a console
 # - -O3
 # - Static link to game
+# - Static link to SDL and GLEW
 if [ $arg_release -eq 0 ]; then
     if [ "$os" == "win" ]; then
         LINK_FLAGS_ARR+=("-Xlinker /SUBSYSTEM:WINDOWS")
+        # TODO(tnegri): Static link SDL and GLEW
     fi
     if [ "$os" == "linux" ]; then
         LINK_FLAGS_ARR+=("-lm")
+        LINK_FLAGS_ARR+=("-Llib/linux/SDL3/x64")
+        LINK_FLAGS_ARR+=("-Llib/linux/GLEW/x64")
     fi
     BUILD_TYPE_FLAGS="-O3"
 else

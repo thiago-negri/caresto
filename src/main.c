@@ -21,7 +21,12 @@
 #define APP_TYPE "game"
 #define APP_URL "TODO: Steam URL"
 
+#ifdef _WIN32
 #define SHARED_LIB_PATH "build/debug/bin/caresto.dll"
+#elif __linux__
+#define SHARED_LIB_PATH "build/debug/bin/caresto.so"
+#endif // __linux__
+
 #define SHARED_LIB_CHECK_INTERVAL_MS 5000.0f
 
 #define MB_10 (10 * 1024 * 1024)

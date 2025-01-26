@@ -100,3 +100,55 @@ OK: ortho
 OK: arena
 ```
 
+
+## Linux
+
+### GLEW
+
+```sh
+git clone git@github.com:nigels-com/glew
+
+cd glew
+
+sudo dnf install libXmu-devel libXi-devel libGL-devel
+
+cd auto
+
+make
+
+cd ..
+
+make
+
+mkdir -p $CARESTO/lib/linux/GLEW/x64/
+cp lib/libGLEW.a $CARESTO/lib/linux/GLEW/x64/libGLEW.a
+```
+
+### SDL
+
+```sh
+git clone git@github.com:libsdl-org/SDL.git
+
+cd SDL
+
+sudo dnf install gcc git-core make cmake \
+   alsa-lib-devel pulseaudio-libs-devel nas-devel pipewire-devel \
+   libX11-devel libXext-devel libXrandr-devel libXcursor-devel libXfixes-devel \
+   libXi-devel libXScrnSaver-devel dbus-devel ibus-devel fcitx-devel \
+   systemd-devel mesa-libGL-devel libxkbcommon-devel mesa-libGLES-devel \
+   mesa-libEGL-devel vulkan-devel wayland-devel wayland-protocols-devel \
+   libdrm-devel mesa-libgbm-devel libusb-devel libdecor-devel \
+   pipewire-jack-audio-connection-kit-devel \
+   liburing-devel libusb1-devel libunwind-devel \
+   --skip-unavailable
+
+cmake -DCMAKE_BUILD_TYPE=Release -DSDL_STATIC=ON \
+   -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DSDL_STATIC_PIC=ON
+
+cmake --build . --config Release
+
+sudo cmake --install build --config Release --prefix /usr/local
+
+mkdir -p $CARESTO/lib/linux/SDL3/x64/
+cp libSDL3.a $CARESTO/lib/linux/SDL3/x64/libSDL3.a
+```
