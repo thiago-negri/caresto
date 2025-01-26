@@ -14,7 +14,7 @@ int ef_copy(const char *to, const char *from, struct ea_arena *arena) {
     size_t arena_offset = ea_arena_save_offset(arena);
 
     fd = fopen(from, "r");
-    if (errno != 0) {
+    if (fd == NULL) {
         el_critical_fmt("U: Could not open for read: %s. %d: %s\n", from, errno,
                         strerror(errno));
         rc = -1;
@@ -43,8 +43,9 @@ int ef_copy(const char *to, const char *from, struct ea_arena *arena) {
     fclose(fd);
 
     fd = fopen(to, "w");
-    if (errno != 0) {
-        el_critical_fmt("U: Could not open for write: %s.\n", to);
+    if (fd == NULL) {
+        el_critical_fmt("U: Could not open for write: %s. %d: %s\n", to, errno,
+                        strerror(errno));
         rc = -1;
         goto _err;
     }
@@ -95,6 +96,10 @@ ET_TEST(ef_copy) {
     ET_ASSERT(strcmp((const char *)buffer, "hello") == 0);
 
     ET_DONE;
+
+    remove("ef_copy.tmp");
+    remove("ef_copy.tmp-to");
+    remove("ef_copy.tmp-to2");
 }
 
 long long ef_timestamp(const char *path) {

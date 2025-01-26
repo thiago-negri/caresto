@@ -24,7 +24,7 @@
 #define ELAPSED_TIME_PER_TICK (1000.0f / TICKS_PER_SECOND)
 
 #define BEETLE_SPEED 1.5f
-#define BEETLE_JUMP_SPEED 4.0f
+#define BEETLE_JUMP_SPEED 2.0f
 #define DEBUG_SPRITES_MAX 100
 
 #define cge_init ee_init
