@@ -89,6 +89,9 @@ fi
 if [ "$os" == "linux" ]; then
     LINK_FLAGS_ARR=(
         "-lSDL3"
+        "-lSDL3_ttf"
+        "-lfreetype"
+        "-lharfbuzz"
         "-lGLEW"
         "-lGL"
         "-lX11"
@@ -112,6 +115,7 @@ if [ $arg_release -eq 0 ]; then
         LINK_FLAGS_ARR+=("-lm")
         LINK_FLAGS_ARR+=("-Llib/linux/SDL3/x64")
         LINK_FLAGS_ARR+=("-Llib/linux/GLEW/x64")
+        LINK_FLAGS_ARR+=("-Llib/linux/SDL3_ttf/x64")
     fi
     BUILD_TYPE_FLAGS="-O3"
 else

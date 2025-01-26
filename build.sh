@@ -92,6 +92,8 @@ if [ $arg_build -eq 0 ]; then
     fi
     static licenses/README-SDL.txt
     static licenses/LICENSE-glew.txt
+    static licenses/LICENSE-freetype.txt
+    static licenses/Montserrat-OFL.txt
 fi
 
 

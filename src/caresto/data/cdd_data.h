@@ -8,6 +8,8 @@ struct cdd_data {
     struct eo_buffer debug_buffer;
 #endif // DEBUG
 
+    unsigned int hello_world_texture_id;
+
     struct coo_sprite_shader sprite_shader;
     struct eo_buffer sprite_buffer;
     struct eo_buffer tile_buffer;

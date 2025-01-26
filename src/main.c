@@ -3,6 +3,7 @@
 #include <GL/glew.h>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
+#include <SDL3_ttf/SDL_ttf.h>
 #include <engine/ea_allocator.h>
 #include <engine/ee_entry.h>
 #include <engine/el_log.h>
@@ -109,6 +110,14 @@ int main(int /*argc*/, char * /*argv*/[]) {
     if (!SDL_Init(sdl_flags)) {
         const char *sdl_error = SDL_GetError();
         el_critical_fmt("SDL: Could not initialize. %s\n", sdl_error);
+        rc = -1;
+        goto _err;
+    }
+
+    // Initialize SDL_ttf
+    if (!TTF_Init()) {
+        const char *sdl_error = SDL_GetError();
+        el_critical_fmt("SDL_ttf: Could not initialize. %s\n", sdl_error);
         rc = -1;
         goto _err;
     }

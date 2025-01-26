@@ -152,3 +152,28 @@ sudo cmake --install build --config Release --prefix /usr/local
 mkdir -p $CARESTO/lib/linux/SDL3/x64/
 cp libSDL3.a $CARESTO/lib/linux/SDL3/x64/libSDL3.a
 ```
+
+
+### SDL_ttf
+
+```sh
+git clone git@github.com:libsdl-org/SDL_ttf.git
+
+cd SDL_ttf
+
+# need to use 'main' branch for SDL3
+
+cmake -S . -B build -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+   -DBUILD_SHARED_LIBS=OFF -DSDLTTF_HARFBUZZ=ON
+
+cmake --build build
+
+cmake --install build --prefix /usr/local
+
+mkdir -p $CARESTO/lib/linux/SDL3_ttf/x64/
+cp build/libSDL3_ttf.a $CARESTO/lib/linux/SDL3_ttf/x64/libSDL3_ttf.a
+
+cd include
+cp -r SDL3_ttf $CARESTO/include
+cd ..
+```

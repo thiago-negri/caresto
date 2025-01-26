@@ -1,11 +1,12 @@
-#include "caresto/system/csd_debug.h"
 #include <SDL3/SDL.h>
 #include <caresto/data/cdd_data.h>
 #include <caresto/entity/cee_entity.h>
 #include <caresto/opengl/coo_opengl.h>
+#include <caresto/opengl/cot_text.h>
 #include <caresto/system/csa_animation.h>
 #include <caresto/system/csb_body.h>
 #include <caresto/system/csc_camera.h>
+#include <caresto/system/csd_debug.h>
 #include <caresto/system/css_sprite.h>
 #include <caresto/system/cst_tile.h>
 #include <engine/ee_entry.h>
@@ -45,6 +46,11 @@ int cge_init(void **out_data, struct ea_arena *persistent_storage,
     }
 
     memset(state, 0, sizeof(struct cdd_data));
+
+    rc = load_hello_world_texture(&state->hello_world_texture_id);
+    if (rc != 0) {
+        goto _err;
+    }
 
     rc = coo_sprite_shader_load(&state->sprite_shader, transient_storage);
     if (rc != 0) {
@@ -331,6 +337,12 @@ bool cge_frame(void *data, const struct eo_frame *frame) {
         state->systems.sprite_map.sprite_count * COO_VERTEX_PER_QUAD,
         &state->sprite_buffer);
 
+    // Render using font texture
+    coo_sprite_shader_render(
+        &state->sprite_shader, &camera_transform,
+        &(struct eo_texture){.id = state->hello_world_texture_id},
+        1 * COO_VERTEX_PER_QUAD, &state->sprite_buffer);
+
 #ifdef DEBUG
     // Render debug
     if (state->systems.debug_enabled) {
@@ -351,6 +363,8 @@ bool cge_frame(void *data, const struct eo_frame *frame) {
         state->systems.debug.debug_count = 0;
     }
 #endif // DEBUG
+
+    /*render_hello_world_texture(state->hello_world_texture_id);*/
 
     return true;
 }
