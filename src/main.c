@@ -42,7 +42,11 @@ static SDL_Window *create_sdl_window() {
     SDL_Window *sdl_window = SDL_CreateWindow(title, WINDOW_W, WINDOW_H, flags);
 
 #ifdef DEBUG
+#ifdef _WIN32
     SDL_SetWindowPosition(sdl_window, 0, 30);
+#elif __linux__
+    SDL_SetWindowPosition(sdl_window, 1600, 30);
+#endif
 #endif
 
     return sdl_window;
