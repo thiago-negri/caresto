@@ -103,6 +103,9 @@ _err:
     if (surface_rgba != NULL) {
         SDL_DestroySurface(surface_rgba);
     }
+    if (texture_id != 0) {
+        glDeleteTextures(1, &texture_id);
+    }
 
 _done:
     return rc;
