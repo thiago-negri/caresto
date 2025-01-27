@@ -68,7 +68,10 @@ if [ "$os" == "linux" ]; then
         -lGL \
         -lX11 \
         -lGLU \
-        -lOpenGL
+        -lOpenGL \
+        -lSDL3_ttf \
+        -lfreetype \
+        -lharfbuzz
 fi
 
 

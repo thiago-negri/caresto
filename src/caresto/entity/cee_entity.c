@@ -2,8 +2,10 @@
 #include <caresto/system/csa_animation.h>
 #include <caresto/system/csb_body.h>
 #include <caresto/system/css_sprite.h>
+#include <caresto/system/csu_ui.h>
 #include <engine/el_log.h>
 #include <gen/sprite_atlas.h>
+#include <stdio.h>
 
 static void cee_tick_beetle(struct cds_beetle *entity,
                             struct cds_systems *systems) {
@@ -37,6 +39,16 @@ static void cee_tick_beetle(struct cds_beetle *entity,
 static void cee_tick_carestosan(struct cds_carestosan *entity,
                                 struct cds_systems *systems) {
     struct cds_body *body = csb_get(systems, entity->body);
+
+    // FIXME(tnegri): debug stuff
+    char buffer[255];
+    snprintf(buffer, 255, "vel.y = %f", body->velocity.y);
+    csu_text_set(systems, &entity->texts[0], systems->ui.font, buffer, 10, 10);
+    snprintf(buffer, 255, "vel.x = %f", body->velocity.x);
+    csu_text_set(systems, &entity->texts[1], systems->ui.font, buffer, 10, 30);
+    csu_text_set(systems, &entity->texts[2], systems->ui.font, "caresto", 10,
+                 50);
+    csu_text_set(systems, &entity->texts[3], systems->ui.font, "san", 10, 70);
 
     // Carestosan animation
     if (body->velocity.y < 0.0) {

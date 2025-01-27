@@ -1,4 +1,6 @@
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_video.h>
+#include <SDL3_ttf/SDL_ttf.h>
 #include <caresto/data/cdd_data.h>
 #include <caresto/entity/cee_entity.h>
 #include <caresto/opengl/coo_opengl.h>
@@ -23,6 +25,7 @@
 #define GAME_CAMERA_WIDTH 320.0f
 #define TICKS_PER_SECOND 60
 #define ELAPSED_TIME_PER_TICK (1000.0f / TICKS_PER_SECOND)
+#define ASSETS_MONTSERRAT_REGULAR "assets/Montserrat-Regular.ttf"
 
 #define BEETLE_SPEED 1.5f
 #define BEETLE_JUMP_SPEED 2.0f
@@ -47,11 +50,28 @@ int cge_init(void **out_data, struct ea_arena *persistent_storage,
 
     memset(state, 0, sizeof(struct cdd_data));
 
-    rc = load_hello_world_texture(&state->hello_world_texture_id);
-    if (rc != 0) {
+#ifdef SHARED
+    // Apparently this needs to be initialized within the shared library
+    // For release builds, main initializes it
+    if (!TTF_Init()) {
+        const char *sdl_error = SDL_GetError();
+        el_critical_fmt("SDL_ttf: Could not initialize. %s\n", sdl_error);
+        rc = -1;
+        goto _err;
+    }
+#endif
+
+    // Load font
+    state->systems.ui.font = TTF_OpenFont(ASSETS_MONTSERRAT_REGULAR, 32.0f);
+    if (state->systems.ui.font == NULL) {
+        const char *sdl_error = SDL_GetError();
+        el_critical_fmt("SDL_ttf: Could not load Montserrat-Regular. %s\n",
+                        sdl_error);
+        rc = -1;
         goto _err;
     }
 
+    // Load shaders
     rc = coo_sprite_shader_load(&state->sprite_shader, transient_storage);
     if (rc != 0) {
         goto _err;
@@ -70,6 +90,8 @@ int cge_init(void **out_data, struct ea_arena *persistent_storage,
 
     coo_sprite_buffer_create(&state->tile_buffer, CDS_TILES_MAX,
                              GL_DYNAMIC_DRAW);
+
+    coo_sprite_buffer_create(&state->text_buffer, 1, GL_DYNAMIC_DRAW);
 
     rc = eo_texture_load(GEN_SPRITE_ATLAS_PATH, &state->sprite_atlas);
     if (rc != 0) {
@@ -179,6 +201,14 @@ void cge_reload(void *data, struct ea_arena *transient_storage) {
 #endif // DEBUG
     eo_texture_load(GEN_SPRITE_ATLAS_PATH, &state->sprite_atlas);
     eo_texture_load(GEN_TILE_ATLAS_PATH, &state->tile_atlas);
+#ifdef SHARED
+    // Apparently this needs to be initialized within the shared library
+    // For release builds, main initializes it
+    if (!TTF_Init()) {
+        const char *sdl_error = SDL_GetError();
+        el_critical_fmt("SDL_ttf: Could not initialize. %s\n", sdl_error);
+    }
+#endif
 }
 
 void cge_tick(struct cds_systems *systems, struct eo_frame *frame) {
@@ -337,11 +367,20 @@ bool cge_frame(void *data, const struct eo_frame *frame) {
         state->systems.sprite_map.sprite_count * COO_VERTEX_PER_QUAD,
         &state->sprite_buffer);
 
-    // Render using font texture
-    coo_sprite_shader_render(
-        &state->sprite_shader, &camera_transform,
-        &(struct eo_texture){.id = state->hello_world_texture_id},
-        1 * COO_VERTEX_PER_QUAD, &state->sprite_buffer);
+    // Render UI
+    // FIXME(tnegri): Pack texts textures?
+    struct em_mat4 ui_camera_transform = {};
+    int w, h;
+    SDL_GetWindowSize(frame->sdl_window, &w, &h);
+    em_mat4_ortho(&ui_camera_transform, 0, w, 0, h, 0, 1);
+    for (size_t i = 0; i < state->systems.ui.text_count; i++) {
+        eo_buffer_data(&state->text_buffer, 1 * sizeof(struct coo_sprite),
+                       &state->systems.ui.texts_gpu[i]);
+        coo_sprite_shader_render(
+            &state->sprite_shader, &ui_camera_transform,
+            &(struct eo_texture){.id = state->systems.ui.texts[i].texture_id},
+            1 * COO_VERTEX_PER_QUAD, &state->text_buffer);
+    }
 
 #ifdef DEBUG
     // Render debug
@@ -380,4 +419,5 @@ void cge_destroy(void *data) {
     coo_debug_shader_destroy(&state->debug_shader);
     eo_buffer_destroy(&state->debug_buffer);
 #endif
+    TTF_CloseFont(state->systems.ui.font);
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <SDL3_ttf/SDL_ttf.h>
 #include <caresto/opengl/coo_opengl.h>
 #include <gen/sprite_atlas.h>
 
@@ -8,11 +9,27 @@
 #define CDS_SPRITES_MAX 100
 #define CDS_ANIMATIONS_MAX 100
 #define CDS_TILES_MAX 1000
+#define CDS_UI_TEXTS_MAX 100
 
 #define CDS_TILE_MAP_MAX_WIDTH 100
 #define CDS_TILE_MAP_MAX_HEIGHT 100
 
 #define CDS_SPRITE_MIRROR_X 1
+
+typedef unsigned char cds_ui_text_id;
+
+struct cds_ui_text {
+    int x, y;
+    GLuint texture_id;
+};
+
+struct cds_ui {
+    TTF_Font *font;
+    unsigned char text_count;
+    unsigned char text_ids[CDS_UI_TEXTS_MAX];
+    struct cds_ui_text texts[CDS_UI_TEXTS_MAX];
+    struct coo_sprite texts_gpu[CDS_UI_TEXTS_MAX];
+};
 
 struct cds_camera {
     float x, y, w, h;
@@ -89,6 +106,8 @@ struct cds_carestosan {
     cds_body_id body;
     cds_animation_id animation;
     struct em_ivec2 position;
+
+    cds_ui_text_id texts[4];
 };
 
 union cds_entity {
@@ -124,4 +143,5 @@ struct cds_systems {
     struct cds_body_map body_map;
     struct cds_sprite_map sprite_map;
     struct cds_tile_map tile_map;
+    struct cds_ui ui;
 };
