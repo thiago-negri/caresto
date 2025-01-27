@@ -4,7 +4,6 @@
 #include <caresto/data/cdd_data.h>
 #include <caresto/entity/cee_entity.h>
 #include <caresto/opengl/coo_opengl.h>
-#include <caresto/opengl/cot_text.h>
 #include <caresto/system/csa_animation.h>
 #include <caresto/system/csb_body.h>
 #include <caresto/system/csc_camera.h>
