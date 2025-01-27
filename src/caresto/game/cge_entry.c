@@ -90,7 +90,7 @@ int cge_init(void **out_data, struct ea_arena *persistent_storage,
     coo_sprite_buffer_create(&state->tile_buffer, CDS_TILES_MAX,
                              GL_DYNAMIC_DRAW);
 
-    coo_sprite_buffer_create(&state->text_buffer, 1, GL_DYNAMIC_DRAW);
+    coo_sprite_buffer_create(&state->text_buffer, 1, GL_STREAM_DRAW);
 
     rc = eo_texture_load(GEN_SPRITE_ATLAS_PATH, &state->sprite_atlas);
     if (rc != 0) {
