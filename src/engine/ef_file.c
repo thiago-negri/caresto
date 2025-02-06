@@ -13,7 +13,7 @@ int ef_copy(const char *to, const char *from, struct ea_arena *arena) {
 
     size_t arena_offset = ea_arena_save_offset(arena);
 
-    fd = fopen(from, "r");
+    fd = fopen(from, "rb");
     if (fd == NULL) {
         el_critical_fmt("U: Could not open for read: %s. %d: %s\n", from, errno,
                         strerror(errno));
@@ -35,14 +35,16 @@ int ef_copy(const char *to, const char *from, struct ea_arena *arena) {
     memset(buffer, 0, file_size + 1);
     size_t read_count = fread(buffer, sizeof(char), file_size, fd);
     if (read_count != (size_t)file_size) {
-        el_critical_fmt("U: Something went wrong while reading %s.\n", from);
+        el_critical_fmt(
+            "U: Something went wrong while reading %s. (%llu != %ld)\n", from,
+            read_count, file_size);
         rc = -1;
         goto _err;
     }
 
     fclose(fd);
 
-    fd = fopen(to, "w");
+    fd = fopen(to, "wb");
     if (fd == NULL) {
         el_critical_fmt("U: Could not open for write: %s. %d: %s\n", to, errno,
                         strerror(errno));

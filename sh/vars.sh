@@ -71,6 +71,15 @@ OBJ_GEN_PATH=$BUILD_PATH/obj/gen
 
 INCLUDE_PATH=include
 
+if [ "$os" == "win" ]; then
+    rm compile_flags.txt
+    cp compile_flags_win.txt compile_flags.txt
+fi
+if [ "$os" == "linux" ]; then
+    rm compile_flags.txt
+    cp compile_flags_linux.txt compile_flags.txt
+fi
+
 if [ $arg_release -eq 0 ]; then
     mapfile COMPILE_FLAGS_ARR < compile_flags_release.txt
 else
@@ -80,7 +89,10 @@ fi
 if [ "$os" == "win" ]; then
     LINK_FLAGS_ARR=(
         "-Llib/windows/SDL3/x64"
+        "-Llib/windows/SDL3_ttf/x64"
         "-Llib/windows/glew/x64"
+        "-lSDL3"
+        "-lSDL3_ttf"
         "-lglew32"
         "-lglu32"
         "-lopengl32"

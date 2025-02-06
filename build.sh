@@ -88,6 +88,7 @@ if [ $arg_build -eq 0 ]; then
     # COPY DLLS AND LICENSES
     if [ "$os" == "win" ]; then
         static lib/windows/SDL3/x64/SDL3.dll
+        static lib/windows/SDL3_ttf/x64/SDL3_ttf.dll
         static lib/windows/glew/x64/glew32.dll
     fi
     static licenses/README-SDL.txt

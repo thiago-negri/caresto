@@ -1,10 +1,11 @@
 /assets/*.json
 /build
+/compile_flags.txt
 /include
 /lib
 /licenses/LICENSE-glew.txt
+/licenses/LICENSE-SDL_ttf.txt
 /licenses/README-SDL.txt
 /src_gen
 /test
 /tmp-dependencies
-
