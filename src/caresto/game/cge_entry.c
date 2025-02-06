@@ -211,6 +211,7 @@ void cge_reload(void *data, struct ea_arena *transient_storage) {
 }
 
 void cge_tick(struct cds_systems *systems, struct eo_frame *frame) {
+    systems->lang = GEN_STRING_LANG_EN_US;
     csb_tick(systems);
     // TODO(tnegri): odd
     cee_tick((union cds_entity *)&systems->carestosan, systems);

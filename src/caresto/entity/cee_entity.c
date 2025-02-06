@@ -46,9 +46,12 @@ static void cee_tick_carestosan(struct cds_carestosan *entity,
     csu_text_set(systems, &entity->texts[0], systems->ui.font, buffer, 10, 10);
     snprintf(buffer, 255, "vel.x = %f", body->velocity.x);
     csu_text_set(systems, &entity->texts[1], systems->ui.font, buffer, 10, 30);
-    csu_text_set(systems, &entity->texts[2], systems->ui.font, "caresto", 10,
+    const char *hello_world =
+        gen_strings[systems->lang][GEN_STRING_KEY_HELLO_WORLD];
+    csu_text_set(systems, &entity->texts[2], systems->ui.font, hello_world, 10,
                  50);
-    csu_text_set(systems, &entity->texts[3], systems->ui.font, "san", 10, 70);
+    csu_text_set(systems, &entity->texts[3], systems->ui.font, "caresto", 10,
+                 70);
 
     // Carestosan animation
     if (body->velocity.y < 0.0) {

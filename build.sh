@@ -40,6 +40,11 @@ if [ $arg_generate -eq 0 ]; then
     if need_sprite_atlas; then
         generate_sprite_atlas
     fi
+
+    # GENERATE STRINGS
+    if need_strings; then
+        generate_strings
+    fi
 fi
 
 

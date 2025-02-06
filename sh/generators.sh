@@ -161,3 +161,37 @@ generate_sprite_atlas() {
         $SPRITE_ATLAS_PNG $SPRITE_ATLAS_JSON $SPRITE_ATLAS_BOUNDING_BOX_JSON \
         $SPRITE_ATLAS_GEN_MODULE
 }
+
+
+#
+# STRINGS
+#
+need_strings() {
+    if [ ! -e "src_gen/gen/strings.h" ]; then
+        return 0
+    fi
+    if [ ! -e "src_gen/gen/strings.c" ]; then
+        return 0
+    fi
+    if [ "src_gen/gen/strings.h" -ot "tools/generate-string-map.js" ]; then
+        return 0
+    fi
+    if [ "src_gen/gen/strings.c" -ot "tools/generate-string-map.js" ]; then
+        return 0
+    fi
+    for file in $(find assets/strings/ -type f -name '*.js'); do
+        if [ "src_gen/gen/strings.h" -ot "$file" ]; then
+            return 0
+        fi
+        if [ "src_gen/gen/strings.c" -ot "$file" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+generate_strings() {
+    echo "# generating strings ..."
+
+    node tools/generate-string-map.js
+}

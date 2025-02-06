@@ -3,6 +3,7 @@
 #include <SDL3_ttf/SDL_ttf.h>
 #include <caresto/opengl/coo_opengl.h>
 #include <gen/sprite_atlas.h>
+#include <gen/strings.h>
 
 #define CDS_DEBUG_MAX 100
 #define CDS_BODIES_MAX 100
@@ -129,6 +130,7 @@ struct cds_tile_map {
 };
 
 struct cds_systems {
+    enum gen_string_lang lang;
     struct cds_camera camera;
 
 #ifdef DEBUG
